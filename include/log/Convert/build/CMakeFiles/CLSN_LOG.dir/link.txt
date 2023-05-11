@@ -1,0 +1,1 @@
+/usr/bin/g++ CMakeFiles/CLSN_LOG.dir/test/LogConvertTest.cpp.o -o CLSN_LOG 
