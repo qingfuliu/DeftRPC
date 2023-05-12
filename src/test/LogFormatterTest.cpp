@@ -3,19 +3,20 @@
 #include"log/Log.h"
 //#include"
 
-class Init{
+class Init {
 public:
-    Init(){
-        CLSN::init<0>({
-                              CLSN::createFileLogAppender("/home/lqf/project/DeftRPC/src/test/log.txt",
-                                                          "[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s",
-                                                          CLSN::LogLevel::Debug)});
+    Init() {
+        CLSN::init<0>({CLSN::createConsoleLogAppender(
+                "[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s",
+                CLSN::LogLevel::Debug), CLSN::createFileLogAppender("/home/lqf/project/DeftRPC/src/test/log.txt",
+                                                                    "[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s",
+                                                                    CLSN::LogLevel::Debug)});
     }
 };
 
-static void test_log(benchmark::State&state){
+static void test_log(benchmark::State &state) {
     static Init a;
-    for(auto _:state){
+    for (auto _: state) {
         CLSN_LOG_DEBUG << "message";
     }
 }
