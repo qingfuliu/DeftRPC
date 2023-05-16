@@ -9,6 +9,7 @@
 #include "common/common.h"
 #include "coroutine/Coroutine.h"
 #include "net/RingBuffer.h"
+#include "net/EVBuffer.h"
 #include "coroutine/Timer.h"
 #include "coroutine/Scheduler.h"
 #include "net/Socket.h"
@@ -47,7 +48,7 @@ namespace CLSN {
 
         void writeInThread(const char *msg, size_t len) noexcept {
             assert(mScheduler->IsInLoopThread());
-            outputBuffer->Write(msg, len);
+//            outputBuffer->Write(msg, len);
         }
 
         void processMag();
@@ -56,7 +57,7 @@ namespace CLSN {
         const Socket sock;
         const Addr remote;
         std::unique_ptr<RingBuffer> inputBuffer;
-        std::unique_ptr<RingBuffer> outputBuffer;
+        std::unique_ptr<EVBuffer> outputBuffer;
         Scheduler *const mScheduler = Scheduler::GetThreadScheduler();
     };
 }

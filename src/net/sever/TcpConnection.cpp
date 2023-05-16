@@ -14,7 +14,7 @@ namespace CLSN {
             sock(f),
             remote(addr),
             inputBuffer(std::make_unique<RingBuffer>()),
-            outputBuffer(std::make_unique<RingBuffer>()) {}
+            outputBuffer(std::make_unique<EVBuffer>()) {}
 
     TcpConnection::~TcpConnection() = default;
 
