@@ -74,12 +74,12 @@ namespace CLSN {
             oss << "<"#X">[";\
             auto begin = t.cbegin();\
             if (begin != t.cend()) {\
-                    LogConvert<Key>::convert(oss,begin->first);                      \
+                    LogConvert<Key>::convert(oss,begin->pIovec);                      \
                     oss<<":";                \
                 LogConvert<Val>::convert(oss,(begin++)->second);                \
                 for (; begin != t.cend(); ++begin) {\
                     oss << ",";   \
-                    LogConvert<Key>::convert(oss,begin->first);                      \
+                    LogConvert<Key>::convert(oss,begin->pIovec);                      \
                     oss<<":";                \
                 LogConvert<Val>::convert(oss,begin->second);                \
                 }\

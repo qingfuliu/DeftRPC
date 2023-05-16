@@ -10,60 +10,62 @@
 #include<memory>
 #include <arpa/inet.h>
 
-class RingBuffer {
-public:
-    RingBuffer() noexcept;
+namespace CLSN {
+    class RingBuffer {
+    public:
+        RingBuffer() noexcept;
 
-    ~RingBuffer() = default;
+        ~RingBuffer() = default;
 
-    [[nodiscard]] uint32_t GetInt() const noexcept;
+        [[nodiscard]] uint32_t GetPackageLength() const noexcept;
 
-    char *ReadAll(int *len = nullptr) noexcept;
+        char *ReadAll(int *len = nullptr) noexcept;
 
-    int Read(char *buf, int len) noexcept;
+        int Read(char *buf, int len) noexcept;
 
-    [[nodiscard]] int GetReadableCapacity() const noexcept {
-        return size;
-    }
+        [[nodiscard]] int GetReadableCapacity() const noexcept {
+            return size;
+        }
 
-    int ReadFromFd(int fd) noexcept;
+        int ReadFromFd(int fd) noexcept;
 
-    int WriteToFd(int fd) noexcept;
+        int WriteToFd(int fd) noexcept;
 
-    int Write(const char *buf, int len) noexcept;
+        int Write(const char *buf, int len) noexcept;
 
-    int Write(const std::string &buf) noexcept { return this->Write(buf.c_str(), static_cast<int>(buf.size())); }
+        int Write(const std::string &buf) noexcept { return this->Write(buf.c_str(), static_cast<int>(buf.size())); }
 
-    void Append(const std::string &buf) noexcept { Write(buf); }
+        void Append(const std::string &buf) noexcept { Write(buf); }
 
-    void Append(const char *buf, int len) noexcept { Write(buf, len); }
+        void Append(const char *buf, int len) noexcept { Write(buf, len); }
 
-    [[nodiscard]] bool IsEmpty() const noexcept { return begin == end && size == 0; }
+        [[nodiscard]] bool IsEmpty() const noexcept { return begin == end && size == 0; }
 
-private:
+    private:
 
-    [[nodiscard]] bool isFull() const noexcept { return begin == end && size == buffer.capacity(); }
+        [[nodiscard]] bool isFull() const noexcept { return begin == end && size == buffer.capacity(); }
 
-    [[nodiscard]] int getTailSpaceLen() const noexcept;
+        [[nodiscard]] int getTailSpaceLen() const noexcept;
 
-    [[nodiscard]] int getTailContentLen() const noexcept;
+        [[nodiscard]] int getTailContentLen() const noexcept;
 
-    [[nodiscard]] int getWritableCapacity() const noexcept;
+        [[nodiscard]] int getWritableCapacity() const noexcept;
 
-    void updateAfterRead(int len) noexcept;
+        void updateAfterRead(int len) noexcept;
 
-    void updateAfterWrite(int len) noexcept;
+        void updateAfterWrite(int len) noexcept;
 
-    void enableWritableSpace(int targetSize) noexcept;
+        void enableWritableSpace(int targetSize) noexcept;
 
-private:
-    int begin;
-    int end;
-    int size;
-    std::vector<char> buffer;
-    int tempCapacity;
-    std::unique_ptr<char[]> temp;
-};
+    private:
+        int begin;
+        int end;
+        int size;
+        std::vector<char> buffer;
+        int tempCapacity;
+        std::unique_ptr<char[]> temp;
+    };
 
+}
 
 #endif //MCLOUDDISK_MCLOUDBUFFER_H

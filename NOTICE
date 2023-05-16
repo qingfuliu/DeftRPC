@@ -1,0 +1,8 @@
+* sipHash: https://github.com/google/highwayhash
+    * 以下文件来自 highwayhash,主要修改了部分头文件路径，在test文件中删除了部分没用的代码：
+
+```
+  src/test/test_sipHash.cpp
+  src/hash/*.cc
+  include/google_highwayhash_Public/*.h
+```

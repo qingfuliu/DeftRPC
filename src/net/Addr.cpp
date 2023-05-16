@@ -11,6 +11,8 @@
 #include<sstream>
 
 namespace CLSN {
+    int i = 0;
+
     int Addr::FromString(const std::string &ip, uint16_t port, struct sockaddr_in *addr) {
         std::fill(reinterpret_cast<char *>(addr), reinterpret_cast<char *>(addr) + sizeof(sockaddr_in), 0);
         addr->sin_family = AF_INET;
@@ -88,4 +90,5 @@ namespace CLSN {
         free(buf);
         return oss.str();
     }
+
 }

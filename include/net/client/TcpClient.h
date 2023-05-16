@@ -8,6 +8,8 @@
 #include "net/Addr.h"
 #include "net/Socket.h"
 #include "net/RingBuffer.h"
+#include "net/EVBuffer.h"
+#include "net/Codec.h"
 #include "log/Log.h"
 #include <string_view>
 #include <cerrno>
@@ -64,43 +66,50 @@ namespace CLSN {
             return SendAll(str.data(), str.size());
         }
 
-        int Send(const char *msg, size_t len) noexcept {
-            int res = write(sock.getFd(), msg, len);
-            return res;
-        }
+//        int Send(const char *msg, size_t len) noexcept {
+//            int res = write(sock.getFd(), msg, len);
+//            return res;
+//        }
 
         int SendAll(const char *msg, size_t len) noexcept {
+            if (len == 0) {
+                return 0;
+            }
+            codeC->Encode(*outputBuffer, msg, len);
             int res = 0;
             int temp;
             do {
-                temp = write(sock.getFd(), msg + res, len);
-                if (temp > 0) {
-                    len -= temp;
-                    res += temp;
-                }
-            } while (temp >= 0 && len > 0);
+                temp = outputBuffer->WriteToFd(sock.getFd());
+                res += temp;
+            } while (temp >= 0 && !outputBuffer->IsEmpty());
             if (temp < 0) {
                 return -1;
             }
             return res;
         }
 
-
         size_t Receive(char *data, size_t len) noexcept {
+            if (len <= 0) {
+                return 0;
+            }
             int res = inputBuffer->ReadFromFd(sock.getFd());
             if (res > 0) {
-                inputBuffer->Read(data, res);
+                len = res > len ? len : res;
+                inputBuffer->Read(data, static_cast<int>(len));
             }
             return res;
         }
 
         std::string_view Receive() noexcept {
-            int res = inputBuffer->ReadFromFd(sock.getFd());
-            if (0 < res) {
-                char *data = inputBuffer->ReadAll();
-                return {data, static_cast<std::string_view::size_type>(res)};
-            }
-            return {};
+            std::string_view view;
+            do {
+                int res = inputBuffer->ReadFromFd(sock.getFd());
+                if (res < 0) {
+                    break;
+                }
+                view = codeC->Decode(*inputBuffer);
+            } while (view.empty());
+            return view;
         }
 
         [[nodiscard]] int MakeSelfNonblock(bool val) const noexcept {
@@ -152,7 +161,10 @@ namespace CLSN {
         State state;
         int readTimeout;
         int writeTimeout;
+        std::unique_ptr<CodeC> codeC;
         std::unique_ptr<RingBuffer> inputBuffer;
+        std::unique_ptr<EVBuffer> outputBuffer;
+
     };
 
 } // CLSN

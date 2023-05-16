@@ -17,24 +17,21 @@ int main() {
         return -1;
     }
     std::string str = "test str";
-    if (str.size() != client.Send(str)) {
+    if (0 >= client.Send(str)) {
         CLSN_LOG_ERROR << "Send failed,error is "
                        << strerror(errno);
         return -1;
     }
     int res = 0;
-    int totalLen = str.size();
-    do {
-        int temp = client.Receive(str.data() + res, totalLen - res);
-        if (temp < 0) {
-            CLSN_LOG_ERROR << "Receive failed,error is "
-                           << strerror(errno);
-            return -1;
-        }
-        res += temp;
-    } while (res < totalLen);
-    CLSN_LOG_DEBUG << "receive str is " << str;
-    sleep(30);
+
+    std::string_view temp = client.Receive();
+    if (temp.empty()) {
+        CLSN_LOG_ERROR << "Receive failed,error is "
+                       << strerror(errno);
+        return -1;
+    }
+
+    CLSN_LOG_DEBUG << "receive str is " << temp;
     client.Close();
     return 0;
 };

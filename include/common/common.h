@@ -137,7 +137,8 @@ namespace CLSN {
         inline static T *instance = nullptr;
     };
 
-
+//********************buffer***************************//
+    using PackageLengthType = uint32_t;
 }
 
 #endif //DEFTRPC_TYPE_COMMON_H

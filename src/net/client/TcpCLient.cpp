@@ -11,7 +11,9 @@ namespace CLSN {
             state(State::Construct),
             readTimeout(0),
             writeTimeout(0),
-            inputBuffer(std::make_unique<RingBuffer>()) {}
+            codeC(DefaultCodeCFactory::CreateCodeC()),
+            inputBuffer(std::make_unique<RingBuffer>()),
+            outputBuffer(std::make_unique<EVBuffer>()) {}
 
     TcpClient::~TcpClient() noexcept {
         if (state == State::Connected) {
