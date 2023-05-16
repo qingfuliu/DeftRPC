@@ -114,7 +114,8 @@ CLSN_LOG_DEBUG << temp;
     * 引用了highwayhash部分文件，主要修改了部分头文件路径，在test文件中删除了部分没用的代码
     * 以下文件引用自 highwayhash ：
 
+    
+    src/test/test_sipHash.cpp   
+    src/hash/*.cc   
+    include/google_highwayhash_Public/*.h
 
-  src/test/test_sipHash.cpp 
-  src/hash/*.cc
-  include/google_highwayhash_Public/*.h
