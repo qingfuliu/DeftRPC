@@ -1,7 +1,7 @@
 //
 // Created by lqf on 23-5-14.
 //
-#include"dataStruct/hash.h"
+#include"dataStruct/Hash.h"
 #include "log/Log.h"
 
 using namespace CLSN;

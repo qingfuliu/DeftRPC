@@ -1,7 +1,7 @@
 //
 // Created by lqf on 23-5-14.
 //
-#include "dataStruct/hash.h"
+#include "dataStruct/Hash.h"
 #include "dataStructConfig.h"
 #include <utility>
 #include <cassert>
@@ -152,10 +152,12 @@ namespace CLSN {
     void HashTable::ExpendOrReduce(int32_t len) noexcept {
         if (0 == size[0]) {
             table = std::make_unique<HashEntryBase *[]>(1 << len);
+            std::fill(table.get(), table.get() + (1 << len), nullptr);
             size[0] = len;
             return;
         }
         reHashTable = std::make_unique<HashEntryBase *[]>(1 << len);
+        std::fill(reHashTable.get(), reHashTable.get() + (1 << len), nullptr);
         size[1] = len;
         reHashIdx = 0;
     }
