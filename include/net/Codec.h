@@ -6,9 +6,10 @@
 #define DEFTRPC_CODEC_H
 
 #include<string_view>
-#include"net/RingBuffer.h"
 #include"net/EVBuffer.h"
 #include "common/common.h"
+#include"net/RingBuffer.h"
+
 //std::string func(std::shared_ptr<conn>, std::string_view, TimeStamp);
 
 namespace CLSN {
@@ -20,11 +21,11 @@ namespace CLSN {
 
         virtual ~CodeC() = default;
 
-        virtual std::string_view Decode(RingBuffer &buffer) const noexcept = 0;
+        virtual std::string_view Decode(RingBuffer &buffer) const = 0;
 
-        virtual void Encode(EVBuffer &buffer, const char *data, size_t len) noexcept = 0;
+        virtual void Encode(EVBuffer &buffer, const char *data, size_t len) = 0;
 
-        virtual void Encode(EVBuffer &buffer, std::string &str) noexcept {
+        void Encode(EVBuffer &buffer, std::string &str) {
             Encode(buffer, str.data(), str.size());
         }
     };
@@ -42,7 +43,7 @@ namespace CLSN {
 
         ~DefaultCodeC() override = default;
 
-        std::string_view Decode(RingBuffer &buffer) const noexcept override {
+        std::string_view Decode(RingBuffer &buffer) const override {
             if (DecodeCondition(buffer)) {
                 PackageLengthType size = buffer.GetPackageLength();
                 if (size <= buffer.GetReadableCapacity()) {
@@ -52,7 +53,7 @@ namespace CLSN {
             return {};
         }
 
-        void Encode(EVBuffer &buffer, const char *data, size_t len) noexcept override {
+        void Encode(EVBuffer &buffer, const char *data, size_t len) override {
             WriteSizeToPackage(len + sizeof(PackageLengthType));
             buffer.Write(cache.get(), sizeof(PackageLengthType));
             buffer.Write(data, len);

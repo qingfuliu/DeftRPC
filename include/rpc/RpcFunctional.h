@@ -8,6 +8,7 @@
 #include<tuple>
 #include <sstream>
 #include "common/Exception.h"
+#include "rpc/RpcFunctional.h"
 #include "serialize/StringSerializer.h"
 
 namespace CLSN {
@@ -18,16 +19,13 @@ namespace CLSN {
         RpcFunction() noexcept = default;
 
         template<class Func, class... Args>
-        explicit RpcFunction(Func &&f, Args &&...args) noexcept {
-
-        }
+        explicit RpcFunction(Func &&f, Args &&...args) noexcept {}
 
         virtual ~RpcFunction() = default;
 
         virtual std::string Call(std::string_view arg) = 0;
 
     private:
-
     };
 
     namespace detail {
@@ -61,15 +59,15 @@ namespace CLSN {
             using ResType = Res;
             using TupleType = std::tuple<Args...>;
             using ArgsSize = std::integral_constant<size_t, sizeof...(Args)>;
-            using IndexSequenceType = typename IndexSequence<ArgsSize::value>::type;
+            using IndexSequenceType = typename IndexSequence<ArgsSize::value - 1>::type;
         };
 
         template<class Func>
-        class FunctionHelper : RpcFunction {
+        class FunctionHelper : public RpcFunction {
             using FuncTraitType = FuncTrait<Func>;
 
             template<typename T, size_t...index>
-            auto InterExecute(T &&tuple, Sequence<index...>) -> typename FuncTraitType::Res {
+            auto InterExecute(T &&tuple, Sequence<index...>) -> typename FuncTraitType::ResType {
                 return f(std::get<index>(tuple)...);
             }
 
@@ -81,7 +79,7 @@ namespace CLSN {
             std::string Call(std::string_view arg) override {
                 std::string resStr;
                 std::exception_ptr eptr;
-                typename FuncTraitType::Res res;
+                typename FuncTraitType::ResType res;
 
                 CLSN::StringDeSerialize decoder(arg);
                 typename FuncTraitType::TupleType tuple;
@@ -95,10 +93,11 @@ namespace CLSN {
 
                 if (eptr != nullptr) {
                     HandleException(resStr, eptr);
-                } else {
-                    CLSN::StringSerialize encoder(resStr);
-                    encoder(res);
+                    return resStr;
                 }
+
+                CLSN::StringSerialize encoder(resStr);
+                encoder(res);
                 return resStr;
             }
 
@@ -107,16 +106,14 @@ namespace CLSN {
         };
     }
 
-    template<class Func, class... Args>
-    inline RpcFunction *MakeRpcFunc(Func f, Args &&...args) noexcept {
-        return new detail::FunctionHelper(std::forward<Func>(f), std::forward<Args>(args)...);
-    }
+//    template<class Func, class... Args>
+//    inline RpcFunction *MakeRpcFunc(Func f, Args &&...args) noexcept {
+//        return new detail::FunctionHelper(std::forward<Func>(f), std::forward<Args>(args)...);
+//    }
 
     template<class Func, class... Args>
     inline RpcFunction *MakeRpcFunc(Func &&f) noexcept {
-        return new
-
-                detail::FunctionHelper(std::forward<Func>(f));
+        return static_cast<RpcFunction *>(new detail::FunctionHelper(std::forward<Func>(f)));
     }
 
 }

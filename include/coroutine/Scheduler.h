@@ -57,6 +57,11 @@ namespace CLSN {
             HandleExtraState
         };
 
+        /**
+         *
+         * @param sharedStackSize
+         * @param UserCall : 该Scheduler是否由用户创建，如果是，需要将其挂载到thread loacl 变量上
+         */
         explicit Scheduler(size_t sharedStackSize, bool UserCall = true);
 
         Scheduler() noexcept: Scheduler(0) {}

@@ -14,9 +14,6 @@
 namespace CLSN {
 
 
-
-
-
     template<class Header, class ...Args>
     struct ConditionalAnd
             : public std::conditional_t<Header::value, ConditionalAnd<Args...>, std::false_type> {
@@ -54,10 +51,25 @@ namespace CLSN {
 
     };
 
-
     template<class T>
     struct is_binary_deserialize : ConditionalOr<std::is_base_of<T, BinaryDeSerialize>,
             std::is_same<T, BinaryDeSerialize>> {
+
+    };
+
+    class StringSerialize;
+
+    class StringDeSerialize;
+
+    template<class T>
+    struct is_string_serialize : ConditionalOr<std::is_base_of<T, StringSerialize>,
+            std::is_same<T, StringSerialize>> {
+
+    };
+
+    template<class T>
+    struct is_string_deserialize : ConditionalOr<std::is_base_of<T, StringDeSerialize>,
+            std::is_same<T, StringDeSerialize>> {
 
     };
 

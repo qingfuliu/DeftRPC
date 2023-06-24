@@ -105,6 +105,25 @@ namespace CLSN {
         return temp.get();
     }
 
+//    char*
+    char *RingBuffer::Read(int size, int *len) noexcept {
+        if (size <= 0) {
+            return nullptr;
+        }
+        while (tempCapacity < size) {
+            if (tempCapacity == 0) {
+                tempCapacity = 1024;
+            } else
+                tempCapacity <<= 1;
+            temp.reset(new char[tempCapacity]);
+        }
+        size = Read(temp.get(), size);
+        if (len != nullptr) {
+            *len = size;
+        }
+        return temp.get();
+    }
+
     int RingBuffer::Write(const char *buf, int len) noexcept {
         enableWritableSpace(len);
         do {
@@ -202,8 +221,6 @@ namespace CLSN {
         }
 
         auto resSize = static_cast<int>(readv(fd, iov, iovLen));
-
-
         if (resSize < 0) {
             return -1;
         }

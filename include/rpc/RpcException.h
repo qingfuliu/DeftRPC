@@ -11,8 +11,10 @@ namespace CLSN {
 
     inline const char *NoSuchFunction = "No Such Function.";
     inline const char *FuncAlreadyExists = "Func Already Exists.";
+    inline const char *RouterIsInvalid = "Router Is Invalid.";
+    inline const char *PackageIsInvalid = "Package is Invalid.";
 
-    std::string MakeRpcException(const char *eptr, const std::string &funcName) {
+    inline std::string MakeRpcException(const char *eptr, const std::string &funcName) {
         return std::string(eptr).append("The FuncName is ").append(funcName);
     }
 }

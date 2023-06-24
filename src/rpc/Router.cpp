@@ -12,18 +12,25 @@ namespace CLSN {
         std::exception_ptr eptr;
         if (auto func = functions.FindByKey(funcName);func != nullptr) {
 
-            auto rpcFunction = static_cast<RpcFunction *>(func->GetVal());
+            auto rpcFunction = *static_cast<RpcFunction **>(func->GetVal());
             try {
                 res = rpcFunction->Call(arg);
             } catch (...) {
+                CLSN_LOG_FATAL << "An Exception happened.";
                 eptr = std::current_exception();
             }
 
         } else {
-            eptr = std::make_exception_ptr(CLSN::RpcExecuteException(NoSuchFunction));
+            CLSN_LOG_DEBUG << MakeRpcException(NoSuchFunction, funcName);
+            eptr = std::make_exception_ptr(
+                    CLSN::RpcExecuteException(MakeRpcException(NoSuchFunction, funcName)));
         }
 
         HandleException(res, eptr);
         return res;
+    }
+
+    void RpcRouter::CallFuncASync(const std::string &funcName, std::string_view arg) {
+
     }
 }

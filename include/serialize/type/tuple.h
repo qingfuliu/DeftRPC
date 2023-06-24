@@ -6,6 +6,7 @@
 #define DEFTRPC_TUPLE_H
 
 #include"../detail/helper.h"
+#include "serialize/SerializeException.h"
 #include<tuple>
 
 namespace CLSN {
@@ -19,7 +20,7 @@ namespace CLSN {
 
         template<typename Sr, typename... Args, size_t ...Idx>
         inline void DEFTRPC_DESERIALIZE_INPUT_FUNCNAME_HELPER(Sr &sr, std::tuple<Args...> &tp,
-                                                              sequence_index<Idx...> &&) noexcept {
+                                                              sequence_index<Idx...> &&) {
             sr(std::get<Idx>(tp)...);
         }
     }
@@ -32,9 +33,12 @@ namespace CLSN {
     }
 
     template<typename Sr, typename... Args>
-    inline void DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr, std::tuple<Args...> &tp) noexcept {
+    inline void DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr, std::tuple<Args...> &tp) {
         size_t size = 0;
         sr(make_size_tag(size));
+        if (size != sizeof...(Args)) {
+            throw std::logic_error(ArgsSizeError);
+        }
         if (size != 0)
             DEFTRPC_DESERIALIZE_INPUT_FUNCNAME_HELPER(sr, tp,
                                                       make_sequence_index<sizeof...(Args)>());

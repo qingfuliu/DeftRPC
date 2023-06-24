@@ -11,6 +11,12 @@ namespace CLSN {
     public:
         Iterator() = default;
 
+        Iterator(const Iterator &) = default;
+
+        Iterator &operator()(const Iterator &) {
+            return *this;
+        }
+
         virtual ~Iterator() = default;
 
         virtual bool IsValid() const noexcept = 0;
@@ -20,6 +26,8 @@ namespace CLSN {
         virtual void Prev() noexcept = 0;
 
         virtual void *Get() const noexcept = 0;
+
+        virtual void Reset() noexcept = 0;
 
         void *operator()() const noexcept {
             return Get();

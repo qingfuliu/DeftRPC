@@ -21,6 +21,8 @@ namespace CLSN {
 
         char *ReadAll(int *len = nullptr) noexcept;
 
+        char *Read(int size, int *len = nullptr) noexcept;
+
         int Read(char *buf, int len) noexcept;
 
         [[nodiscard]] int GetReadableCapacity() const noexcept {

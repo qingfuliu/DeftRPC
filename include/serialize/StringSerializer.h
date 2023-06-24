@@ -7,7 +7,9 @@
 
 #include "Serializer.h"
 #include "detail/helper.h"
+#include "SerializeException.h"
 #include <iostream>
+#include <exception>
 
 namespace CLSN {
 
@@ -38,12 +40,15 @@ namespace CLSN {
         using Base = DeSerializer<StringDeSerialize>;
     public:
         explicit StringDeSerialize(std::string_view
-                                   &inPutStr) noexcept: Base(this),
-                                                        str(inPutStr) {}
+                                   inPutStr) noexcept: Base(this),
+                                                       str(inPutStr) {}
 
         ~StringDeSerialize() override = default;
 
         void Input(void *data, size_t size) {
+            if (str.size() < size) {
+                throw std::logic_error(ArgsLengthError);
+            }
             str.copy(static_cast<char *>(data), size);
             str = str.substr(size);
         }

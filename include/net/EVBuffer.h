@@ -130,7 +130,12 @@ namespace CLSN {
             return begin == end;
         }
 
-        int WriteToFd(int fd);
+        void Clear() noexcept {
+            begin = 0;
+            end = 0;
+        }
+
+        int WriteToFd(int fd)noexcept;
 
     private:
         std::unique_ptr<struct iovec[]> iovecs;

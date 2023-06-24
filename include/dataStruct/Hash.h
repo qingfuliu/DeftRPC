@@ -7,6 +7,7 @@
 
 #include<memory>
 #include <cstdint>
+#include <cassert>
 #include<functional>
 #include <type_traits>
 #include "common/Iterator.h"
@@ -56,7 +57,9 @@ namespace CLSN {
 
     template<typename T>
     class HashEntry : public HashEntryBase {
-        using storage = typename std::aligned_storage<sizeof(T), std::alignment_of_v<T>>::type;
+        using storage = typename std::aligned_storage<sizeof(T),
+                std::alignment_of_v<T>>::
+        type;
     public:
         HashEntry() noexcept = default;
 
@@ -103,6 +106,8 @@ namespace CLSN {
 
 
     class HashTable {
+        class HashIterator;
+
         using HashLenType = unsigned long long;
         const HashLenType sipHashKey[2] = {0x0706050403020100ULL, 0x0F0E0D0C0B0A0908ULL};
         using Bucket = HashEntryBase **;
@@ -111,14 +116,23 @@ namespace CLSN {
     public:
 
         ~HashTable() noexcept {
-            forEachTable(table.get(), 1 << size[0], [](EntryType entry) {
-                delete entry;
-            });
+
+            {
+                auto f = [](EntryType entry) -> void {
+                    delete entry;
+                };
+                forEachTable(table.get(), 1 << size[0],
+                             std::function<void(EntryType)>(std::move(f)));
+            }
+
 
             if (isReHashing()) {
-                forEachTable(reHashTable.get(), 1 << size[1], [](EntryType entry) {
-                    delete entry;
-                });
+                {
+                    auto f = [](EntryType entry) -> void {
+                        delete entry;
+                    };
+                    forEachTable(reHashTable.get(), 1 << size[1], std::move(f));
+                }
             }
         }
 
@@ -163,6 +177,23 @@ namespace CLSN {
             return used[0] + used[1];
         }
 
+        std::unique_ptr<CLSN::Iterator> GetIterator() noexcept {
+            return std::make_unique<HashIterator>(this);
+        }
+
+        static const std::string &GetKeyByIterator(Iterator *it) noexcept {
+            if (it->IsValid()) {
+                return static_cast<HashEntryBase *>(it->Get())->GetKey();
+            }
+        }
+
+        static void *GetValByIterator(Iterator *it) noexcept {
+            if (it->IsValid()) {
+                return static_cast<HashEntryBase *>(it->Get())->GetVal();
+            }
+            return nullptr;
+        }
+
     private:
         template<class T>
         EntryType insertToBucket(const char *key, T &&value, Bucket bucket) noexcept {
@@ -172,9 +203,9 @@ namespace CLSN {
             auto entry = new HashEntry<EntryT>(std::forward<T>(value));
             entry->SetKey(key);
             entry->SetNext(*bucket);
+            entry->SetPrev(nullptr);
             if (*bucket != nullptr) {
-                entry->SetPrev(*entry->GetPrev());
-                *bucket->SetPrev(enrty);
+                (*bucket)->SetPrev(entry);
             }
             *bucket = entry;
             return entry;
@@ -216,6 +247,7 @@ namespace CLSN {
             };
         }
 
+
     private:
         class HashIterator : public Iterator {
         public:
@@ -225,72 +257,45 @@ namespace CLSN {
                     curBucket(0),
                     curElement(nullptr),
                     hashTable(hash) {
-                if (hashTable != nullptr && hashTable->Size() > 0) {
-                    table = hashTable->table.get();
-                    curElement = hashTable->table.get()[0];
+                if (hashTable != nullptr && !hashTable->IsEmpty()) {
+                    reset();
                 }
             }
 
             ~HashIterator() override = default;
 
-            [[nodiscard]] bool IsValid() const noexcept override {
-                return curElement == nullptr;
+            HashIterator(const HashIterator &) noexcept = default;
+
+            HashIterator &operator()(const HashIterator &other) noexcept {
+                Iterator::operator=(other);
+                table = other.table;
+                curElement = other.curElement;
+                curBucket = other.curBucket;
+                hashTable = other.hashTable;
+                return *this;
             }
 
-            void Next() noexcept override {
-                if (!IsValid()) {
-                    return;
-                }
-                curElement = curElement->GetNext();
-                while (curElement == nullptr) {
-                    int tableIndex = (table == hashTable->table.get()) ? 0 : 1;
-                    size_t maxSize = 1 << hashTable->size[tableIndex];
-                    if (curBucket < maxSize) {
-                        ++curBucket;
-                        curElement = *(table + curBucket);
-                        continue;
-                    }
-
-                    if (tableIndex == 0) {
-                        table = hashTable->reHashTable.get();
-                        curBucket = 0;
-                        curElement = table[0];
-                        continue;
-                    }
-                    break;
-                }
+            [[nodiscard]]  bool IsValid() const noexcept override {
+                return curElement != nullptr;
             }
 
-            void Prev() noexcept override {
-                if (!IsValid()) {
-                    return;
-                }
-                curElement = curElement->GetNext();
-                while (curElement == nullptr) {
-                    int tableIndex = (table == hashTable->table.get()) ? 0 : 1;
-                    size_t maxSize = 1 << hashTable->size[tableIndex];
-                    if (curBucket < maxSize) {
-                        ++curBucket;
-                        curElement = *(table + curBucket);
-                        continue;
-                    }
+            void Next() noexcept override;
 
-                    if (tableIndex == 0) {
-                        table = hashTable->reHashTable.get();
-                        curBucket = 0;
-                        curElement = table[0];
-                        continue;
-                    }
-                    break;
-                }
-            }
+            void Prev() noexcept override;
 
             [[nodiscard]] void *Get() const noexcept override {
                 if (!IsValid()) {
                     return nullptr;
                 }
-                return curElement->GetVal();
+                return curElement;
             }
+
+            void Reset() noexcept override {
+                reset();
+            }
+
+        private:
+            void reset() noexcept;
 
         private:
             HashEntryBase **table;

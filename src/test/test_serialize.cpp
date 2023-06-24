@@ -5,6 +5,7 @@
 #include <iostream>
 #include <type_traits>
 #include <fstream>
+#include"serialize/StringSerializer.h"
 #include"serialize/BinarySerialize.h"
 #include "serialize/detail/config.h"
 #include "serialize/detail/helper.h"
@@ -231,6 +232,26 @@ static void test_binary_serialize_tuple(benchmark::State &state) {
 }
 
 
+static void test_string_serialize_tuple(benchmark::State &state) {
+    for (auto _: state) {
+        std::string res;
+        {
+            std::tuple<float, float, std::string> tp(3, 10.2, "wangfei222");
+            StringSerialize bsr(res);
+            bsr(tp);
+        }
+
+        {
+            std::tuple<float, float, std::string> tp;
+            StringDeSerialize bsr{std::string_view(res)};
+            bsr(tp);
+            int a = 1;
+        }
+
+    }
+//    b(a);
+}
+
 static void test_binary_serialize_memory(benchmark::State &state) {
 
     for (auto _: state) {
@@ -338,7 +359,10 @@ static void test_binary_string(benchmark::State &state) {
 
 BENCHMARK(test_binary_serialize)->Threads(1)->Iterations(1);
 BENCHMARK(test_binary_serialize_vector)->Threads(1)->Iterations(1);
+
 BENCHMARK(test_binary_serialize_tuple)->Threads(1)->Iterations(1);
+BENCHMARK(test_string_serialize_tuple)->Threads(1)->Iterations(1);
+
 BENCHMARK(test_binary_serialize_memory)->Threads(1)->Iterations(1);
 BENCHMARK(test_binary_serialize_memory_complex)->Threads(1)->Iterations(1);
 BENCHMARK(test_binary_string)->Threads(1)->Iterations(1);

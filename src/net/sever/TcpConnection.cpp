@@ -24,13 +24,11 @@ namespace CLSN {
         connection.processMag();
         CLSN_LOG_DEBUG << "connection close,coroutine deconstruct";
     }
-
-//    int TcpConnection::sendToRemote(const char *msg, size_t len) noexcept {
-//        return static_cast<int>(::write(sock.getFd(), msg, len));
-//    };
+    
 
     void TcpConnection::processMag() {
         auto mSever = dynamic_cast<TcpSever *>(mScheduler);
+        std::string exception;
         assert(nullptr != mSever);
         do {
             int res;
@@ -39,16 +37,24 @@ namespace CLSN {
                 if (res <= 0) {
                     break;
                 }
-                std::string_view view = mSever->GetCodeC()->Decode(*inputBuffer);
-                std::string responseMsg = mSever->GetMagCallback()(this, view, TimeStamp::Now());
-                mSever->GetCodeC()->Encode(*outputBuffer, responseMsg);
+                try {
+                    std::string_view view = mSever->GetCodeC()->Decode(*inputBuffer);
+                    std::string responseMsg = mSever->GetMagCallback()(this, view, TimeStamp::Now());
+                    mSever->GetCodeC()->Encode(*outputBuffer, responseMsg);
+                    if (res < 0) {
+                        break;
+                    }
+                } catch (std::exception &e) {
+                    exception = e.what();
+                    outputBuffer->Write(exception);
+                }
+
                 do {
                     res = outputBuffer->WriteToFd(sock.getFd());
                 } while (!outputBuffer->IsEmpty() && res >= 0);
-                if (res < 0) {
-                    break;
-                }
+
             } while (true);
+
 
             if (res == 0) {
                 if (-1 == sock.Close()) {

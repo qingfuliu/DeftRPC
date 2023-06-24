@@ -42,6 +42,9 @@ namespace CLSN {
                     } else {
                         prev->SetNext(entry->GetNext());
                     }
+                    if (entry->GetNext() != nullptr) {
+                        entry->GetNext()->SetPrev(prev);
+                    }
                     delete entry;
                     return;
                 }
@@ -110,6 +113,10 @@ namespace CLSN {
                                (reHashIdx & getKeyMask(size[1]));
             }
             entry->SetNext(*rehashBucket);
+            entry->SetPrev(nullptr);
+            if (*rehashBucket != nullptr) {
+                (*rehashBucket)->SetPrev(entry);
+            }
             *rehashBucket = entry;
             entry = next;
             --used[0];
@@ -161,4 +168,100 @@ namespace CLSN {
         size[1] = len;
         reHashIdx = 0;
     }
+
+    void HashTable::HashIterator::Next() noexcept {
+        if (!IsValid()) {
+            return;
+        }
+        curElement = curElement->GetNext();
+        while (curElement == nullptr) {
+            int tableIndex = (table == hashTable->table.get()) ? 0 : 1;
+            size_t maxSize = 1 << hashTable->size[tableIndex];
+            if (curBucket < maxSize - 1) {
+                ++curBucket;
+                curElement = (table + curBucket)[0];
+                assert(curElement == nullptr || curElement->GetPrev() == nullptr);
+                continue;
+            }
+
+            if (tableIndex == 0 && hashTable->reHashIdx != -1) {
+                table = hashTable->reHashTable.get();
+                curBucket = 0;
+                curElement = *table;
+                continue;
+            }
+            break;
+        }
+    }
+
+    void HashTable::HashIterator::Prev() noexcept {
+        if (!IsValid()) {
+            return;
+        }
+
+        if (curElement = curElement->GetPrev();curElement != nullptr) {
+            return;
+        }
+        do {
+            if (curBucket > 0) {
+                --curBucket;
+                curElement = *(table + curBucket);
+                assert(curElement == nullptr || curElement->GetPrev() == nullptr);
+                continue;
+            }
+
+            int tableIndex = (table == hashTable->table.get()) ? 0 : 1;
+            if (tableIndex == 1) {
+                table = hashTable->table.get();
+                curBucket = (1 << hashTable->size[0]) - 1;
+                curElement = *(table + curBucket);
+                continue;
+            }
+            break;
+
+        } while (curElement == nullptr);
+
+        if (curElement != nullptr) {
+            while (curElement->GetNext() != nullptr) {
+                curElement = curElement->GetNext();
+            }
+        }
+
+        assert(curElement == nullptr || curElement->GetNext() == nullptr);
+
+    }
+
+    void HashTable::HashIterator::reset() noexcept {
+
+        curBucket = 0;
+        curElement = nullptr;
+
+        size_t maxSize = (1 << hashTable->size[0]);
+        if (hashTable != nullptr && 0 < hashTable->Size()) {
+            table = hashTable->table.get();
+            curElement = hashTable->table.get()[curBucket];
+
+            while (curElement == nullptr) {
+                if (curBucket < maxSize - 1) {
+                    ++curBucket;
+                    curElement = hashTable->table.get()[curBucket];
+                    continue;
+                }
+
+                if (hashTable->reHashIdx != -1) {
+                    table = hashTable->reHashTable.get();
+                    curBucket = 0;
+                    curElement = hashTable->table.get()[curBucket];
+
+                    maxSize = (1 << hashTable->size[1]);
+                    continue;
+                }
+                break;
+            }
+            return;
+        }
+        table = nullptr;
+
+    }
 }
+

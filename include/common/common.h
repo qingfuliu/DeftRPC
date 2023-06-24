@@ -139,6 +139,14 @@ namespace CLSN {
 
 //********************buffer***************************//
     using PackageLengthType = uint32_t;
+    using Crc32Type = uint32_t;
+//********************RPC***************************//
+
+    enum class RpcType : short {
+        Async = 1,
+        Sync = 2
+    };
+
 }
 
 #endif //DEFTRPC_TYPE_COMMON_H
