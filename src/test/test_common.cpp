@@ -1,6 +1,5 @@
 #include <benchmark/benchmark.h>
 #include "common/type.h"
-#include<typeinfo>
 #include <iostream>
 using namespace CLSN;
 
