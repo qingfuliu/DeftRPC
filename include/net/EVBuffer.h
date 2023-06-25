@@ -6,6 +6,7 @@
 #define DEFTRPC_EVBUFFER_H
 
 #include <memory>
+#include <string>
 #include <sys/uio.h>
 #include <string_view>
 
