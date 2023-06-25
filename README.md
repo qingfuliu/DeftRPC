@@ -19,10 +19,11 @@ DeftRPC是一个基于C++编写的Rpc框架。
 
 * [简介](#简介)
 * [日志模块](#日志模块)
-* 协程模块
-* 序列化模块
-* hook模块
-* 网络模块
+* 协程模块（非对称、共享栈）
+* 序列化模块（模板元编程）
+* hook模块（dlsym）
+* 网络模块（reactor网络模型）
+* [RPC模块(路由、Sever、Client)](#RPC模块)
 * [参考](#参考)
 
 ## 简介
@@ -108,14 +109,116 @@ std::vector<int>temp{1,2,3};
 CLSN_LOG_DEBUG << temp;
 ```
 
+## RPC模块
+
+### RPC路由
+
+提供若干种底层实现：
+
+| 数据结构                |
+|---------------------|
+| hash table（siphash） |
+| RB Tree             |
+| 前缀树                 |
+
+使用模板如下：
+
+```cpp
+int test_router(int a) {
+    return a + 1;
+}
+
+CLSN::RpcRouter r("test"); //创建路由
+r.InsertFunc("test", test_router);//插入函数
+
+std::string res;
+CLSN::StringSerialize encode(res);
+encode(std::tuple<int>(100));//将参数序列化
+
+auto p = r.CallFuncSync("test", res); //调用函数
+
+CLSN::StringDeSerialize decode(p);
+int aa;
+decode(aa);     //结果反序列化
+
+CLSN_LOG_DEBUG << aa; //输出结果
+```
+
+### RPC Sever
+
+即成于TcpSever，使用模板如下：
+
+```c++
+#include "log/Log.h"
+#include "rpc/Router.h"
+#include "rpc/RPCSever.h"
+#include "hook/Hook.h"
+int test_router(int a) {
+    return a + 1;
+}
+
+int test_rpc(int a) {
+    return a + 1;
+}
+
+int test_exception(int a, int b) {
+    throw std::runtime_error("test exception");
+}
+
+int main() {
+    Enable_Hook();
+    
+    auto r = new CLSN::RpcRouter("test");       //新建路由并注册函数
+    r->InsertFunc("test_router", test_router);
+    r->InsertFunc("test_rpc", test_rpc);
+    r->InsertFunc("test_exception", test_exception);
+
+    auto rpcSever = CLSN::CreateRpcSever("0.0.0.0:5201", 1); //创建rpcSever，并设置ip、端口
+    rpcSever->SetRouter(r);           //设置路由，RpcSever将接管该router的生命周期
+    rpcSever->Start(100000);           //启动路由
+}
+```
+
+### RPC Client
+
+继承于TcpClient，提供future特性，部分接口如下：
+
+| 接口名称                                                                                                                                                              | 作用                     |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------|
+| template<class Res, class ...Args> std::future<Res><br/> DoFuncAsync(std::string &&name, Args &&...args)                                                          | 类似于std::async的future特性 |
+| template<typename Clock, typename Dur, class Res, class ...Args>Res DoFuncAsyncUntil(std::chrono::time_point<Clock, Dur> point,std::string &&name,Args &&...args) | 类似于wait_unitl          |
+| template<typename Res, typename Rep, class Period, class ...Args>Res DoFuncAsyncFor(std::chrono::duration<Rep, Period> point,std::string &&name,Args &&...args)   | 类似于wait_for            |
+
+使用模板如下：
+
+```c++
+#include "hook/Hook.h"
+#include "rpc/RpcClient.h"
+
+int main() {
+    Enable_Hook();
+    Disable_Enable_Hook();
+    CLSN::RpcClient client("0.0.0.0:5201");
+    CLSN_LOG_DEBUG << "remote:" << client.GetRemote().toString();
+    if (!client.Connect()) {
+        CLSN_LOG_ERROR << "connect failed,error is "
+                       << strerror(errno);
+        return -1;
+    }
+
+    auto p = client.DoFuncAsync<int>("test_router", 1);
+
+    CLSN_LOG_DEBUG << p.get();
+}
+```
+
 ## 参考
 
 * sipHash: https://github.com/google/highwayhash
     * 引用了highwayhash部分文件，主要修改了部分头文件路径，在test文件中删除了部分没用的代码
     * 以下文件引用自 highwayhash ：
 
-    
-    src/test/test_sipHash.cpp   
-    src/hash/*.cc   
-    include/google_highwayhash_Public/*.h
+  src/test/test_sipHash.cpp   
+  src/hash/*.cc   
+  include/google_highwayhash_Public/*.h
 

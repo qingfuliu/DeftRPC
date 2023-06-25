@@ -48,6 +48,13 @@ namespace CLSN {
             return future.get();
         }
 
+        template<typename Res, typename Rep, class Period, class ...Args>
+        Res DoFuncAsyncFor(std::chrono::duration<Rep, Period> point,
+                           std::string &&name,
+                           Args &&...args
+        ) {
+            return {};
+        }
 
     private:
         template<class Res, class ...Args>
