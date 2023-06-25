@@ -1,4 +1,4 @@
-name: Build By Make
+name: Make
 
 on:
   push:
