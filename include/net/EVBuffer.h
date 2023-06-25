@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <sys/uio.h>
+#include <string_view>
 
 namespace CLSN {
     /**
@@ -135,7 +136,7 @@ namespace CLSN {
             end = 0;
         }
 
-        int WriteToFd(int fd)noexcept;
+        int WriteToFd(int fd) noexcept;
 
     private:
         std::unique_ptr<struct iovec[]> iovecs;
