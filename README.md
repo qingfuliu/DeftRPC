@@ -6,7 +6,7 @@ DeftRPC是一个基于C++编写的Rpc框架。
 ![](https://img.shields.io/badge/Release-V1.1-orange)
 ![](https://img.shields.io/badge/CMake-V3.26.3-blue)
 ![](https://img.shields.io/badge/Cpp-17-blue)
-
+![](https://github.com/qingfuliu/DeftRPC/workflows/CMake/badge.svg)
 ****
 
 | 作者          | github                   |
