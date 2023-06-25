@@ -33,6 +33,8 @@ namespace CLSN {
             return mCodeC.get();
         }
 
+        void SetCodeC(CodeC *codeC) noexcept;
+
         void SetMagCallback(MagCallback callback) noexcept {
             magCallback = std::move(callback);
         }

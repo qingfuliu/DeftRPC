@@ -128,9 +128,9 @@ namespace CLSN {
     }
 
     void Scheduler::writeEventFd() const noexcept {
-        uint64_t v = 0;
+        uint64_t v = 1;
         if (sizeof v != write(eventFd, &v, sizeof v)) {
-            CLSN_LOG_ERROR << "readEventFd error!";
+            CLSN_LOG_ERROR << "writeEventFd error!";
         }
     }
 

@@ -20,9 +20,7 @@ foreach (filename IN LISTS EXAMPLE_SOURCE)
 
     target_include_directories(${target} PRIVATE ${CMAKE_SOURCE_DIR}/include PUBLIC ${CMAKE_SOURCE_DIR}/include/log)
 
-    target_link_libraries(${target} CLSN_HOOK CLSN_COROUTINE LOG
-            benchmark pthread CLSN_NET CLSN_SEVER CLSN_CLIENT
-            CLSN_DATASTRUCT CLSN_HASH CLSN_RPC CLSN_COMMON)
+    target_link_libraries(${target} CLSN_RPC_CLIENT CLSN_RPC_SEVER)
 
 endforeach ()
 

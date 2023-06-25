@@ -28,6 +28,9 @@ static void scheduler_test() noexcept {
         s.Stop();
     }, false);
 
+    s.AddDefer([=]() {
+        CLSN_LOG_DEBUG << "do defer";
+    });
     s.Start();
 }
 

@@ -19,14 +19,7 @@ namespace CLSN {
 
     class RPCSever : public TcpSever {
     public:
-        explicit RPCSever(const std::string &ipPort, size_t sharedStackSize = 0) noexcept:
-                TcpSever(ipPort, sharedStackSize),
-                router(nullptr) {
-            TcpSever::SetMagCallback([this](auto &&PH1, auto &&PH2, auto &&PH3) {
-                return MessageCallBack(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2),
-                                       std::forward<decltype(PH3)>(PH3));
-            });
-        }
+        explicit RPCSever(const std::string &ipPort, size_t sharedStackSize = 0) noexcept;
 
         void SetRouter(RpcRouter *rpcRouter) noexcept {
             router.reset(rpcRouter);
@@ -50,15 +43,7 @@ namespace CLSN {
         void Start(int timeout) noexcept override;
 
     private:
-        std::string MessageCallBack(CLSN::TcpConnection *connection, std::string_view arg, CLSN::TimeStamp t) {
-            RPCRequest request;
-            CLSN::StringDeSerialize enCode(arg);
-            enCode(request);
-            if (request.async == static_cast<short>(RpcType::Sync)) {
-                return router->CallFuncSync(request.funcName, request.args);
-            }
-            return "";
-        }
+        std::string MessageCallBack(CLSN::TcpConnection *connection, std::string_view arg, CLSN::TimeStamp t);
 
     private:
         std::unique_ptr<RpcRouter> router;

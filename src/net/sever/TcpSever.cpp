@@ -36,6 +36,10 @@ namespace CLSN {
         }
     }
 
+    void TcpSever::SetCodeC(CodeC *codeC) noexcept {
+        mCodeC.reset(codeC);
+    }
+
     void TcpSever::CloseConnection(int fd, bool activelyClose) noexcept {
         if (IsInLoopThread()) {
             auto it = connections.find(fd);
@@ -57,7 +61,10 @@ namespace CLSN {
     }
 
     void TcpSever::Start(int timeout) noexcept {
-        acceptCoroutine->swapIn();
+        int a = 0;
+        Scheduler::AddDefer([this]() {
+            acceptCoroutine->swapIn();
+        });
         Scheduler::Start(timeout);
     }
 
@@ -91,6 +98,8 @@ namespace CLSN {
             } else if (fd == -1 && errno == EBADF) {
                 CLSN_LOG_ERROR << "please make sure this message only appears when the server is shut down!";
                 assert(stop.load(std::memory_order_acquire));
+            } else if (fd == -1 && errno == EAGAIN) {
+
             } else {
                 CLSN_LOG_ERROR << "accept error,error is " << strerror(errno);
             }

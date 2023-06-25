@@ -66,11 +66,6 @@ namespace CLSN {
             return SendAll(str.data(), str.size());
         }
 
-//        int Send(const char *msg, size_t len) noexcept {
-//            int res = write(sock.getFd(), msg, len);
-//            return res;
-//        }
-
         int SendAll(const char *msg, size_t len) noexcept {
             if (len == 0) {
                 return 0;
@@ -100,7 +95,7 @@ namespace CLSN {
             return res;
         }
 
-        std::string_view Receive() noexcept {
+        std::string_view Receive() {
             std::string_view view;
             do {
                 int res = inputBuffer->ReadFromFd(sock.getFd());
@@ -153,6 +148,10 @@ namespace CLSN {
 
         Addr &GetRemote() noexcept {
             return remote;
+        }
+
+        void SetCodeC(CodeC *enCodeC) noexcept {
+            codeC.reset(enCodeC);
         }
 
     private:

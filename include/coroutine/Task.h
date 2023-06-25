@@ -120,7 +120,7 @@ namespace CLSN {
         }
 
         void SetRead(Task t) noexcept {
-            mEvent = static_cast<uint32_t>(Event::Read);
+            mEvent = static_cast<uint32_t>(Event::Read );
             task = std::move(t);
         }
 
@@ -132,7 +132,7 @@ namespace CLSN {
         void SetFd(int f) noexcept {
             fd = f;
         }
-        
+
         [[nodiscard]] int GetFd() const noexcept {
             return fd;
         }

@@ -26,21 +26,19 @@ namespace CLSN {
     }
 
     void RpcCodeC::Encode(EVBuffer &buffer, const char *data, size_t len) {
-        WriteSizeToPackage(len + cacheLength);
+        WriteSizeToPackage(htonl(len + cacheLength));
         buffer.Write(cache.get(), sizeof(PackageLengthType));
+        buffer.Write(data, len);
 
         Crc32Type checkCode = CLSN::GenerateCrc32(data, len);
-
         for (int i = -1 + sizeof checkCode; i >= 0; --i) {
             int index = static_cast<int>(cacheLength) - i - 1;
             std::copy(reinterpret_cast<char *>(&checkCode) + i,
                       reinterpret_cast<char *>(&checkCode) + i + 1,
                       cache.get() + index + sizeof(PackageLengthType));
         }
-
         buffer.Write(cache.get() + sizeof(PackageLengthType), sizeof(Crc32Type));
 
-        buffer.Write(data, len);
     }
 
 } // CLSN
