@@ -5,7 +5,8 @@
 #ifndef DEFTRPC_HASH_H
 #define DEFTRPC_HASH_H
 
-#include<memory>
+#include <string>
+#include <memory>
 #include <cstdint>
 #include <cassert>
 #include<functional>
