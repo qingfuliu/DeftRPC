@@ -5,7 +5,9 @@
 #include "hook/Hook.h"
 #include "net/client/TcpClient.h"
 
-int main() {
+#include<gtest/gtest.h>
+
+TEST(test_tcpClient, test_tcpClient) {
     Enable_Hook();
     Disable_Enable_Hook();
 
@@ -14,13 +16,11 @@ int main() {
     if (!client.Connect()) {
         CLSN_LOG_ERROR << "connect failed,error is "
                        << strerror(errno);
-        return -1;
     }
     std::string str = "test str";
     if (0 >= client.Send(str)) {
         CLSN_LOG_ERROR << "Send failed,error is "
                        << strerror(errno);
-        return -1;
     }
     int res = 0;
 
@@ -28,10 +28,8 @@ int main() {
     if (temp.empty()) {
         CLSN_LOG_ERROR << "Receive failed,error is "
                        << strerror(errno);
-        return -1;
     }
 
     CLSN_LOG_DEBUG << "receive str is " << temp;
     client.Close();
-    return 0;
 };

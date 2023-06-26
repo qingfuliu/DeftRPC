@@ -6,10 +6,11 @@
 #include<arpa/inet.h>
 #include<string.h>
 #include <cerrno>
+#include <gtest/gtest.h>
 #include "hook/Hook.h"
 #include"log/Log.h"
 
-int main() {
+TEST(test_net_sever,test_net_sever) {
     Enable_Hook();
     Disable_Enable_Hook();
     int acceptFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -20,12 +21,10 @@ int main() {
 
     if (0 != bind(acceptFd, reinterpret_cast<sockaddr *>(&addr), sizeof(sockaddr))) {
         CLSN_LOG_DEBUG << "bind failed,error is:" << errno;
-        return 0;
     }
 
     if (0 != listen(acceptFd, 100)) {
         CLSN_LOG_DEBUG << "listen failed,error is:" << errno;
-        return 0;
     } else {
         CLSN_LOG_DEBUG << "listen success";
     }

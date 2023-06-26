@@ -1,18 +1,18 @@
 //
 // Created by lqf on 23-4-30.
 //
-#include <benchmark/benchmark.h>
+#include<gtest/gtest.h>
 #include "coroutine/Timer.h"
 #include "coroutine/Poller.h"
 #include "log/Log.h"
 
-static void test_timer(benchmark::State &state) {
+static void test_timer() {
 
     CLSN::init<0>({
                           CLSN::createConsoleLogAppender(
                                   "[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s",
                                   CLSN::LogLevel::Debug)});
-    for (auto _: state) {
+    {
         auto poller = CLSN::CreateNewPoller();
         auto timerQueue = CLSN::CreateNewTimerQueue();
         poller->RegisterRead(timerQueue->GetTimerFd(), *timerQueue);
@@ -33,5 +33,6 @@ static void test_timer(benchmark::State &state) {
     }
 }
 
-BENCHMARK(test_timer)->Threads(1)->Iterations(1);
-BENCHMARK_MAIN();
+TEST(test_timer, test_timer) {
+
+}

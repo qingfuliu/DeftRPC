@@ -5,6 +5,8 @@
 #include"dataStruct/Hash.h"
 #include "log/Log.h"
 
+#include <gtest/gtest.h>
+
 using namespace CLSN;
 
 struct TestEntry {
@@ -25,7 +27,7 @@ void test_HashTableIterator(HashTable *hash) {
 //            if (i != 0) {
 //                it->Prev();
 ////                auto val = HashTable::GetValByIterator(it.get());
-////                assert(val == prevVal);
+////                ASSERT_TRUE(val == prevVal);
 //                it->Next();
 //            }
             auto key = HashTable::GetKeyByIterator(it.get());
@@ -33,7 +35,7 @@ void test_HashTableIterator(HashTable *hash) {
             prevVal = val;
             p[i] = *static_cast<int *>(val);
 
-            assert(s.find(key) == s.end());
+            ASSERT_TRUE(s.find(key) == s.end());
             s.insert(key);
 
             ++i;
@@ -49,7 +51,7 @@ void test_HashTableIterator(HashTable *hash) {
         while (it->IsValid()) {
             auto key = HashTable::GetKeyByIterator(it.get());
             auto val = HashTable::GetValByIterator(it.get());
-            assert(p[i] == *static_cast<int *>(val));
+            ASSERT_TRUE(p[i] == *static_cast<int *>(val));
             ++i;
             if (i == 5000) {
                 break;
@@ -68,8 +70,8 @@ void test_HashTableIterator(HashTable *hash) {
             auto key = HashTable::GetKeyByIterator(it.get());
             auto val = HashTable::GetValByIterator(it.get());
             CLSN_LOG_DEBUG << y << " " << key << " " << *static_cast<int *>(val) << " ";
-            assert(p[y] == *static_cast<int *>(val));
-            assert(s.find(key) == s.end());
+            ASSERT_TRUE(p[y] == *static_cast<int *>(val));
+            ASSERT_TRUE(s.find(key) == s.end());
             s.insert(key);
             if (y == 0) {
                 int a = 1;
@@ -81,7 +83,7 @@ void test_HashTableIterator(HashTable *hash) {
 //    CLSN_LOG_DEBUG << y;
 };
 
-int main() {
+TEST(tset_hash, test_hash) {
     CLSN::init<0>({
                           CLSN::createConsoleLogAppender(
                                   "[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s",
@@ -93,11 +95,11 @@ int main() {
 
         vec[i] = "lqf" + std::to_string(i);
         auto res = t.Insert(vec[i], i);
-        assert(i == *static_cast<int *>(res->GetVal()));
-        assert(t.Size() == i + 1);
+        ASSERT_TRUE(i == *static_cast<int *>(res->GetVal()));
+        ASSERT_TRUE(t.Size() == i + 1);
 
         res = t.FindByKey(vec[i]);
-        assert(i == *static_cast<int *>(res->GetVal()));
+        ASSERT_TRUE(i == *static_cast<int *>(res->GetVal()));
 
     }
 
@@ -105,15 +107,15 @@ int main() {
 
     CLSN_LOG_DEBUG << vec.capacity() << " " << vec.size();
     for (int i = 0; i < vec.size(); i++) {
-        assert(nullptr == t.Insert(vec[i], i));
+        ASSERT_TRUE(nullptr == t.Insert(vec[i], i));
         auto res = t.FindByKey(vec[i]);
-        assert(i == *static_cast<int *>(res->GetVal()));
+        ASSERT_TRUE(i == *static_cast<int *>(res->GetVal()));
     }
 
     for (int i = 0; i < vec.size() / 2; i++) {
         t.Delete(vec[i]);
-        assert(t.Size() == (vec.size() - i - 1));
+        ASSERT_TRUE(t.Size() == (vec.size() - i - 1));
         auto res = t.FindByKey(vec[i]);
-        assert(res == nullptr);
+        ASSERT_TRUE(res == nullptr);
     }
 }

@@ -2,7 +2,11 @@ cmake_minimum_required(VERSION 3.25)
 project(DeftRPC)
 
 add_subdirectory(./common)
-add_subdirectory(./test)
+
+if (ENABLE_TEST STREQUAL "True")
+    add_subdirectory(./test)
+endif ()
+
 add_subdirectory(./log)
 add_subdirectory(./coroutine)
 add_subdirectory(./net)

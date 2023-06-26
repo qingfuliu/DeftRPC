@@ -13,7 +13,9 @@
 #include "net/Socket.h"
 #include "net/Addr.h"
 
-int main() {
+#include <gtest/gtest.h>
+
+TEST(test_net_helper, test_net_helper) {
     Enable_Hook();
     Disable_Enable_Hook();
 //    int sock;
@@ -35,7 +37,6 @@ int main() {
 //    if (0 != connect(socket1.getFd(), addr.getSockAddr(), addr.getSockAddrSize())) {
     if (0 != socket1.Connect(&addr)) {
         std::cout << "connect socket error!!" << strerror(errno) << std::endl;
-        return 0;
     }
 
     sleep(1000);

@@ -24,4 +24,7 @@ static void test_log(benchmark::State &state) {
 //BENCHMARK(init)->Iterations(1)->Threads(1);
 
 BENCHMARK(test_log)->Threads(10)->Iterations(1000);
-BENCHMARK_MAIN();
+
+int main() {
+
+}

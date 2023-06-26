@@ -2,6 +2,7 @@
 // Created by lqf on 23-5-6.
 //
 #include "coroutine/Scheduler.h"
+#include <gtest/gtest.h>
 
 static void scheduler_test() noexcept {
     CLSN::init<0>({
@@ -34,6 +35,6 @@ static void scheduler_test() noexcept {
     s.Start();
 }
 
-int main() {
+TEST(test_scheduler, test_scheduler) {
     scheduler_test();
 }

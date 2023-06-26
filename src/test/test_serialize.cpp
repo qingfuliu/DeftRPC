@@ -1,7 +1,7 @@
 //
 // Created by lqf on 23-4-24.
 //
-#include<benchmark/benchmark.h>
+#include <gtest/gtest.h>
 #include <iostream>
 #include <type_traits>
 #include <fstream>
@@ -97,10 +97,10 @@ namespace temp {
 
 }
 
-static void test_binary_serialize(benchmark::State &state) {
+static void test_binary_serialize() {
 
 
-    for (auto _: state) {
+    {
 
         std::ofstream f("/home/lqf/project/DeftRPC/src/test/binary.txt",
                         std::ios_base::ate | std::ios_base::binary);
@@ -163,8 +163,8 @@ static void test_binary_serialize(benchmark::State &state) {
 }
 
 
-static void test_binary_serialize_vector(benchmark::State &state) {
-    for (auto _: state) {
+static void test_binary_serialize_vector() {
+    {
         {
             std::vector<float> vec(3, 10.2);
             std::ofstream f("/home/lqf/project/DeftRPC/src/test/binary.txt",
@@ -200,8 +200,8 @@ static void test_binary_serialize_vector(benchmark::State &state) {
 }
 
 
-static void test_binary_serialize_tuple(benchmark::State &state) {
-    for (auto _: state) {
+static void test_binary_serialize_tuple() {
+    {
         {
             std::tuple<float, float, std::string> tp(3, 10.2, "wangfei222");
             std::ofstream f("/home/lqf/project/DeftRPC/src/test/binary.txt",
@@ -232,8 +232,8 @@ static void test_binary_serialize_tuple(benchmark::State &state) {
 }
 
 
-static void test_string_serialize_tuple(benchmark::State &state) {
-    for (auto _: state) {
+static void test_string_serialize_tuple() {
+    {
         std::string res;
         {
             std::tuple<float, float, std::string> tp(3, 10.2, "wangfei222");
@@ -252,9 +252,9 @@ static void test_string_serialize_tuple(benchmark::State &state) {
 //    b(a);
 }
 
-static void test_binary_serialize_memory(benchmark::State &state) {
+static void test_binary_serialize_memory() {
 
-    for (auto _: state) {
+    {
         {
             std::shared_ptr<int> ptr = std::make_shared<int>(1);
             std::ofstream f("/home/lqf/project/DeftRPC/src/test/binary.txt",
@@ -284,10 +284,10 @@ static void test_binary_serialize_memory(benchmark::State &state) {
 }
 
 
-static void test_binary_serialize_memory_complex(benchmark::State &state) {
+static void test_binary_serialize_memory_complex() {
 
 
-    for (auto _: state) {
+    {
         {
 //            A a{1,2,3};
             std::shared_ptr<A> ptr = std::make_shared<A>();
@@ -326,9 +326,9 @@ static void test_binary_serialize_memory_complex(benchmark::State &state) {
     }
 }
 
-static void test_binary_string(benchmark::State &state) {
+static void test_binary_string() {
 
-    for (auto _: state) {
+    {
         {
             std::string str = "wangfei222";
             std::ofstream f("/home/lqf/project/DeftRPC/src/test/binary.txt",
@@ -357,13 +357,6 @@ static void test_binary_string(benchmark::State &state) {
 //    b(a);
 }
 
-BENCHMARK(test_binary_serialize)->Threads(1)->Iterations(1);
-BENCHMARK(test_binary_serialize_vector)->Threads(1)->Iterations(1);
+TEST(test_serialize, test_serialize) {
 
-BENCHMARK(test_binary_serialize_tuple)->Threads(1)->Iterations(1);
-BENCHMARK(test_string_serialize_tuple)->Threads(1)->Iterations(1);
-
-BENCHMARK(test_binary_serialize_memory)->Threads(1)->Iterations(1);
-BENCHMARK(test_binary_serialize_memory_complex)->Threads(1)->Iterations(1);
-BENCHMARK(test_binary_string)->Threads(1)->Iterations(1);
-BENCHMARK_MAIN();
+}

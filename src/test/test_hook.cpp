@@ -9,6 +9,8 @@
 #include <netinet/in.h>
 #include <chrono>
 
+#include <gtest/gtest.h>
+
 void test_hook() {
 
     int acceptFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -41,15 +43,14 @@ void test_hook() {
     }
 }
 
-int main() {
+TEST(test_hook, test_hook) {
     Enable_Hook();
     CLSN::Scheduler s;
     auto cotoutine = CLSN::CreateCoroutine(test_hook);
-    s.DoAfter(std::chrono::seconds{5}, cotoutine.get());
+    s.DoAfter(std::chrono::seconds{1}, cotoutine.get());
 
-    s.DoAfter(std::chrono::seconds{300}, [&s]() -> void {
+    s.DoAfter(std::chrono::seconds{2}, [&s]() -> void {
         s.Stop();
     });
     s.Start();
-    return 0;
 }
