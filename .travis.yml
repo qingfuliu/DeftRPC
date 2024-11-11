@@ -3,5 +3,5 @@ sudo: required
 install:
   - sudo install cmake
 script:
-  - ./script/make.sh
-  - ./script/test.sh
+  - ./scripts/make.sh
+  - ./scripts/test.sh

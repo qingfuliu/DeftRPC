@@ -10,8 +10,6 @@ aux_source_directory(. COROUTINE_SRC)
 
 list(APPEND COROUTINE_SRC ./coctx_swap.S)
 
-message("=============COROUTINE_SRC=============")
-message(${COROUTINE_SRC})
 add_library(CLSN_COROUTINE SHARED ${COROUTINE_SRC})
 target_include_directories(CLSN_COROUTINE PUBLIC ${CMAKE_SOURCE_DIR}/include/)
 target_link_libraries(CLSN_COROUTINE LOG)
