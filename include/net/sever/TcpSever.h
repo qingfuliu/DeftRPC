@@ -5,68 +5,60 @@
 #ifndef DEFTRPC_TCPSEVER_H
 #define DEFTRPC_TCPSEVER_H
 
-#include "net/Socket.h"
-#include "net/Addr.h"
-#include "coroutine/Scheduler.h"
-#include <unordered_map>
+#include <sys/socket.h>
 #include <cerrno>
 #include <cstring>
-#include <sys/socket.h>
+#include <unordered_map>
+#include "coroutine/Scheduler.h"
+#include "net/Addr.h"
+#include "net/Socket.h"
 
 namespace CLSN {
 
-    class TcpConnection;
+class TcpConnection;
 
+class CodeC;
 
-    class CodeC;
+class TcpSever : public Scheduler {
+ public:
+  using MagCallback = std::function<std::string(TcpConnection *, std::string_view, CLSN::TimeStamp)>;
 
-    class TcpSever : public Scheduler {
-    public:
-        using MagCallback = std::function<std::string(TcpConnection *, std::string_view, CLSN::TimeStamp)>;
+  explicit TcpSever(const std::string &ipPort, size_t sharedStackSize = 0, bool UserCall = true) noexcept;
 
+  ~TcpSever() override;
 
-        explicit TcpSever(const std::string &ipPort, size_t sharedStackSize = 0, bool UserCall = true) noexcept;
+  [[nodiscard]] CodeC *GetCodeC() noexcept { return mCodeC.get(); }
 
-        ~TcpSever() override;
+  void SetCodeC(CodeC *codeC) noexcept;
 
-        [[nodiscard]] CodeC *GetCodeC() noexcept {
-            return mCodeC.get();
-        }
+  void SetMagCallback(MagCallback callback) noexcept { magCallback = std::move(callback); }
 
-        void SetCodeC(CodeC *codeC) noexcept;
+  MagCallback &GetMagCallback() noexcept { return magCallback; }
 
-        void SetMagCallback(MagCallback callback) noexcept {
-            magCallback = std::move(callback);
-        }
+  void CloseConnection(int fd, bool activelyClose = false) noexcept;
 
-        MagCallback &GetMagCallback() noexcept {
-            return magCallback;
-        }
+  void Start(int timeout) noexcept override;
 
-        void CloseConnection(int fd, bool activelyClose = false) noexcept;
+  void Stop() noexcept override;
 
-        void Start(int timeout) noexcept override;
+ private:
+  void acceptTask() noexcept;
 
-        void Stop() noexcept override;
+  void newConnectionArrives(int fd, const Addr &remote) noexcept;
 
-    private:
-        void acceptTask() noexcept;
+  void closeAllConnection() noexcept;
 
-        void newConnectionArrives(int fd, const Addr &remote) noexcept;
+  void closeAcceptor() const noexcept;
 
-        void closeAllConnection() noexcept;
+ private:
+  Socket acceptSock;
+  const Addr local;
+  std::unique_ptr<CodeC> mCodeC;
+  std::unique_ptr<Coroutine> acceptCoroutine;
+  std::unordered_map<int, std::unique_ptr<Coroutine>> connections;
+  MagCallback magCallback;
+};
 
-        void closeAcceptor() const noexcept;
+}  // namespace CLSN
 
-    private:
-        Socket acceptSock;
-        const Addr local;
-        std::unique_ptr<CodeC> mCodeC;
-        std::unique_ptr<Coroutine> acceptCoroutine;
-        std::unordered_map<int, std::unique_ptr<Coroutine>> connections;
-        MagCallback magCallback;
-    };
-
-} // CLSN
-
-#endif //DEFTRPC_TCPSEVER_H
+#endif  // DEFTRPC_TCPSEVER_H

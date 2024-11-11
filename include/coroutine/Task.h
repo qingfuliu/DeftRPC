@@ -5,160 +5,137 @@
 #ifndef DEFTRPC_TASK_H
 #define DEFTRPC_TASK_H
 
-#include "common/common.h"
-#include "Coroutine.h"
 #include <functional>
-#include <variant>
 #include <type_traits>
+#include <variant>
+#include "Coroutine.h"
+#include "common/common.h"
 
 namespace CLSN {
 
-    class Task {
-        using TaskType = std::function<void(void)>;
-    public:
-        Task() noexcept = default;
+class Task {
+  using TaskType = std::function<void(void)>;
 
-        Task(TaskType t) noexcept: task(std::move(t)) {}
+ public:
+  Task() noexcept = default;
 
-        Task(Coroutine *t) noexcept: task(t) {}
+  Task(TaskType t) noexcept : task(std::move(t)) {}
 
+  Task(Coroutine *t) noexcept : task(t) {}
 
-        Task(const Task &) = default;
+  Task(const Task &) = default;
 
-        Task(Task &&other) noexcept: task(std::move(other.task)) {}
+  Task(Task &&other) noexcept : task(std::move(other.task)) {}
 
-        template<class Lambda, typename =std::enable_if_t<!std::is_base_of_v<Task, Lambda>>>
-        Task(Lambda t) noexcept: Task(std::move(TaskType(std::move(t)))) {}
+  template <class Lambda, typename = std::enable_if_t<!std::is_base_of_v<Task, Lambda>>>
+  Task(Lambda t) noexcept : Task(std::move(TaskType(std::move(t)))) {}
 
-        virtual ~Task() = default;
+  virtual ~Task() = default;
 
-        Task &operator=(const Task &) = default;
+  Task &operator=(const Task &) = default;
 
-        Task &operator=(std::nullptr_t) noexcept {
-            task = nullptr;
+  Task &operator=(std::nullptr_t) noexcept { task = nullptr; }
+
+  Task &operator=(Task &&other) noexcept { task = std::move(other.task); }
+
+  void operator()() noexcept {
+    switch (task.index()) {
+      case 0: {
+        auto routine = std::get<Coroutine *>(task);
+        if (nullptr != routine) {
+          routine->swapIn();
         }
-
-        Task &operator=(Task &&other) noexcept {
-            task = std::move(other.task);
-        }
-
-        void operator()() noexcept {
-            switch (task.index()) {
-                case 0: {
-                    auto routine = std::get<Coroutine *>(task);
-                    if (nullptr != routine) {
-                        routine->swapIn();
-                    }
-                    break;
-                }
-                case 1:
-                    std::get<TaskType>(task)();
-                    break;
-            }
-        }
-
-        bool operator==(std::nullptr_t) const noexcept {
-            if (0 == task.index()) {
-                return nullptr == std::get<Coroutine *>(task);
-            }
-            return nullptr == std::get<TaskType>(task);
-        }
-
-        bool operator!=(std::nullptr_t) const noexcept {
-            if (0 == task.index()) {
-                return nullptr != std::get<Coroutine *>(task);
-            }
-            return nullptr != std::get<TaskType>(task);
-        }
-
-    private:
-        std::variant<Coroutine *, TaskType> task{nullptr};
-    };
-
-    inline bool operator==(std::nullptr_t, Task &t) noexcept {
-        return t == nullptr;
+        break;
+      }
+      case 1:
+        std::get<TaskType>(task)();
+        break;
     }
+  }
 
-    class FdDescriptor {
-    public:
-        explicit FdDescriptor(int fd) noexcept: fd(fd), mEvent(0), curEvent(0) {}
+  bool operator==(std::nullptr_t) const noexcept {
+    if (0 == task.index()) {
+      return nullptr == std::get<Coroutine *>(task);
+    }
+    return nullptr == std::get<TaskType>(task);
+  }
 
-        FdDescriptor() noexcept = default;
+  bool operator!=(std::nullptr_t) const noexcept {
+    if (0 == task.index()) {
+      return nullptr != std::get<Coroutine *>(task);
+    }
+    return nullptr != std::get<TaskType>(task);
+  }
 
-        ~FdDescriptor() = default;
+ private:
+  std::variant<Coroutine *, TaskType> task{nullptr};
+};
 
-        FdDescriptor(const FdDescriptor &other) = default;
+inline bool operator==(std::nullptr_t, Task &t) noexcept { return t == nullptr; }
 
-        FdDescriptor(FdDescriptor
-                     &&other) noexcept = default;
+class FdDescriptor {
+ public:
+  explicit FdDescriptor(int fd) noexcept : fd(fd), mEvent(0), curEvent(0) {}
 
-        FdDescriptor &operator=(const FdDescriptor &other) noexcept = default;
+  FdDescriptor() noexcept = default;
 
+  ~FdDescriptor() = default;
 
-        FdDescriptor &operator=(FdDescriptor &&other) noexcept = default;
+  FdDescriptor(const FdDescriptor &other) = default;
 
-        FdDescriptor &operator=(std::nullptr_t) noexcept {
-            fd = 0;
-            mEvent = 0;
-            curEvent = 0;
-            task = nullptr;
-        }
+  FdDescriptor(FdDescriptor &&other) noexcept = default;
 
+  FdDescriptor &operator=(const FdDescriptor &other) noexcept = default;
 
-        void operator()() noexcept {
-            if (curEvent != mEvent) {
-                CLSN_LOG_ERROR << "task should not be execute!";
-                return;
-            }
-            if (task != nullptr) {
-                task();
-            }
-        }
+  FdDescriptor &operator=(FdDescriptor &&other) noexcept = default;
 
-        void setCurEvent(uint32_t event) noexcept {
-            curEvent = event;
-        }
+  FdDescriptor &operator=(std::nullptr_t) noexcept {
+    fd = 0;
+    mEvent = 0;
+    curEvent = 0;
+    task = nullptr;
+  }
 
-        void SetRead(Task t) noexcept {
-            mEvent = static_cast<uint32_t>(Event::Read );
-            task = std::move(t);
-        }
+  void operator()() noexcept {
+    if (curEvent != mEvent) {
+      CLSN_LOG_ERROR << "task should not be execute!";
+      return;
+    }
+    if (task != nullptr) {
+      task();
+    }
+  }
 
-        void SetWrite(Task t) noexcept {
-            mEvent = static_cast<uint32_t>(Event::Write);
-            task = std::move(t);
-        }
+  void setCurEvent(uint32_t event) noexcept { curEvent = event; }
 
-        void SetFd(int f) noexcept {
-            fd = f;
-        }
+  void SetRead(Task t) noexcept {
+    mEvent = static_cast<uint32_t>(Event::Read);
+    task = std::move(t);
+  }
 
-        [[nodiscard]] int GetFd() const noexcept {
-            return fd;
-        }
+  void SetWrite(Task t) noexcept {
+    mEvent = static_cast<uint32_t>(Event::Write);
+    task = std::move(t);
+  }
 
-        [[nodiscard]] uint32_t GetEvent() const noexcept {
-            return mEvent;
-        }
+  void SetFd(int f) noexcept { fd = f; }
 
-        [[nodiscard]] bool IsNoneEvent() const noexcept {
-            return 0 == mEvent;
-        }
+  [[nodiscard]] int GetFd() const noexcept { return fd; }
 
-        [[nodiscard]] bool IsReading() const noexcept {
-            return 0 != (mEvent & static_cast<uint32_t>(Event::Read));
-        }
+  [[nodiscard]] uint32_t GetEvent() const noexcept { return mEvent; }
 
-        [[nodiscard]] bool IsWrite() const noexcept {
-            return 0 != (mEvent & static_cast<uint32_t>(Event::Write));
-        }
+  [[nodiscard]] bool IsNoneEvent() const noexcept { return 0 == mEvent; }
 
-    private:
-        int fd{0};
-        uint32_t mEvent{0};
-        uint32_t curEvent{0};
-        Task task;
-    };
+  [[nodiscard]] bool IsReading() const noexcept { return 0 != (mEvent & static_cast<uint32_t>(Event::Read)); }
+
+  [[nodiscard]] bool IsWrite() const noexcept { return 0 != (mEvent & static_cast<uint32_t>(Event::Write)); }
+
+ private:
+  int fd{0};
+  uint32_t mEvent{0};
+  uint32_t curEvent{0};
+  Task task;
+};
 
 //    class FdDescriptor {
 //    public:
@@ -251,7 +228,6 @@ namespace CLSN {
 //        Task errorTask;
 //    };
 
-}
+}  // namespace CLSN
 
-
-#endif //DEFTRPC_TASK_H
+#endif  // DEFTRPC_TASK_H

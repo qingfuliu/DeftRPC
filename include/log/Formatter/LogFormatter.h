@@ -5,60 +5,56 @@
 #ifndef DEFTRPC_FORMATTER_H
 #define DEFTRPC_FORMATTER_H
 
-#include<string>
-#include<vector>
+#include <iostream>
+#include <string>
+#include <vector>
+#include "LogCommon.h"
 #include "LogRecord.h"
-#include"LogCommon.h"
 #include "common/common.h"
-#include<iostream>
 
 namespace CLSN {
 
-    class FormatterItem : public noncopyable {
-    public:
-        virtual ~FormatterItem() = default;
+class FormatterItem : public noncopyable {
+ public:
+  virtual ~FormatterItem() = default;
 
-        virtual void format(std::ostream &os, const LogRecord &) noexcept = 0;
+  virtual void format(std::ostream &os, const LogRecord &) noexcept = 0;
 
-        virtual FormatterItem *nextItem() noexcept {
-            return next;
-        }
+  virtual FormatterItem *nextItem() noexcept { return next; }
 
+  void addItem(FormatterItem *item) {
+    if (item != nullptr) {
+      auto temp = this;
+      while (temp->next != nullptr) {
+        temp = temp->next;
+      }
+      temp->next = item;
+    }
+  }
 
-        void addItem(FormatterItem *item) {
-            if (item != nullptr) {
-                auto temp = this;
-                while (temp->next != nullptr) {
-                    temp = temp->next;
-                }
-                temp->next = item;
-            }
-        }
+ private:
+  FormatterItem *next = nullptr;
+};
 
-    private:
-        FormatterItem *next = nullptr;
-    };
+class LogFormatter : public noncopyable {
+ public:
+  LogFormatter(const std::string &format);
 
+  ~LogFormatter() {
+    FormatterItem *temp;
+    while (first != nullptr) {
+      temp = first;
+      first = first->nextItem();
+      delete temp;
+    }
+  }
 
-    class LogFormatter : public noncopyable {
-    public:
-        LogFormatter(const std::string &format);
+  void format(std::ostream &os, const LogRecord &) noexcept;
 
-        ~LogFormatter() {
-            FormatterItem *temp;
-            while (first != nullptr) {
-                temp = first;
-                first = first->nextItem();
-                delete temp;
-            }
-        }
+ private:
+  FormatterItem *first;
+};
 
-        void format(std::ostream &os, const LogRecord &) noexcept;
+}  // namespace CLSN
 
-    private:
-        FormatterItem *first;
-    };
-
-} // CLSN
-
-#endif //DEFTRPC_FORMATTER_H
+#endif  // DEFTRPC_FORMATTER_H

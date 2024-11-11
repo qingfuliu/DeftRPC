@@ -34,14 +34,14 @@ class SipHashStateT {
   using Key = HH_U64[2];
   static const size_t kPacketSize = sizeof(HH_U64);
 
-  explicit HH_INLINE SipHashStateT(const Key& key) {
+  explicit HH_INLINE SipHashStateT(const Key &key) {
     v0 = 0x736f6d6570736575ull ^ key[0];
     v1 = 0x646f72616e646f6dull ^ key[1];
     v2 = 0x6c7967656e657261ull ^ key[0];
     v3 = 0x7465646279746573ull ^ key[1];
   }
 
-  HH_INLINE void Update(const char* bytes) {
+  HH_INLINE void Update(const char *bytes) {
     HH_U64 packet;
     memcpy(&packet, bytes, sizeof(packet));
     packet = host_from_le64(packet);
@@ -61,6 +61,7 @@ class SipHashStateT {
 
     return (v0 ^ v1) ^ (v2 ^ v3);
   }
+
  private:
   // Rotate a 64-bit value "v" left by N bits.
   template <HH_U64 bits>
@@ -106,10 +107,8 @@ using SipHash13State = SipHashStateT<1, 3>;
 // Override the HighwayTreeHash padding scheme with that of SipHash so that
 // the hash output matches the known-good values in sip_hash_test.
 template <>
-HH_INLINE void PaddedUpdate<SipHashState>(const HH_U64 size,
-                                          const char* remaining_bytes,
-                                          const HH_U64 remaining_size,
-                                          SipHashState* state) {
+HH_INLINE void PaddedUpdate<SipHashState>(const HH_U64 size, const char *remaining_bytes, const HH_U64 remaining_size,
+                                          SipHashState *state) {
   // Copy to avoid overrunning the input buffer.
   char final_packet[SipHashState::kPacketSize] = {0};
   memcpy(final_packet, remaining_bytes, remaining_size);
@@ -118,15 +117,12 @@ HH_INLINE void PaddedUpdate<SipHashState>(const HH_U64 size,
 }
 
 template <>
-HH_INLINE void PaddedUpdate<SipHash13State>(const HH_U64 size,
-                                            const char* remaining_bytes,
-                                            const HH_U64 remaining_size,
-                                            SipHash13State* state) {
+HH_INLINE void PaddedUpdate<SipHash13State>(const HH_U64 size, const char *remaining_bytes, const HH_U64 remaining_size,
+                                            SipHash13State *state) {
   // Copy to avoid overrunning the input buffer.
   char final_packet[SipHash13State::kPacketSize] = {0};
   memcpy(final_packet, remaining_bytes, remaining_size);
-  final_packet[SipHash13State::kPacketSize - 1] =
-      static_cast<char>(size & 0xFF);
+  final_packet[SipHash13State::kPacketSize - 1] = static_cast<char>(size & 0xFF);
   state->Update(final_packet);
 }
 
@@ -142,25 +138,22 @@ HH_INLINE void PaddedUpdate<SipHash13State>(const HH_U64 size,
 // "bytes" is the data to hash; ceil(size / 8) * 8 bytes are read.
 // Returns a 64-bit hash of the given data bytes, which are swapped on
 // big-endian CPUs so the return value is the same as on little-endian CPUs.
-static HH_INLINE HH_U64 SipHash(const SipHashState::Key& key, const char* bytes,
-                                const HH_U64 size) {
+static HH_INLINE HH_U64 SipHash(const SipHashState::Key &key, const char *bytes, const HH_U64 size) {
   return ComputeHash<SipHashState>(key, bytes, size);
 }
 
 // Round-reduced SipHash version (1 update and 3 finalization rounds).
-static HH_INLINE HH_U64 SipHash13(const SipHash13State::Key& key,
-                                  const char* bytes, const HH_U64 size) {
+static HH_INLINE HH_U64 SipHash13(const SipHash13State::Key &key, const char *bytes, const HH_U64 size) {
   return ComputeHash<SipHash13State>(key, bytes, size);
 }
 
 template <int kNumLanes, int kUpdateIters, int kFinalizeIters>
-static HH_INLINE HH_U64 ReduceSipTreeHash(
-    const typename SipHashStateT<kUpdateIters, kFinalizeIters>::Key& key,
-    const uint64_t (&hashes)[kNumLanes]) {
+static HH_INLINE HH_U64 ReduceSipTreeHash(const typename SipHashStateT<kUpdateIters, kFinalizeIters>::Key &key,
+                                          const uint64_t (&hashes)[kNumLanes]) {
   SipHashStateT<kUpdateIters, kFinalizeIters> state(key);
 
   for (int i = 0; i < kNumLanes; ++i) {
-    state.Update(reinterpret_cast<const char*>(&hashes[i]));
+    state.Update(reinterpret_cast<const char *>(&hashes[i]));
   }
 
   return state.Finalize();

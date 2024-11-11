@@ -12,10 +12,9 @@ namespace CLSN {
 
 #define DEFTRPC_DESERIALIZE_LOAD_AND_CONSTRUCT_FUNCNANE LoadAndConstruct
 
+using AddressType = uint64_t;
+using IdType = uint64_t;
+constexpr IdType PtrIdMask = 0x8000000000000000;
+}  // namespace CLSN
 
-    using AddressType = uint64_t;
-    using IdType = uint64_t;
-    constexpr IdType PtrIdMask = 0x8000000000000000;
-}
-
-#endif //DEFTRPC_CONFIG_H
+#endif  // DEFTRPC_CONFIG_H

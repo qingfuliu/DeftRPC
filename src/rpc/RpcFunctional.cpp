@@ -6,7 +6,6 @@
 
 namespace CLSN::detail {
 
-
 //    template<class Func>
 //    template<typename T, size_t...index>
 //    auto FunctionHelper<Func>::InterExecute(T &&tuple, Sequence<index...>) -> typename FuncTraitType::ResType {
@@ -38,4 +37,4 @@ namespace CLSN::detail {
 //        encoder(res);
 //        return resStr;
 //    }
-}
+}  // namespace CLSN::detail

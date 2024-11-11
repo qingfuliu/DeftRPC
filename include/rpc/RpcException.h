@@ -9,14 +9,14 @@
 
 namespace CLSN {
 
-    inline const char *NoSuchFunction = "No Such Function.";
-    inline const char *FuncAlreadyExists = "Func Already Exists.";
-    inline const char *RouterIsInvalid = "Router Is Invalid.";
-    inline const char *PackageIsInvalid = "Package is Invalid.";
-    inline const char *SeverIsBase = "Sever is base or Connection is invalid.";
+inline const char *NoSuchFunction = "No Such Function.";
+inline const char *FuncAlreadyExists = "Func Already Exists.";
+inline const char *RouterIsInvalid = "Router Is Invalid.";
+inline const char *PackageIsInvalid = "Package is Invalid.";
+inline const char *SeverIsBase = "Sever is base or Connection is invalid.";
 
-    inline std::string MakeRpcException(const char *eptr, const std::string &funcName) {
-        return std::string(eptr).append("The FuncName is ").append(funcName);
-    }
+inline std::string MakeRpcException(const char *eptr, const std::string &funcName) {
+  return std::string(eptr).append("The FuncName is ").append(funcName);
 }
-#endif //DEFTRPC_RPCEXCEPTION_H
+}  // namespace CLSN
+#endif  // DEFTRPC_RPCEXCEPTION_H

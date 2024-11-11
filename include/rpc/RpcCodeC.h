@@ -5,38 +5,37 @@
 #ifndef DEFTRPC_RPCCODEC_H
 #define DEFTRPC_RPCCODEC_H
 
-#include "net/Codec.h"
-#include "common/common.h"
 #include <string>
+#include "common/common.h"
+#include "net/Codec.h"
 
 namespace CLSN {
 
-    class RpcCodeC : public CodeC {
-    public:
-        RpcCodeC() = default;
+class RpcCodeC : public CodeC {
+ public:
+  RpcCodeC() = default;
 
-        ~RpcCodeC() override = default;
+  ~RpcCodeC() override = default;
 
-        std::string_view Decode(RingBuffer &buffer) const override;
+  std::string_view Decode(RingBuffer &buffer) const override;
 
-        void Encode(EVBuffer &buffer, const char *data, size_t len) override;
+  void Encode(EVBuffer &buffer, const char *data, size_t len) override;
 
-    protected:
-        virtual bool DecodeCondition(RingBuffer &buffer) const noexcept {
-            return buffer.GetReadableCapacity() >= sizeof(PackageLengthType);
-        }
+ protected:
+  virtual bool DecodeCondition(RingBuffer &buffer) const noexcept {
+    return buffer.GetReadableCapacity() >= sizeof(PackageLengthType);
+  }
 
-        virtual void WriteSizeToPackage(size_t size) noexcept {
-            PackageLengthType be = htonl(size);
-            std::copy(reinterpret_cast<char *>(&be), reinterpret_cast<char *>(&be) + sizeof(PackageLengthType),
-                      cache.get());
-        }
+  virtual void WriteSizeToPackage(size_t size) noexcept {
+    PackageLengthType be = htonl(size);
+    std::copy(reinterpret_cast<char *>(&be), reinterpret_cast<char *>(&be) + sizeof(PackageLengthType), cache.get());
+  }
 
-    private:
-        inline static size_t cacheLength = sizeof(PackageLengthType) + sizeof(Crc32Type);
-        std::unique_ptr<char[]> cache{new char[cacheLength]};
-    };
+ private:
+  inline static size_t cacheLength = sizeof(PackageLengthType) + sizeof(Crc32Type);
+  std::unique_ptr<char[]> cache{new char[cacheLength]};
+};
 
-} // CLSN
+}  // namespace CLSN
 
-#endif //DEFTRPC_RPCCODEC_H
+#endif  // DEFTRPC_RPCCODEC_H

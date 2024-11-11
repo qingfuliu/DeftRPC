@@ -10,11 +10,11 @@
 
 /******************************event sock******************************/
 inline int CreateEventFd() noexcept {
-    int fd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
-    if (-1 == fd) {
-        CLSN_LOG_DEBUG << "CreateEventFd failed!";
-    }
-    return fd;
+  int fd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+  if (-1 == fd) {
+    CLSN_LOG_DEBUG << "CreateEventFd failed!";
+  }
+  return fd;
 }
 
-#endif //DEFTRPC_SHAREDFUNC_H
+#endif  // DEFTRPC_SHAREDFUNC_H

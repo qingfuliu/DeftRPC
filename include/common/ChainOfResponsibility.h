@@ -10,23 +10,23 @@
 
 namespace CLSN {
 
-    class Processor {
-    public:
-        constexpr Processor() noexcept = default;
+class Processor {
+ public:
+  constexpr Processor() noexcept = default;
 
-        explicit Processor(Processor *n) noexcept: next(n) {}
+  explicit Processor(Processor *n) noexcept : next(n) {}
 
-        virtual ~Processor() = default;
+  virtual ~Processor() = default;
 
-        virtual void process() = 0;
+  virtual void process() = 0;
 
-    private:
-//        std::function<>
-        std::unique_ptr<Processor> next;
-    };
+ private:
+  //        std::function<>
+  std::unique_ptr<Processor> next;
+};
 
 //    template<class RreType>
 //    class
 
-}
-#endif //DEFTRPC_CHAINOFRESPONSIBILITY_H
+}  // namespace CLSN
+#endif  // DEFTRPC_CHAINOFRESPONSIBILITY_H

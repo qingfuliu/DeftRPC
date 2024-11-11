@@ -109,8 +109,7 @@ namespace highwayhash {
 // Required due to macro expansion rules.
 #define HH_EXPAND_CONCAT(first, second) HH_CONCAT(first, second)
 // Appends HH_TARGET_NAME to "identifier_prefix".
-#define HH_ADD_TARGET_SUFFIX(identifier_prefix) \
-  HH_EXPAND_CONCAT(identifier_prefix, HH_TARGET_NAME)
+#define HH_ADD_TARGET_SUFFIX(identifier_prefix) HH_EXPAND_CONCAT(identifier_prefix, HH_TARGET_NAME)
 
 // HH_TARGET expands to an integer constant. Typical usage: HHStateT<HH_TARGET>.
 // This ensures your code will work correctly when compiler flags are changed,
@@ -139,7 +138,7 @@ namespace HH_TARGET_NAME {
 
 // Calls func(bit_value) for every nonzero bit in "bits".
 template <class Func>
-void ForeachTarget(TargetBits bits, const Func& func) {
+void ForeachTarget(TargetBits bits, const Func &func) {
   while (bits != 0) {
     const TargetBits lowest = bits & (~bits + 1);
     func(lowest);
@@ -151,7 +150,7 @@ void ForeachTarget(TargetBits bits, const Func& func) {
 
 // Returns a brief human-readable string literal identifying one of the above
 // bits, or nullptr if zero, multiple, or unknown bits are set.
-const char* TargetName(const TargetBits target_bit);
+const char *TargetName(const TargetBits target_bit);
 
 // Returns the nominal (without Turbo Boost) CPU clock rate [Hertz]. Useful for
 // (roughly) characterizing the CPU speed.
@@ -166,8 +165,7 @@ double InvariantTicksPerSecond();
 
 // Calls CPUID instruction with eax=level and ecx=count and returns the result
 // in abcd array where abcd = {eax, ebx, ecx, edx} (hence the name abcd).
-void Cpuid(const uint32_t level, const uint32_t count,
-           uint32_t* HH_RESTRICT abcd);
+void Cpuid(const uint32_t level, const uint32_t count, uint32_t *HH_RESTRICT abcd);
 
 // Returns the APIC ID of the CPU on which we're currently running.
 uint32_t ApicId();

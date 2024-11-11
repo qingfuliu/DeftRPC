@@ -5,62 +5,59 @@
 #ifndef MCLOUDDISK_SOCKET_H
 #define MCLOUDDISK_SOCKET_H
 
-#include<unistd.h>
-#include<arpa/inet.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
 namespace CLSN {
-    class Addr;
+class Addr;
 
-    int CreateNoBlockSocket() noexcept;
+int CreateNoBlockSocket() noexcept;
 
-    int CreateBlockSocket() noexcept;
+int CreateBlockSocket() noexcept;
 
-    class Socket {
-    public:
-        explicit Socket() = default;
+class Socket {
+ public:
+  explicit Socket() = default;
 
-        explicit Socket(int fd) : fd(fd) {}
+  explicit Socket(int fd) : fd(fd) {}
 
-        ~Socket() = default;
+  ~Socket() = default;
 
-        [[nodiscard]] int getFd() const noexcept {
-            return fd;
-        }
+  [[nodiscard]] int getFd() const noexcept { return fd; }
 
-        int Listen() const noexcept;
+  int Listen() const noexcept;
 
-        int Connect(const Addr *addr) const noexcept;
+  int Connect(const Addr *addr) const noexcept;
 
-        int Accept(Addr *addr) const noexcept;
+  int Accept(Addr *addr) const noexcept;
 
-        int Bind(const Addr *addr) const noexcept;
+  int Bind(const Addr *addr) const noexcept;
 
-        int SetTcpKeepAlive(bool) const noexcept;
+  int SetTcpKeepAlive(bool) const noexcept;
 
-        int SetTCPNoDelay(bool val) const noexcept;
+  int SetTCPNoDelay(bool val) const noexcept;
 
-        int SetReusePort(bool val) const noexcept;
+  int SetReusePort(bool val) const noexcept;
 
-        int SetReuseAddr(bool val) const noexcept;
+  int SetReuseAddr(bool val) const noexcept;
 
-        int SetNoBlock(bool val) const noexcept;
+  int SetNoBlock(bool val) const noexcept;
 
-        int SetReadTimeout(int val) const noexcept;
+  int SetReadTimeout(int val) const noexcept;
 
-        int SetWriteTimeout(int val) const noexcept;
+  int SetWriteTimeout(int val) const noexcept;
 
-        int Read(char *buf, size_t len) const noexcept;
+  int Read(char *buf, size_t len) const noexcept;
 
-        [[maybe_unused]] int Readv(const struct iovec *buf, size_t len) const noexcept;
+  [[maybe_unused]] int Readv(const struct iovec *buf, size_t len) const noexcept;
 
-        int Write(char *buf, size_t) const noexcept;
+  int Write(char *buf, size_t) const noexcept;
 
-        int Close() const noexcept;
+  int Close() const noexcept;
 
-    private:
-        int fd;
-    };
-}
+ private:
+  int fd;
+};
+}  // namespace CLSN
 
-
-#endif //MCLOUDDISK_SOCKET_H
+#endif  // MCLOUDDISK_SOCKET_H

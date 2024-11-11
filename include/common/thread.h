@@ -5,13 +5,11 @@
 #ifndef DEFTRPC_THREAD_H
 #define DEFTRPC_THREAD_H
 
-#include <unistd.h>
 #include <sys/syscall.h>
+#include <unistd.h>
 
 namespace CLSN::Thread {
-    inline pid_t thisThreadId() noexcept {
-        return static_cast<pid_t>(syscall(SYS_gettid));
-    }
-}
+inline pid_t thisThreadId() noexcept { return static_cast<pid_t>(syscall(SYS_gettid)); }
+}  // namespace CLSN::Thread
 
-#endif //DEFTRPC_THREAD_H
+#endif  // DEFTRPC_THREAD_H

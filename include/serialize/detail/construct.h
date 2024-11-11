@@ -5,53 +5,47 @@
 #ifndef DEFTRPC_CONSTRUCT_H
 #define DEFTRPC_CONSTRUCT_H
 
-#include "helper.h"
 #include <bits/move.h>
+#include "helper.h"
 
 namespace CLSN {
 
-    template<typename T>
-    class Construct {
-    public:
-        explicit Construct(T *p) noexcept: ptr(p) {}
+template <typename T>
+class Construct {
+ public:
+  explicit Construct(T *p) noexcept : ptr(p) {}
 
-        ~Construct() = default;
+  ~Construct() = default;
 
-        template<typename ...Args>
-        T *operator()(Args &&...args)
-        noexcept(access::construct(std::declval<T *>(), std::declval<Args>()...)) {
-            access::construct(ptr, std::forward<Args>(args)...);
-            return ptr;
-        }
+  template <typename... Args>
+  T *operator()(Args &&...args) noexcept(access::construct(std::declval<T *>(), std::declval<Args>()...)) {
+    access::construct(ptr, std::forward<Args>(args)...);
+    return ptr;
+  }
 
-        T *operator->() noexcept {
-            return ptr;
-        }
+  T *operator->() noexcept { return ptr; }
 
-        T *get() noexcept {
-            return ptr;
-        }
+  T *get() noexcept { return ptr; }
 
-    private:
-        T *ptr;
-    };
+ private:
+  T *ptr;
+};
 
-    template<typename Sr, typename T>
-    std::enable_if_t<has_no_member_load_and_construct_func_v<Sr, T>, void>
-    ConstructNavigation(Sr &sr,
-                        Construct<T> &mConstruct)
-    noexcept(DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(std::declval<Sr &>(), std::declval<Construct<T> &>())) {
-        DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(sr, mConstruct);
-    }
-
-    template<typename Sr, typename T>
-    std::enable_if_t<has_member_load_and_construct_func_v<Sr, T>, void>
-    ConstructNavigation(Sr &sr,
-                        Construct<T> &mConstruct)
-    noexcept(access::DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(std::declval<Sr &>(), std::declval<Construct<T> &>())) {
-        access::DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(sr, mConstruct);
-    }
-
+template <typename Sr, typename T>
+std::enable_if_t<has_no_member_load_and_construct_func_v<Sr, T>, void> ConstructNavigation(
+    Sr &sr, Construct<T> &mConstruct) noexcept(DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(std::declval<Sr &>(),
+                                                                                 std::declval<Construct<T> &>())) {
+  DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(sr, mConstruct);
 }
 
-#endif //DEFTRPC_CONSTRUCT_H
+template <typename Sr, typename T>
+std::enable_if_t<has_member_load_and_construct_func_v<Sr, T>, void> ConstructNavigation(
+    Sr &sr,
+    Construct<T> &mConstruct) noexcept(access::DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(std::declval<Sr &>(),
+                                                                                 std::declval<Construct<T> &>())) {
+  access::DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(sr, mConstruct);
+}
+
+}  // namespace CLSN
+
+#endif  // DEFTRPC_CONSTRUCT_H

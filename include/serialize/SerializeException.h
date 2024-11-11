@@ -9,7 +9,7 @@
 
 namespace CLSN {
 
-    inline const char *ArgsSizeError = "Incorrect number of parameters.";
-    inline const char *ArgsLengthError = "Incorrect length of input.";
-}
-#endif //DEFTRPC_RPCEXCEPTION_H
+inline const char *ArgsSizeError = "Incorrect number of parameters.";
+inline const char *ArgsLengthError = "Incorrect length of input.";
+}  // namespace CLSN
+#endif  // DEFTRPC_RPCEXCEPTION_H
