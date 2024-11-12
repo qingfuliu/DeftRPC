@@ -12,7 +12,7 @@
 #define MultiplyExpansionLimit (1024)
 #define DefaultBufferLen (1024)
 
-namespace CLSN {
+namespace clsn {
 RingBuffer::RingBuffer() noexcept
     : begin(0), end(0), size(0), buffer(std::vector<char>(DefaultBufferLen)), tempCapacity(0), temp(nullptr) {}
 
@@ -250,4 +250,4 @@ int RingBuffer::WriteToFd(int fd) noexcept {
   return writeSize;
 }
 
-}  // namespace CLSN
+}  // namespace clsn

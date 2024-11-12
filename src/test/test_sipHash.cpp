@@ -15,7 +15,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "hash/google_highwayhash_Public//sip_hash.h"
+#include "hash/google_highwayhash_Public/sip_hash.h"
 
 namespace highwayhash {
 namespace {

@@ -10,7 +10,7 @@ extern "C" {
 extern void coctx_swap(coctx_t *, coctx_t *) asm("coctx_swap");
 };
 
-namespace CLSN {
+namespace clsn {
 
 SharedStack::SharedStack(size_t size) : owner(nullptr), stack(nullptr) {
   unsigned long pageSize = sysconf(_SC_PAGESIZE);
@@ -133,4 +133,4 @@ void CoroutineContext::SwapCtx(CoroutineContext *other) noexcept {
   }
   coctx_swap(&other->ctx, &ctx);
 }
-}  // namespace CLSN
+}  // namespace clsn

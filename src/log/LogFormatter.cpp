@@ -2,11 +2,11 @@
 // Created by lqf on 23-3-30.
 //
 
-#include "Formatter/LogFormatter.h"
+#include "log/Formatter/LogFormatter.h"
 #include <cstring>
-#include "Convert/LogConvert.h"
-#include "LoggerBase.h"
-namespace CLSN {
+#include "log/Convert/LogConvert.h"
+#include "log/LoggerBase.h"
+namespace clsn {
 
 class TempFormatterItem : public FormatterItem {
  public:
@@ -198,4 +198,4 @@ void LogFormatter::format(std::ostream &os, const LogRecord &record) noexcept {
   os << std::endl << std::flush;
 }
 
-}  // namespace CLSN
+}  // namespace clsn

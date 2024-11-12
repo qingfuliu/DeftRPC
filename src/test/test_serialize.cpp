@@ -10,7 +10,7 @@
 #include "serialize/detail/config.h"
 #include "serialize/detail/helper.h"
 
-using namespace CLSN;
+using namespace clsn;
 
 struct A {
   A() = default;

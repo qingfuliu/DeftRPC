@@ -11,7 +11,7 @@
 #include "coroutine/Poller.h"
 #include "coroutine/Timer.h"
 
-namespace CLSN {
+namespace clsn {
 
 static thread_local std::unique_ptr<Scheduler> threadScheduler{nullptr};
 
@@ -20,7 +20,7 @@ Scheduler::Scheduler(size_t sharedStackSize, bool UserCall)
       mPid(Thread::thisThreadId()),
       stop(true),
       state(SchedulerState::DoNothing),
-      mainCoroutines(CLSN::CreateCoroutine()),
+      mainCoroutines(clsn::CreateCoroutine()),
       extraTasks(),
       sharedStack(nullptr),
       poller(CreateNewPoller()),
@@ -42,7 +42,7 @@ Scheduler::Scheduler(size_t sharedStackSize, bool UserCall)
   }
 
   if (0 != sharedStackSize) {
-    sharedStack = CLSN::MakeSharedStack(sharedStackSize);
+    sharedStack = clsn::MakeSharedStack(sharedStackSize);
   }
 }
 
@@ -127,4 +127,4 @@ void Scheduler::writeEventFd() const noexcept {
   }
 }
 
-}  // namespace CLSN
+}  // namespace clsn

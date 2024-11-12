@@ -5,7 +5,7 @@
 #include <cerrno>
 #include <cstring>
 
-namespace CLSN {
+namespace clsn {
 int Poller::EpollWait(std::vector<FdDescriptor *> &tasks, int timeout) noexcept {
   tasks.clear();
   int res = epoll_wait(epollFd, events, MAXEPOLLSIZE, timeout);
@@ -48,4 +48,4 @@ void Poller::registerFd(FdDescriptor fdDescriptor) noexcept {
     CLSN_LOG_ERROR << "register sock failed!,sock is " << fd << " ,error is " << strerror(errno);
   }
 }
-}  // namespace CLSN
+}  // namespace clsn

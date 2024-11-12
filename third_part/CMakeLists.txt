@@ -1,6 +1,7 @@
 project(DeftRPC)
 
-message(========build_googletest========)
+message(========third_part========)
 if (ENABLE_TEST STREQUAL "True")
     add_subdirectory(./googletest)
+    add_subdirectory(./benchmark)
 endif ()

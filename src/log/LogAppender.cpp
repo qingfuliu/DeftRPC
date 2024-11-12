@@ -2,11 +2,11 @@
 // Created by lqf on 23-3-30.
 //
 
-#include "Appender/LogAppender.h"
-#include "Formatter/LogFormatter.h"
+#include "log/Appender/LogAppender.h"
 #include "common/mutex.h"
+#include "log/Formatter/LogFormatter.h"
 
-namespace CLSN {
+namespace clsn {
 
 LogAppender *createConsoleLogAppender(const std::string &format, LogLevel level) {
   return new ConsoleLogAppender(format, level);
@@ -28,15 +28,15 @@ void LogAppender::setLogFormatter(const std::string &arg) { formatter.reset(new 
 void LogAppender::setLogFormatter(LogFormatter *IFormatter) noexcept { formatter.reset(IFormatter); }
 
 void ConsoleLogAppender::append(const LogRecord &record) noexcept {
-  CLSN::MutexGuard lock(&mutex);
+  clsn::MutexGuard lock(&mutex);
   if (recordValid(record)) formatter->format(std::cout, record);
 }
 
 void FileLogAppender::append(const LogRecord &record) noexcept {
-  CLSN::MutexGuard lock(&mutex);
+  clsn::MutexGuard lock(&mutex);
   if (recordValid(record)) formatter->format(ofStream, record);
 }
 
 //    ConsoleLogAppender::
 
-}  // namespace CLSN
+}  // namespace clsn

@@ -4,7 +4,7 @@
 #include "rpc/RpcFunctional.h"
 #include "serialize/StringSerializer.h"
 
-namespace CLSN::detail {
+namespace clsn::detail {
 
 //    template<class Func>
 //    template<typename T, size_t...index>
@@ -18,7 +18,7 @@ namespace CLSN::detail {
 //        std::exception_ptr eptr;
 //        typename FuncTraitType::Res res;
 //
-//        CLSN::StringDeSerialize decoder(arg);
+//        clsn::StringDeSerialize decoder(arg);
 //        typename FuncTraitType::TupleType tuple;
 //
 //        try {
@@ -33,8 +33,8 @@ namespace CLSN::detail {
 //            return resStr;
 //        }
 //
-//        CLSN::StringSerialize encoder(resStr);
+//        clsn::StringSerialize encoder(resStr);
 //        encoder(res);
 //        return resStr;
 //    }
-}  // namespace CLSN::detail
+}  // namespace clsn::detail

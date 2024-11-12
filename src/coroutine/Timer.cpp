@@ -4,7 +4,7 @@
 #include "coroutine/Timer.h"
 #include "log/Log.h"
 
-namespace CLSN {
+namespace clsn {
 
 static inline int createTimerFd() noexcept {
   int timerFd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
@@ -107,4 +107,4 @@ void TimerQueue::HandleExpireEvent() {
   handlingEvent = false;
   assert(activeTimers.size() + 1 == timers.size());
 }
-}  // namespace CLSN
+}  // namespace clsn

@@ -3,7 +3,7 @@ project(DeftRPC)
 
 add_subdirectory(./common)
 
-if (ENABLE_TEST STREQUAL "True")
+if (ENABLE_TEST)
     add_subdirectory(./test)
 endif ()
 

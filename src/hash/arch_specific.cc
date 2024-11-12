@@ -36,7 +36,7 @@
 
 namespace highwayhash {
 
-const char* TargetName(const TargetBits target_bit) {
+const char* TargetName(TargetBits target_bit) {
   switch (target_bit) {
     case HH_TARGET_Portable:
       return "Portable";
@@ -77,7 +77,7 @@ std::string BrandString() {
 
 }  // namespace
 
-void Cpuid(const uint32_t level, const uint32_t count,
+void Cpuid( uint32_t level,  uint32_t count,
            uint32_t* HH_RESTRICT abcd) {
 #if HH_MSC_VERSION
   int regs[4];

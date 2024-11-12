@@ -9,9 +9,9 @@
 #include "log/Log.h"
 
 int main() {
-  CLSN::init<0>({CLSN::createConsoleLogAppender("[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s", CLSN::LogLevel::Debug)});
-  CLSN::SkipList list;
-  std::vector<std::tuple<CLSN::ScoreType, std::string, CLSN::SizeType>> t;
+  clsn::init<0>({clsn::createConsoleLogAppender("[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s", clsn::LogLevel::Debug)});
+  clsn::SkipList list;
+  std::vector<std::tuple<clsn::ScoreType, std::string, clsn::SizeType>> t;
 
   for (int i = 0; i < 1000; ++i) {
     CLSN_LOG_DEBUG << i;

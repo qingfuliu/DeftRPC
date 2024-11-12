@@ -7,7 +7,7 @@
 #include "net/Codec.h"
 #include "net/sever/TcpConnection.h"
 
-namespace CLSN {
+namespace clsn {
 
 TcpSever::TcpSever(const std::string &ipPort, size_t sharedStackSize, bool UserCall) noexcept
     : Scheduler(sharedStackSize, UserCall),
@@ -121,4 +121,4 @@ void TcpSever::closeAcceptor() const noexcept {
   acceptCoroutine->swapIn();
 }
 
-}  // namespace CLSN
+}  // namespace clsn

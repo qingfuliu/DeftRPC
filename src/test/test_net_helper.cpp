@@ -31,8 +31,8 @@ TEST(test_net_helper, test_net_helper) {
   //    serv_addr.sin_family = AF_INET;
   //    serv_addr.sin_addr.s_addr = inet_addr("0.0.0.0");
   //    serv_addr.sin_port = htons(5201);
-  CLSN::Socket socket1(socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));
-  CLSN::Addr addr("0.0.0.0:5201");
+  clsn::Socket socket1(socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));
+  clsn::Addr addr("0.0.0.0:5201");
   //    if (connect(sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) == -1) {
   //    if (0 != connect(socket1.getFd(), addr.getSockAddr(), addr.getSockAddrSize())) {
   if (0 != socket1.Connect(&addr)) {

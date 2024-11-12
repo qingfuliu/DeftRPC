@@ -33,6 +33,10 @@
 
 build
 cmake-build-*
+bin
+lib
+*pycache*
 
 .idea
 .vscode
+venv

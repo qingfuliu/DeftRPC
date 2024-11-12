@@ -6,7 +6,7 @@
 #include <utility>
 #include "dataStructConfig.h"
 
-namespace CLSN {
+namespace clsn {
 
 HashEntryBase *HashTable::FindByKey(const char *key, HashLenType len) noexcept {
   HashEntryBase *p;
@@ -254,4 +254,4 @@ void HashTable::HashIterator::reset() noexcept {
   }
   table = nullptr;
 }
-}  // namespace CLSN
+}  // namespace clsn

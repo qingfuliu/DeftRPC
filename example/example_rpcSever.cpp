@@ -14,12 +14,12 @@ int test_exception(int a, int b) { throw std::runtime_error("test exception"); }
 int main() {
   Enable_Hook();
 
-  auto r = new CLSN::RpcRouter("test");
+  auto r = new clsn::RpcRouter("test");
   r->InsertFunc("test_router", test_router);
   r->InsertFunc("test_rpc", test_rpc);
   r->InsertFunc("test_exception", test_exception);
 
-  auto rpcSever = CLSN::CreateRpcSever("0.0.0.0:5201", 1);
+  auto rpcSever = clsn::CreateRpcSever("0.0.0.0:5201", 1);
 
   rpcSever->SetRouter(r);
 

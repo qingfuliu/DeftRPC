@@ -2,7 +2,7 @@
 #include <iostream>
 #include "common/type.h"
 
-using namespace CLSN;
+using namespace clsn;
 
 static void get_index_type_test() {
   class A {

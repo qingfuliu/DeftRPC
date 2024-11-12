@@ -4,7 +4,7 @@
 
 #include "net/client/TcpClient.h"
 
-namespace CLSN {
+namespace clsn {
 TcpClient::TcpClient(const std::string &ipPort) noexcept
     : sock(CreateBlockSocket()),
       remote(ipPort),
@@ -22,4 +22,4 @@ TcpClient::~TcpClient() noexcept {
     }
   }
 }
-}  // namespace CLSN
+}  // namespace clsn

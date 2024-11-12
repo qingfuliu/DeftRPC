@@ -4,7 +4,7 @@
 
 #include "rpc/Router.h"
 
-namespace CLSN {
+namespace clsn {
 
 std::string RpcRouter::CallFuncSync(const std::string &funcName, std::string_view arg) {
   std::string res;
@@ -20,7 +20,7 @@ std::string RpcRouter::CallFuncSync(const std::string &funcName, std::string_vie
 
   } else {
     CLSN_LOG_DEBUG << MakeRpcException(NoSuchFunction, funcName);
-    eptr = std::make_exception_ptr(CLSN::RpcExecuteException(MakeRpcException(NoSuchFunction, funcName)));
+    eptr = std::make_exception_ptr(clsn::RpcExecuteException(MakeRpcException(NoSuchFunction, funcName)));
   }
 
   HandleException(res, eptr);
@@ -28,4 +28,4 @@ std::string RpcRouter::CallFuncSync(const std::string &funcName, std::string_vie
 }
 
 void RpcRouter::CallFuncASync(const std::string &funcName, std::string_view arg) {}
-}  // namespace CLSN
+}  // namespace clsn

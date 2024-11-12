@@ -8,7 +8,7 @@
 
 #include <iostream>
 
-thread_local auto sharedMem = CLSN::MakeSharedStack(0);
+thread_local auto sharedMem = clsn::MakeSharedStack(0);
 
 void otherFunc1() { std::cout << "otherFunc1!!" << std::endl; }
 
@@ -21,7 +21,7 @@ void otherFunc() {
   }
   std::cout << "before otherFunc11!!" << std::endl;
 
-  auto routine = CLSN::CreateCoroutine();
+  auto routine = clsn::CreateCoroutine();
   routine->setTask(otherFunc1);
   routine->swapIn();
   std::cout << "after otherFunc11!!" << std::endl;
@@ -38,7 +38,7 @@ void otherFunc() {
 
 static void test_SwapIn() {
   std::cout << "before test_SwapIn!!" << std::endl;
-  auto routine = CLSN::CreateCoroutine();
+  auto routine = clsn::CreateCoroutine();
   routine->setTask(otherFunc);
   routine->swapIn();
   std::cout << "after test_SwapIn!!" << std::endl;
@@ -56,7 +56,7 @@ void otherFuncShared() {
   }
   std::cout << "before otherFunc11!!" << std::endl;
 
-  auto routine = CLSN::CreateCoroutine();
+  auto routine = clsn::CreateCoroutine();
   routine->swapIn();
   std::cout << "after otherFunc11!!" << std::endl;
   assert(a == 1);
@@ -72,7 +72,7 @@ void otherFuncShared() {
 
 static void test_sharedPtr_SwapIn() {
   std::cout << "before test_SwapIn!!" << std::endl;
-  auto routine = CLSN::CreateCoroutine(otherFuncShared, sharedMem.get());
+  auto routine = clsn::CreateCoroutine(otherFuncShared, sharedMem.get());
   routine->swapIn();
   std::cout << "after test_SwapIn!!" << std::endl;
   std::cout << "success!!" << std::endl;

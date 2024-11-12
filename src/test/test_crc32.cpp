@@ -46,7 +46,7 @@ void test_crcTable() noexcept {
         crc <<= 1;
       }
     }
-    assert(CLSN::s_crc32Table[byte] == crc);
+    assert(clsn::S_CRC32_TABLE[byte] == crc);
   }
 }
 
@@ -54,11 +54,11 @@ void test_crcCheck_true() {
   std::string t;
   for (int i = 0; i < 1000; ++i) {
     t.append("lqf");
-    auto k = CLSN::GenerateCrc32(t.data(), t.size());
+    auto k = clsn::GenerateCrc32(t.data(), t.size());
     for (int i = 3; i >= 0; --i) {
       t.append(reinterpret_cast<char *>(&k) + i, 1);
     }
-    assert(CLSN::CheckCec32(t.data(), t.size()));
+    assert(clsn::CheckCec32(t.data(), t.size()));
   }
 }
 

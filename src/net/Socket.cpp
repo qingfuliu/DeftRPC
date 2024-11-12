@@ -11,7 +11,7 @@
 #include "log/Log.h"
 #include "net/Addr.h"
 
-namespace CLSN {
+namespace clsn {
 
 int MAX_LISTEN_COUNT = 100;
 
@@ -158,4 +158,4 @@ int Socket::Close() const noexcept {
   }
   return flag;
 }
-}  // namespace CLSN
+}  // namespace clsn

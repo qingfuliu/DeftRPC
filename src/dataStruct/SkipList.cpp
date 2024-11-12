@@ -5,7 +5,7 @@
 #include "dataStruct/SkipList.h"
 #include "log/Log.h"
 
-namespace CLSN {
+namespace clsn {
 std::pair<SkipListNode *, SizeType> SkipList::Insert(ScoreType score, const std::string &val) noexcept {
   SkipLevelType lv = GetRandomLevel();
   auto node = new SkipListNode(score, val, lv);
@@ -127,4 +127,4 @@ void SkipList::getUpdateVec(std::vector<SkipListNode *> &update, std::vector<Siz
   }
 }
 
-}  // namespace CLSN
+}  // namespace clsn

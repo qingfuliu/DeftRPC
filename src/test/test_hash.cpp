@@ -7,7 +7,7 @@
 
 #include <gtest/gtest.h>
 
-using namespace CLSN;
+using namespace clsn;
 
 struct TestEntry {
   int a;
@@ -82,7 +82,7 @@ void test_HashTableIterator(HashTable *hash) {
 };
 
 TEST(tset_hash, test_hash) {
-  CLSN::init<0>({CLSN::createConsoleLogAppender("[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s", CLSN::LogLevel::Debug)});
+  clsn::init<0>({clsn::createConsoleLogAppender("[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s", clsn::LogLevel::Debug)});
   HashTable t;
   std::vector<std::string> vec(5000);
   CLSN_LOG_DEBUG << vec.capacity() << " " << vec.size();

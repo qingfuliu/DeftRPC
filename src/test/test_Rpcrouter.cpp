@@ -7,20 +7,20 @@
 int test_router(int a) { return a + 1; }
 
 int main() {
-  CLSN::init<0>({CLSN::createConsoleLogAppender("[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s", CLSN::LogLevel::Debug)});
+  clsn::init<0>({clsn::createConsoleLogAppender("[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s", clsn::LogLevel::Debug)});
 
-  CLSN::RpcRouter r("test");
+  clsn::RpcRouter r("test");
   r.InsertFunc("test", test_router);
   //    r.InsertFunc("test1", test_router);
 
   std::string res;
-  CLSN::StringSerialize encode(res);
+  clsn::StringSerialize encode(res);
   encode(std::tuple<int>(100));
 
   auto p = r.CallFuncSync("test", res);
 
   //    std::string p;
-  CLSN::StringDeSerialize decode(p);
+  clsn::StringDeSerialize decode(p);
   int aa;
   decode(aa);
 

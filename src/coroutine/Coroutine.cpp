@@ -5,7 +5,7 @@
 #include <cassert>
 #include "coroutine/Scheduler.h"
 
-namespace CLSN {
+namespace clsn {
 
 Coroutine *Coroutine::GetCurCoroutine() { return Scheduler::GetCurCoroutine(); }
 
@@ -68,4 +68,4 @@ void Coroutine::swapOut() {
 //        }
 //    }
 
-}  // namespace CLSN
+}  // namespace clsn

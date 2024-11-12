@@ -41,16 +41,16 @@ DeftRPC是一个rpc框架。拥有日志模块、协程模块、序列化与反�
 在使用日志前，需要调用初始化函数来初始化日志器。其中N是日志器的编号，Appender是vector形式的LogAppend数组。
 
 ```cpp
-CLSN::init<N>(Appenders);
+clsn::init<N>(Appenders);
 ```
 
 形如：
 
 ```cpp
-CLSN::init<0>({
-    CLSN::createConsoleLogAppender(
+clsn::init<0>({
+    clsn::createConsoleLogAppender(
         "[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s",
-                        CLSN::LogLevel::Debug)});
+                        clsn::LogLevel::Debug)});
 ```
 
 ### LogAppender
@@ -84,10 +84,10 @@ CLSN::init<0>({
 例如采用“[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s”，调用如下代码：
 
 ```cpp
-CLSN::init<0>({
-    CLSN::createConsoleLogAppender(
+clsn::init<0>({
+    clsn::createConsoleLogAppender(
         "[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s",
-                        CLSN::LogLevel::Debug)});
+                        clsn::LogLevel::Debug)});
         CLSN_LOG_DEBUG << "message";
 ```
 
@@ -132,16 +132,16 @@ int test_router(int a) {
     return a + 1;
 }
 
-CLSN::RpcRouter r("test"); //创建路由
+clsn::RpcRouter r("test"); //创建路由
 r.InsertFunc("test", test_router);//插入函数
 
 std::string res;
-CLSN::StringSerialize encode(res);
+clsn::StringSerialize encode(res);
 encode(std::tuple<int>(100));//将参数序列化
 
 auto p = r.CallFuncSync("test", res); //调用函数
 
-CLSN::StringDeSerialize decode(p);
+clsn::StringDeSerialize decode(p);
 int aa;
 decode(aa);     //结果反序列化
 
@@ -172,12 +172,12 @@ int test_exception(int a, int b) {
 int main() {
     Enable_Hook();
     
-    auto r = new CLSN::RpcRouter("test");       //新建路由并注册函数
+    auto r = new clsn::RpcRouter("test");       //新建路由并注册函数
     r->InsertFunc("test_router", test_router);
     r->InsertFunc("test_rpc", test_rpc);
     r->InsertFunc("test_exception", test_exception);
 
-    auto rpcSever = CLSN::CreateRpcSever("0.0.0.0:5201", 1); //创建rpcSever，并设置ip、端口
+    auto rpcSever = clsn::CreateRpcSever("0.0.0.0:5201", 1); //创建rpcSever，并设置ip、端口
     rpcSever->SetRouter(r);           //设置路由，RpcSever将接管该router的生命周期
     rpcSever->Start(100000);           //启动路由
 }
@@ -202,7 +202,7 @@ int main() {
 int main() {
     Enable_Hook();
     Disable_Enable_Hook();
-    CLSN::RpcClient client("0.0.0.0:5201");
+    clsn::RpcClient client("0.0.0.0:5201");
     CLSN_LOG_DEBUG << "remote:" << client.GetRemote().toString();
     if (!client.Connect()) {
         CLSN_LOG_ERROR << "connect failed,error is "

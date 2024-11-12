@@ -6,7 +6,7 @@
 #include "common/SpanMutex.h"
 
 static int a = 0;
-static CLSN::SpanMutex spanM;
+static clsn::SpanMutex spanM;
 
 void test_spanMutex() {
   {
@@ -18,10 +18,10 @@ void test_spanMutex() {
 }
 
 void test_spanMutex_Reentrant() {
-  CLSN::ReentrantMutex<CLSN::SpanMutex> mutexRe{};
+  clsn::ReentrantMutex<clsn::SpanMutex> mutexRe{};
   {
     mutexRe.Lock();
-    std::cout << CLSN::Thread::thisThreadId() << std::endl;
+    std::cout << clsn::Thread::thisThreadId() << std::endl;
     std::cout << "Lock" << std::endl;
     mutexRe.Lock();
     std::cout << "Lock1" << std::endl;

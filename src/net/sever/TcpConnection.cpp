@@ -7,7 +7,7 @@
 #include "net/Codec.h"
 #include "net/sever/TcpSever.h"
 
-namespace CLSN {
+namespace clsn {
 
 TcpConnection::TcpConnection(int f, const Addr &addr) noexcept
     : noncopyable(),
@@ -69,4 +69,4 @@ void TcpConnection::processMag() {
     }
   } while (!mSever->IsStop());
 }
-}  // namespace CLSN
+}  // namespace clsn

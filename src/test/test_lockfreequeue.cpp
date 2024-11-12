@@ -6,7 +6,7 @@
 #include <thread>
 #include "common/LockFreeQueue.h"
 
-using namespace CLSN;
+using namespace clsn;
 static void LockFreeQueueTest() {
   LockFreeQueue<int> a;
   std::vector<std::thread> ts(100);

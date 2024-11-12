@@ -5,7 +5,7 @@
 #include "log/Log.h"
 #include "rpc/RpcCodeC.h"
 
-namespace CLSN {
+namespace clsn {
 
 RPCSever::RPCSever(const std::string &ipPort, size_t sharedStackSize) noexcept
     : TcpSever(ipPort, sharedStackSize), router(nullptr) {
@@ -31,11 +31,11 @@ void RPCSever::Start(int timeout) noexcept {
   TcpSever::Start(timeout);
 }
 
-std::string RPCSever::MessageCallBack(CLSN::TcpConnection *connection, std::string_view arg, CLSN::TimeStamp t) {
+std::string RPCSever::MessageCallBack(clsn::TcpConnection *connection, std::string_view arg, clsn::TimeStamp t) {
   RPCResponse response;
 
   RPCRequest request;
-  CLSN::StringDeSerialize deCode(arg);
+  clsn::StringDeSerialize deCode(arg);
   try {
     deCode(request);
     if (request.async == static_cast<short>(RpcType::Sync)) {
@@ -47,9 +47,9 @@ std::string RPCSever::MessageCallBack(CLSN::TcpConnection *connection, std::stri
     response.res = e.what();
   }
   std::string res;
-  CLSN::StringSerialize enCode(res);
+  clsn::StringSerialize enCode(res);
   enCode(response);
   return res;
 }
 
-}  // namespace CLSN
+}  // namespace clsn

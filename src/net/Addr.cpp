@@ -10,7 +10,7 @@
 #include <string_view>
 #include "log/Log.h"
 
-namespace CLSN {
+namespace clsn {
 int i = 0;
 
 int Addr::FromString(const std::string &ip, uint16_t port, struct sockaddr_in *addr) {
@@ -89,4 +89,4 @@ std::string Addr::toString() const noexcept {
   return oss.str();
 }
 
-}  // namespace CLSN
+}  // namespace clsn

@@ -4,10 +4,10 @@
 
 #ifndef DEFTRPC_DATASTRUCTCONFIG_H
 #define DEFTRPC_DATASTRUCTCONFIG_H
-namespace CLSN {
+namespace clsn {
 
 inline constexpr double HashLoadFactor = 1;
 inline constexpr double HashLoadFactorLb = 0.5;
 
-}  // namespace CLSN
+}  // namespace clsn
 #endif  // DEFTRPC_DATASTRUCTCONFIG_H

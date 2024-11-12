@@ -4,8 +4,8 @@
 #include "rpc/RpcClient.h"
 #include "rpc/RpcCodeC.h"
 
-namespace CLSN {
+namespace clsn {
 
 RpcClient::RpcClient(const std::string &ipPort) noexcept : TcpClient(ipPort) { TcpClient::SetCodeC(new RpcCodeC); }
 
-}  // namespace CLSN
+}  // namespace clsn

@@ -6,7 +6,7 @@
 #include "common/Crc32.h"
 #include "rpc/RpcException.h"
 
-namespace CLSN {
+namespace clsn {
 
 std::string_view RpcCodeC::Decode(RingBuffer &buffer) const {
   if (DecodeCondition(buffer)) {
@@ -30,7 +30,7 @@ void RpcCodeC::Encode(EVBuffer &buffer, const char *data, size_t len) {
   buffer.Write(cache.get(), sizeof(PackageLengthType));
   buffer.Write(data, len);
 
-  Crc32Type checkCode = CLSN::GenerateCrc32(data, len);
+  Crc32Type checkCode = clsn::GenerateCrc32(data, len);
   for (int i = -1 + sizeof checkCode; i >= 0; --i) {
     int index = static_cast<int>(cacheLength) - i - 1;
     std::copy(reinterpret_cast<char *>(&checkCode) + i, reinterpret_cast<char *>(&checkCode) + i + 1,
@@ -39,4 +39,4 @@ void RpcCodeC::Encode(EVBuffer &buffer, const char *data, size_t len) {
   buffer.Write(cache.get() + sizeof(PackageLengthType), sizeof(Crc32Type));
 }
 
-}  // namespace CLSN
+}  // namespace clsn
