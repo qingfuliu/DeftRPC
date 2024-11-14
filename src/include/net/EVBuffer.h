@@ -17,7 +17,7 @@ namespace clsn {
  */
 class EVBuffer {
  public:
-  EVBuffer() noexcept : iovecs(std::make_unique<struct iovec[]>(3)), size(3), begin(0), end(0) {}
+  EVBuffer() noexcept : m_iovecs_(std::make_unique<struct iovec[]>(3)) {}
 
   ~EVBuffer() noexcept = default;
 
@@ -25,21 +25,21 @@ class EVBuffer {
     if (len == 0) {
       return;
     }
-    if (end >= size) {
-      if (begin != 0) {
-        std::copy(iovecs.get() + begin, iovecs.get() + end, iovecs.get() + begin - 1);
-        --end;
+    if (m_end_ >= m_size_) {
+      if (m_begin_ != 0) {
+        std::copy(m_iovecs_.get() + m_begin_, m_iovecs_.get() + m_end_, m_iovecs_.get() + m_begin_ - 1);
+        --m_end_;
       } else {
-        ++size;
-        auto *temp = new struct iovec[size];
-        std::copy(iovecs.get(), iovecs.get() + end, temp);
-        iovecs.reset(temp);
+        ++m_size_;
+        auto  temp = std::make_unique<struct iovec[] >(m_size_);
+        std::copy(m_iovecs_.get(), m_iovecs_.get() + m_end_, temp.get());
+        m_iovecs_.swap(temp);
       }
     }
 
-    iovecs[end].iov_len = len;
-    iovecs[end].iov_base = const_cast<char *>(data);
-    ++end;
+    m_iovecs_[m_end_].iov_len = len;
+    m_iovecs_[m_end_].iov_base = const_cast<char *>(data);
+    ++m_end_;
   }
 
   void Write(std::string &data) noexcept { Write(data.data(), data.size()); }
@@ -48,20 +48,20 @@ class EVBuffer {
     if (len == 0) {
       return;
     }
-    if (begin != 0) {
-      --begin;
-    } else if (end < size) {
-      std::copy(iovecs.get() + begin, iovecs.get() + end, iovecs.get() + begin + 1);
-      ++end;
+    if (m_begin_ != 0) {
+      --m_begin_;
+    } else if (m_end_ < m_size_) {
+      std::copy(m_iovecs_.get() + m_begin_, m_iovecs_.get() + m_end_, m_iovecs_.get() + m_begin_ + 1);
+      ++m_end_;
     } else {
-      ++size;
-      auto *temp = new struct iovec[size + 1];
-      std::copy(iovecs.get(), iovecs.get() + end, temp + 1);
-      iovecs.reset(temp);
-      ++end;
+      ++m_size_;
+      auto  temp = std::make_unique<struct iovec[] >(m_size_ +1);
+      std::copy(m_iovecs_.get(), m_iovecs_.get() + m_end_, temp.get() + 1);
+      m_iovecs_.swap(temp);
+      ++m_end_;
     }
-    iovecs[begin].iov_base = const_cast<char *>(data);
-    iovecs[begin].iov_len = len;
+    m_iovecs_[m_begin_].iov_base = const_cast<char *>(data);
+    m_iovecs_[m_begin_].iov_len = len;
   }
 
   void WritePrepend(std::string &str) noexcept { WritePrepend(str.data(), str.size()); }
@@ -71,11 +71,11 @@ class EVBuffer {
   size_t ReadAll() noexcept {
     size_t res = 0;
     if (!IsEmpty()) {
-      for (auto i = begin; i != end; i++) {
-        res += iovecs[i].iov_len;
+      for (auto i = m_begin_; i != m_end_; i++) {
+        res += m_iovecs_[i].iov_len;
       }
-      begin = 0;
-      end = 0;
+      m_begin_ = 0;
+      m_end_ = 0;
     }
     return res;
   }
@@ -85,23 +85,23 @@ class EVBuffer {
       return 0;
     }
     int res = 0;
-    while (begin != end) {
-      if (len >= iovecs[begin].iov_len) {
-        res += static_cast<int>(iovecs[begin].iov_len);
-        len -= static_cast<int>(iovecs[begin].iov_len);
-        begin++;
+    while (m_begin_ != m_end_) {
+      if (len >= m_iovecs_[m_begin_].iov_len) {
+        res += static_cast<int>(m_iovecs_[m_begin_].iov_len);
+        len -= static_cast<int>(m_iovecs_[m_begin_].iov_len);
+        m_begin_++;
       } else {
-        iovecs[begin].iov_base = static_cast<char *>(iovecs[begin].iov_base) + len;
-        iovecs[begin].iov_len -= len;
+        m_iovecs_[m_begin_].iov_base = static_cast<char *>(m_iovecs_[m_begin_].iov_base) + len;
+        m_iovecs_[m_begin_].iov_len -= len;
         res += len;
         break;
       }
     }
-    if (begin == end) {
-      begin = 0;
-      end = 0;
+    if (m_begin_ == m_end_) {
+      m_begin_ = 0;
+      m_end_ = 0;
     }
-    size = end - begin;
+    m_size_ = m_end_ - m_begin_;
     return res;
   }
 
@@ -109,25 +109,25 @@ class EVBuffer {
     if (IsEmpty()) {
       return nullptr;
     }
-    return iovecs.get() + begin;
+    return m_iovecs_.get() + m_begin_;
   }
 
-  [[nodiscard]] int GetIovecsSize() const noexcept { return static_cast<int>(end - begin); }
+  [[nodiscard]] int GetIovecsSize() const noexcept { return static_cast<int>(m_end_ - m_begin_); }
 
-  [[nodiscard]] bool IsEmpty() const noexcept { return begin == end; }
+  [[nodiscard]] bool IsEmpty() const noexcept { return m_begin_ == m_end_; }
 
   void Clear() noexcept {
-    begin = 0;
-    end = 0;
+    m_begin_ = 0;
+    m_end_ = 0;
   }
 
   int WriteToFd(int fd) noexcept;
 
  private:
-  std::unique_ptr<struct iovec[]> iovecs;
-  unsigned int size;
-  unsigned int begin;
-  unsigned int end;
+  std::unique_ptr<struct iovec[]> m_iovecs_;
+  unsigned int m_size_{3};
+  unsigned int m_begin_{0};
+  unsigned int m_end_{0};
 };
 
 }  // namespace clsn

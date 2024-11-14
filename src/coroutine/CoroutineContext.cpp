@@ -7,12 +7,12 @@
 #include "log/Log.h"
 
 extern "C" {
-extern void coctx_swap(coctx_t *, coctx_t *) asm("coctx_swap");
+extern void coctx_swap(Coctx *, Coctx *) asm("coctx_swap");
 };
 
 namespace clsn {
 
-SharedStack::SharedStack(size_t size) : owner(nullptr), stack(nullptr) {
+SharedStack::SharedStack(size_t size) : m_owner_(nullptr), m_stack_(nullptr) {
   unsigned long pageSize = sysconf(_SC_PAGESIZE);
   if (size < pageSize) {
     size = pageSize;
@@ -23,114 +23,114 @@ SharedStack::SharedStack(size_t size) : owner(nullptr), stack(nullptr) {
     size += pageSize;
   }
   CLSN_LOG_DEBUG << "share stack size is " << size;
-  stack = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-  if (-1 == reinterpret_cast<long>(stack)) {
+  m_stack_ = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  if (-1 == reinterpret_cast<long>(m_stack_)) {
     CLSN_LOG_FATAL << "mmap failed!";
     throw "";
   }
-  stackSize = size;
+  m_stack_size_ = size;
 }
 
 SharedStack::~SharedStack() {
-  if (nullptr != stack) {
-    if (-1 == munmap(stack, stackSize)) {
+  if (nullptr != m_stack_) {
+    if (-1 == munmap(m_stack_, m_stack_size_)) {
       CLSN_LOG_FATAL << "munmap failed!";
     }
-    stack = nullptr;
-    stackSize = 0;
+    m_stack_ = nullptr;
+    m_stack_size_ = 0;
   }
 }
 
 void CoroutineContext::Init() noexcept {
-  if (nullptr == sharedMem) {
-    if (nullptr == mem.stack_buffer) {
-      char *s = reinterpret_cast<char *>(&mem);
-      std::fill(s, s + sizeof(stStackMem_t), 0);
-      mem.stack_buffer = new char[DefaultStackSize];
-      mem.stack_size = DefaultStackSize;
-      mem.stack_bp = mem.stack_buffer + mem.stack_size;
+  if (nullptr == m_shared_mem_) {
+    if (nullptr == m_mem_.m_stack_buffer_) {
+      char *s = reinterpret_cast<char *>(&m_mem_);
+      std::fill(s, s + sizeof(StStackMem), 0);
+      m_mem_.m_stack_buffer_ = new char[DEFAULT_STACK_SIZE];
+      m_mem_.m_stack_size_ = DEFAULT_STACK_SIZE;
+      m_mem_.m_stack_bp_ = m_mem_.m_stack_buffer_ + m_mem_.m_stack_size_;
     }
   } else {
-    mem.stack_buffer = static_cast<char *>(sharedMem->GetStack());
-    mem.stack_size = sharedMem->GetStackSize();
-    mem.stack_bp = mem.stack_buffer + mem.stack_size;
+    m_mem_.m_stack_buffer_ = static_cast<char *>(m_shared_mem_->GetStack());
+    m_mem_.m_stack_size_ = m_shared_mem_->GetStackSize();
+    m_mem_.m_stack_bp_ = m_mem_.m_stack_buffer_ + m_mem_.m_stack_size_;
   }
-  makeCtx();
+  MakeCtx();
 }
 
-void CoroutineContext::makeCtx() noexcept {
-  if (sharedMem != nullptr) {
-    saveOtherStack();
-    sharedMem->SetOwner(this);
+void CoroutineContext::MakeCtx() noexcept {
+  if (m_shared_mem_ != nullptr) {
+    SaveOtherStack();
+    m_shared_mem_->SetOwner(this);
   }
-  char *s = reinterpret_cast<char *>(&ctx);
-  std::fill(s, s + sizeof(coctx_t), 0);
+  char *s = reinterpret_cast<char *>(&m_ctx_);
+  std::fill(s, s + sizeof(Coctx), 0);
 
 #if defined(__i386__)
-  char *bp = mem.stack_bp - sizeof(void *);
+  char *bp = m_mem_.m_stack_bp_ - sizeof(void *);
 
   bp = (char *)((unsigned long)bp & -16L);
 
   void **ret = reinterpret_cast<void **>(bp - (sizeof(void *) << 1));
 
-  *ret = reinterpret_cast<void *>(func);
+  *ret = reinterpret_cast<void *>(m_func_);
 
-  *reinterpret_cast<void **>(bp + sizeof(void *)) = reinterpret_cast<void *>(func);
+  *reinterpret_cast<void **>(bp + sizeof(void *)) = reinterpret_cast<void *>(m_func_);
 
-  ctx.regs[ESP] = bp - (sizeof(void *) << 1);
+  m_ctx_.m_regs_[ESP] = bp - (sizeof(void *) << 1);
 #elif defined(__x86_64__)
-  char *sp = mem.stack_bp - sizeof(void *);
+  char *sp = m_mem_.m_stack_bp_ - sizeof(void *);
 
   sp = (char *)((unsigned long)sp & -16LL);
 
   void **ret_addr = (void **)(sp);
-  *ret_addr = (void *)func;
+  *ret_addr = (void *)m_func_;
 
-  ctx.regs[kRSP] = sp;
+  m_ctx_.m_regs_[kRSP] = sp;
 
-  ctx.regs[kRETAddr] = reinterpret_cast<char *>(func);
+  m_ctx_.m_regs_[kRETAddr] = reinterpret_cast<char *>(m_func_);
 
-  ctx.regs[kRDI] = (char *)arg;
+  m_ctx_.m_regs_[kRDI] = (char *)m_arg_;
 #endif
 }
 
-void CoroutineContext::saveOtherStack() {
-  CoroutineContext *owner = sharedMem->GetOwner();
+void CoroutineContext::SaveOtherStack() {
+  CoroutineContext *owner = m_shared_mem_->GetOwner();
   if (nullptr != owner && this != owner) {
-    owner->saveStackToSavedStack();
+    owner->SaveStackToSavedStack();
   }
 }
 
-void CoroutineContext::saveStackToSavedStack() {
-  assert(sharedMem->GetOwner() == this);
-  mem.validSize = static_cast<size_t>(mem.stack_bp - static_cast<char *>(ctx.regs[kRSP]));
-  if (mem.validSize >= mem.saveStackSize) {
-    if (0 == mem.saveStackSize) {
-      mem.saveStackSize = 2;
+void CoroutineContext::SaveStackToSavedStack() {
+  assert(m_shared_mem_->GetOwner() == this);
+  m_mem_.m_valid_size_ = static_cast<size_t>(m_mem_.m_stack_bp_ - static_cast<char *>(m_ctx_.m_regs_[kRSP]));
+  if (m_mem_.m_valid_size_ >= m_mem_.m_save_stack_size_) {
+    if (0 == m_mem_.m_save_stack_size_) {
+      m_mem_.m_save_stack_size_ = 2;
     }
     do {
-      mem.saveStackSize = mem.saveStackSize << 1;
-    } while (mem.validSize >= mem.saveStackSize);
+      m_mem_.m_save_stack_size_ = m_mem_.m_save_stack_size_ << 1;
+    } while (m_mem_.m_valid_size_ >= m_mem_.m_save_stack_size_);
 
-    if (nullptr != mem.savedStack) delete[] reinterpret_cast<char *>(mem.savedStack);
-    mem.savedStack = new char[mem.saveStackSize];
+    if (nullptr != m_mem_.m_saved_stack_) delete[] reinterpret_cast<char *>(m_mem_.m_saved_stack_);
+    m_mem_.m_saved_stack_ = new char[m_mem_.m_save_stack_size_];
   }
-  sharedMem->SaveCtxToStack(mem.savedStack, mem.validSize);
-  sharedMem->SetOwner(nullptr);
+  m_shared_mem_->SaveCtxToStack(m_mem_.m_saved_stack_, m_mem_.m_valid_size_);
+  m_shared_mem_->SetOwner(nullptr);
 }
 
-void CoroutineContext::loadStackFromSavedStack() { sharedMem->LoadCtxFromStack(mem.savedStack, mem.validSize); }
+void CoroutineContext::LoadStackFromSavedStack() { m_shared_mem_->LoadCtxFromStack(m_mem_.m_saved_stack_, m_mem_.m_valid_size_); }
 
 void CoroutineContext::SwapCtx(CoroutineContext *other) noexcept {
-  if (!hasCtx) {
+  if (!m_has_ctx_) {
     Init();
-    hasCtx = true;
-  } else if (sharedMem != nullptr)
-    saveOtherStack();
+    m_has_ctx_ = true;
+  } else if (m_shared_mem_ != nullptr)
+    SaveOtherStack();
 
-  if (nullptr != sharedMem && this != sharedMem->GetOwner()) {
-    loadStackFromSavedStack();
+  if (nullptr != m_shared_mem_ && this != m_shared_mem_->GetOwner()) {
+    LoadStackFromSavedStack();
   }
-  coctx_swap(&other->ctx, &ctx);
+  coctx_swap(&other->m_ctx_, &m_ctx_);
 }
 }  // namespace clsn

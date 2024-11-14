@@ -140,10 +140,11 @@ class HashTable {
 
   std::unique_ptr<clsn::Iterator> GetIterator() noexcept { return std::make_unique<HashIterator>(this); }
 
-  static const std::string &GetKeyByIterator(Iterator *it) noexcept {
-    if (it->IsValid()) {
-      return static_cast<HashEntryBase *>(it->Get())->GetKey();
+  static const std::string &GetKeyByIterator(Iterator *it) {
+    if (!it->IsValid()) {
+      throw std::logic_error("hash entry is invalid.");
     }
+    return static_cast<HashEntryBase *>(it->Get())->GetKey();
   }
 
   static void *GetValByIterator(Iterator *it) noexcept {

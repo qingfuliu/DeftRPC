@@ -15,87 +15,93 @@
 namespace clsn {
 class Poller {
   friend std::unique_ptr<Poller> CreateNewPoller() noexcept;
+  friend class std::unique_ptr<Poller>;
 
  public:
+
+  Poller() : m_epoll_fd_(epoll_create(MAXEPOLLSIZE)) {}
+
+
   ~Poller() {
-    if (epollFd != -1) {
-      close(epollFd);
+    if (m_epoll_fd_ != -1) {
+      close(m_epoll_fd_);
     }
   }
 
-  int EpollWait(std::vector<FdDescriptor *> &tasks, int timeout = -1) noexcept;
+  int EpollWait(std::vector<FileDescriptor *> &tasks, int timeout = -1) noexcept;
 
   void RegisterRead(int fd, Task task) noexcept {
     if (fd < 0) {
-      CLSN_LOG_ERROR << "sock should not less then zero!";
+      CLSN_LOG_ERROR << "m_socket_ should not less then zero!";
       return;
     }
-    if (fdDescriptors.size() <= fd || fdDescriptors[fd].IsNoneEvent()) {
-      FdDescriptor fdDescriptor(fd);
-      fdDescriptor.SetRead(std::move(task));
-      registerFd(std::move(fdDescriptor));
-      return;
-    }
-
-    if (fdDescriptors[fd].IsReading()) {
-      fdDescriptors[fd].SetRead(std::move(task));
+    if (m_fds_.size() <= fd || m_fds_[fd].IsNoneEvent()) {
+      FileDescriptor file_descriptor(fd);
+      file_descriptor.SetRead(std::move(task));
+      RegisterFd(std::move(file_descriptor));
       return;
     }
 
-    CLSN_LOG_ERROR << "sock: sock ,already have event :" << fdDescriptors[fd].GetEvent() << ",but register read event";
+    if (m_fds_[fd].IsReading()) {
+      m_fds_[fd].SetRead(std::move(task));
+      return;
+    }
+
+    CLSN_LOG_ERROR << "m_socket_: m_socket_ ,already have event :" << m_fds_[fd].GetEvent()
+                   << ",but register read event";
   }
 
   void RegisterWrite(int fd, Task task) noexcept {
     if (fd < 0) {
-      CLSN_LOG_ERROR << "sock should not less then zero!";
+      CLSN_LOG_ERROR << "m_socket_ should not less then zero!";
       return;
     }
-    if (fdDescriptors.size() <= fd || fdDescriptors[fd].IsNoneEvent()) {
-      FdDescriptor fdDescriptor(fd);
-      fdDescriptor.SetWrite(std::move(task));
-      registerFd(std::move(fdDescriptor));
-      return;
-    }
-
-    if (fdDescriptors[fd].IsWrite()) {
-      fdDescriptors[fd].SetWrite(std::move(task));
+    if (m_fds_.size() <= fd || m_fds_[fd].IsNoneEvent()) {
+      FileDescriptor file_descriptor(fd);
+      file_descriptor.SetWrite(std::move(task));
+      RegisterFd(std::move(file_descriptor));
       return;
     }
 
-    CLSN_LOG_ERROR << "sock: sock ,already have event :" << fdDescriptors[fd].GetEvent() << ",but register write event";
+    if (m_fds_[fd].IsWrite()) {
+      m_fds_[fd].SetWrite(std::move(task));
+      return;
+    }
+
+    CLSN_LOG_ERROR << "m_socket_: m_socket_ ,already have event :" << m_fds_[fd].GetEvent()
+                   << ",but register write event";
   }
 
   void CancelRegister(int fd) noexcept {
     if (fd < 0) {
-      CLSN_LOG_ERROR << "sock should not less then zero!";
+      CLSN_LOG_ERROR << "m_socket_ should not less then zero!";
       return;
     }
-    if (fdDescriptors.size() >= fd && !fdDescriptors[fd].IsNoneEvent()) {
-      fdDescriptors[fd] = nullptr;
-      epollCtl(fd, EPOLL_CTL_DEL, 0);
+    if (m_fds_.size() >= fd && !m_fds_[fd].IsNoneEvent()) {
+      m_fds_[fd] = nullptr;
+      EpollCtl(fd, EPOLL_CTL_DEL, 0);
     }
   }
 
  private:
-  Poller() : epollFd(epoll_create(MAXEPOLLSIZE)) {}
 
-  void registerFd(FdDescriptor fdDescriptor) noexcept;
+  void RegisterFd(FileDescriptor fdDescriptor) noexcept;
 
-  int epollCtl(int fd, int op, uint32_t event) {
+  int EpollCtl(int fd, int op, uint32_t event) {
     epoll_event ev{};
     ev.data.fd = fd;
-    ev.data.ptr = static_cast<void *>(&(*fdDescriptors.begin()) + fd);
+    ev.data.ptr = static_cast<void *>(&(*m_fds_.begin()) + fd);
     ev.events = event;
-    return epoll_ctl(epollFd, op, fd, &ev);
+    return epoll_ctl(m_epoll_fd_, op, fd, &ev);
   }
 
  private:
-  int epollFd;
-  std::vector<FdDescriptor> fdDescriptors;
-  epoll_event events[MAXEPOLLSIZE]{};
+  int m_epoll_fd_;
+  std::vector<FileDescriptor> m_fds_{};
+  epoll_event m_events_[MAXEPOLLSIZE]{};
 };
 
-inline std::unique_ptr<Poller> CreateNewPoller() noexcept { return std::unique_ptr<Poller>(new Poller); }
+inline std::unique_ptr<Poller> CreateNewPoller() noexcept { return std::make_unique<Poller>(); }
 
 }  // namespace clsn
 

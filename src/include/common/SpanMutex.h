@@ -19,25 +19,21 @@ class SpanMutex : public clsn::Mutex {
   void Lock() noexcept override {
     bool flag = false;
 
-    while (!mutex.compare_exchange_weak(flag, true, std::memory_order_acquire, std::memory_order_release)) {
+    while (!m_mutex_.compare_exchange_weak(flag, true, std::memory_order_acquire, std::memory_order_release)) {
       flag = false;
     }
   }
 
-  void UnLock() noexcept override { mutex.store(false, std::memory_order_acquire); }
+  void UnLock() noexcept override { m_mutex_.store(false, std::memory_order_acquire); }
 
   bool TryLock() noexcept override {
     bool flag = false;
-    mutex.compare_exchange_strong(flag, true, std::memory_order_acquire, std::memory_order_release);
-    if (flag) {
-      flag = false;
-      return false;
-    }
-    return true;
+    m_mutex_.compare_exchange_strong(flag, true, std::memory_order_acquire, std::memory_order_release);
+    return !flag;
   }
 
  private:
-  std::atomic_bool mutex{false};
+  std::atomic_bool m_mutex_{false};
 };
 
 }  // namespace clsn

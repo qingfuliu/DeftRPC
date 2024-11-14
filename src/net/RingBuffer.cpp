@@ -14,86 +14,89 @@
 
 namespace clsn {
 RingBuffer::RingBuffer() noexcept
-    : begin(0), end(0), size(0), buffer(std::vector<char>(DefaultBufferLen)), tempCapacity(0), temp(nullptr) {}
+    : m_begin_(0),
+      m_end_(0),
+      m_size_(0),
+      m_buffer_(std::vector<char>(DefaultBufferLen)), m_temp_capacity_(0), m_temp_(nullptr) {}
 
 PackageLengthType RingBuffer::GetPackageLength() const noexcept {
-  if (size <= sizeof(PackageLengthType)) {
+  if (m_size_ <= sizeof(PackageLengthType)) {
     return -1;
   }
 
-  int tailLen = static_cast<int>(std::distance(buffer.begin() + begin, buffer.end()));
+  int tailLen = static_cast<int>(std::distance(m_buffer_.begin() + m_begin_, m_buffer_.end()));
 
   if (tailLen >= sizeof(PackageLengthType)) {
-    const PackageLengthType *res = reinterpret_cast<const PackageLengthType *>(&(*(buffer.begin() + begin)));
+    const PackageLengthType *res = reinterpret_cast<const PackageLengthType *>(&(*(m_buffer_.begin() + m_begin_)));
     return ntohl(*res);
   }
   PackageLengthType res = 0;
-  std::copy(buffer.begin() + begin, buffer.end(), reinterpret_cast<char *>(&res));
-  std::copy(buffer.begin(), buffer.begin() + sizeof(PackageLengthType) - tailLen,
+  std::copy(m_buffer_.begin() + m_begin_, m_buffer_.end(), reinterpret_cast<char *>(&res));
+  std::copy(m_buffer_.begin(), m_buffer_.begin() + sizeof(PackageLengthType) - tailLen,
             reinterpret_cast<char *>(&res) + tailLen);
   return ntohl(res);
 }
 
-int RingBuffer::getTailSpaceLen() const noexcept {
-  if (begin > end || isFull()) {
+int RingBuffer::GetTailSpaceLen() const noexcept {
+  if (m_begin_ > m_end_ || IsFull()) {
     return 0;
   }
-  return static_cast<int>(buffer.capacity()) - this->end;
+  return static_cast<int>(m_buffer_.capacity()) - this->m_end_;
 }
 
-int RingBuffer::getTailContentLen() const noexcept {
-  if (begin < end || IsEmpty()) {
+int RingBuffer::GetTailContentLen() const noexcept {
+  if (m_begin_ < m_end_ || IsEmpty()) {
     return 0;
   }
-  return static_cast<int>(buffer.capacity()) /**/ - begin;
+  return static_cast<int>(m_buffer_.capacity()) /**/ - m_begin_;
 }
 
-int RingBuffer::getWritableCapacity() const noexcept { return static_cast<int>(buffer.capacity()) - this->size; }
+int RingBuffer::GetWritableCapacity() const noexcept { return static_cast<int>(m_buffer_.capacity()) - this->m_size_; }
 
 // int RingBuffer::ReadAll(char*buf,int*len){
 //     return Read(buf,size);
 // }
 
 int RingBuffer::Read(char *buf, int len) noexcept {
-  if (len > size) {
-    len = size;
+  if (len > m_size_) {
+    len = m_size_;
   }
   if (len == 0) {
     return 0;
   }
   do {
-    if (begin < end) {
-      std::copy(buffer.begin() + begin, buffer.begin() + begin + len, buf);
+    if (m_begin_ < m_end_) {
+      std::copy(m_buffer_.begin() + m_begin_, m_buffer_.begin() + m_begin_ + len, buf);
       break;
     }
-    bool tailLen = getTailContentLen();
+    bool tailLen = GetTailContentLen();
     tailLen = (tailLen > len) ? len : tailLen;
-    std::copy(buffer.begin() + begin, buffer.begin() + begin + tailLen, buf);
+    std::copy(m_buffer_.begin() + m_begin_, m_buffer_.begin() + m_begin_ + tailLen, buf);
     if (len > tailLen) {
-      std::copy(buffer.begin(), buffer.begin() + len - tailLen, buf + tailLen);
+      std::copy(m_buffer_.begin(), m_buffer_.begin() + len - tailLen, buf + tailLen);
     }
   } while (0);
-  updateAfterRead(len);
+  UpdateAfterRead(len);
   return len;
 }
 
 char *RingBuffer::ReadAll(int *len) noexcept {
-  if (size == 0) {
+  if (m_size_ == 0) {
     if (len != nullptr) {
       *len = 0;
     }
     return nullptr;
   }
-  if (tempCapacity < size) {
-    tempCapacity = size;
-    temp = std::unique_ptr<char[]>(new char[tempCapacity]);
+  if (m_temp_capacity_ < m_size_) {
+    m_temp_capacity_ = m_size_;
+    m_temp_ = std::unique_ptr<char[]>(new char[m_temp_capacity_]);
   }
   if (len != nullptr) {
-    *len = Read(temp.get(), size);
+    *len = Read(m_temp_.get(), m_size_);
   } else {
-    Read(temp.get(), size);
+    Read(m_temp_.get(), m_size_);
   }
-  return temp.get();
+  return m_temp_.get();
 }
 
 //    char*
@@ -101,71 +104,71 @@ char *RingBuffer::Read(int size, int *len) noexcept {
   if (size <= 0) {
     return nullptr;
   }
-  while (tempCapacity < size) {
-    if (tempCapacity == 0) {
-      tempCapacity = 1024;
+  while (m_temp_capacity_ < size) {
+    if (m_temp_capacity_ == 0) {
+      m_temp_capacity_ = 1024;
     } else
-      tempCapacity <<= 1;
-    temp.reset(new char[tempCapacity]);
+      m_temp_capacity_ <<= 1;
+    m_temp_.reset(new char[m_temp_capacity_]);
   }
-  size = Read(temp.get(), size);
+  size = Read(m_temp_.get(), size);
   if (len != nullptr) {
     *len = size;
   }
-  return temp.get();
+  return m_temp_.get();
 }
 
 int RingBuffer::Write(const char *buf, int len) noexcept {
-  enableWritableSpace(len);
+  EnableWritableSpace(len);
   do {
-    if (this->begin >= this->end) {
-      std::copy(buf, buf + len, buffer.begin() + this->end);
+    if (this->m_begin_ >= this->m_end_) {
+      std::copy(buf, buf + len, m_buffer_.begin() + this->m_end_);
       break;
     }
-    int tailCapacity = getTailSpaceLen();
+    int tailCapacity = GetTailSpaceLen();
     tailCapacity = tailCapacity > len ? len : tailCapacity;
-    std::copy(buf, buf + tailCapacity, buffer.begin() + this->end);
+    std::copy(buf, buf + tailCapacity, m_buffer_.begin() + this->m_end_);
     if (tailCapacity < len) {
-      std::copy(buf + tailCapacity, buf + len, buffer.begin());
+      std::copy(buf + tailCapacity, buf + len, m_buffer_.begin());
     }
   } while (0);
-  updateAfterWrite(len);
+  UpdateAfterWrite(len);
   return len;
 }
 
-void RingBuffer::updateAfterRead(int len) noexcept {
-  if (this->size == len) {
-    this->size = 0;
-    begin = 0;
-    end = 0;
+void RingBuffer::UpdateAfterRead(int len) noexcept {
+  if (this->m_size_ == len) {
+    this->m_size_ = 0;
+    m_begin_ = 0;
+    m_end_ = 0;
   } else {
-    this->size -= len;
-    begin = (begin + len) % static_cast<int>(this->buffer.capacity());
+    this->m_size_ -= len;
+    m_begin_ = (m_begin_ + len) % static_cast<int>(this->m_buffer_.capacity());
   }
 }
 
-void RingBuffer::updateAfterWrite(int len) noexcept {
+void RingBuffer::UpdateAfterWrite(int len) noexcept {
   if (len == 0) {
     return;
   }
-  this->size += len;
-  if (begin >= end) {
-    end += len;
+  this->m_size_ += len;
+  if (m_begin_ >= m_end_) {
+    m_end_ += len;
     return;
   }
-  end = (end + len) % static_cast<int>(this->buffer.capacity());
+  m_end_ = (m_end_ + len) % static_cast<int>(this->m_buffer_.capacity());
 }
 
-void RingBuffer::enableWritableSpace(int targetSize) noexcept {
-  if (this->buffer.capacity() >= targetSize + this->size) {
+void RingBuffer::EnableWritableSpace(int targetSize) noexcept {
+  if (this->m_buffer_.capacity() >= targetSize + this->m_size_) {
     return;
   }
 
-  int needle = this->size + targetSize;
-  int newCapacity = static_cast<int>(this->buffer.capacity());
+  int needle = this->m_size_ + targetSize;
+  int newCapacity = static_cast<int>(this->m_buffer_.capacity());
 
   do {
-    if (this->buffer.capacity() <= MultiplyExpansionLimit) {
+    if (this->m_buffer_.capacity() <= MultiplyExpansionLimit) {
       newCapacity <<= 1;
       continue;
     }
@@ -173,35 +176,35 @@ void RingBuffer::enableWritableSpace(int targetSize) noexcept {
   } while (newCapacity < needle);
 
   std::vector<char> tempBuffer;
-  tempBuffer.swap(buffer);
-  buffer.resize(newCapacity);
+  tempBuffer.swap(m_buffer_);
+  m_buffer_.resize(newCapacity);
   do {
-    if (this->begin <= this->end) {
-      std::copy(tempBuffer.begin() + begin, tempBuffer.begin() + end, buffer.begin());
+    if (this->m_begin_ <= this->m_end_) {
+      std::copy(tempBuffer.begin() + m_begin_, tempBuffer.begin() + m_end_, m_buffer_.begin());
       break;
     }
-    std::copy(tempBuffer.begin() + begin, tempBuffer.end(), buffer.begin());
-    std::copy(tempBuffer.begin(), tempBuffer.begin() + end, buffer.begin() + getTailContentLen());
+    std::copy(tempBuffer.begin() + m_begin_, tempBuffer.end(), m_buffer_.begin());
+    std::copy(tempBuffer.begin(), tempBuffer.begin() + m_end_, m_buffer_.begin() + GetTailContentLen());
   } while (0);
-  this->begin = 0;
-  this->end = this->size;
+  this->m_begin_ = 0;
+  this->m_end_ = this->m_size_;
 }
 
 int RingBuffer::ReadFromFd(int fd) noexcept {
   char expansionSpace[MAXPACKAGELEN];
   struct iovec iov[3];
   int iovLen;
-  int writable = getWritableCapacity();
-  if (getTailSpaceLen() > 0) {
-    iov[0].iov_base = &(*buffer.begin()) + end;
-    iov[0].iov_len = getTailSpaceLen();
-    iov[1].iov_base = &(*buffer.begin());
-    iov[1].iov_len = begin;
+  int writable = GetWritableCapacity();
+  if (GetTailSpaceLen() > 0) {
+    iov[0].iov_base = &(*m_buffer_.begin()) + m_end_;
+    iov[0].iov_len = GetTailSpaceLen();
+    iov[1].iov_base = &(*m_buffer_.begin());
+    iov[1].iov_len = m_begin_;
     iov[2].iov_base = expansionSpace;
     iov[2].iov_len = MAXPACKAGELEN;
     iovLen = 3;
   } else {
-    iov[0].iov_base = &(*buffer.begin()) + end;
+    iov[0].iov_base = &(*m_buffer_.begin()) + m_end_;
     iov[0].iov_len = writable;
     iov[1].iov_base = expansionSpace;
     iov[1].iov_len = MAXPACKAGELEN;
@@ -216,10 +219,10 @@ int RingBuffer::ReadFromFd(int fd) noexcept {
     return -1;
   }
   if (resSize > writable) {
-    updateAfterWrite(writable);
+    UpdateAfterWrite(writable);
     Append(expansionSpace, resSize - writable);
   } else {
-    updateAfterWrite(resSize);
+    UpdateAfterWrite(resSize);
   }
   return resSize;
 }
@@ -227,17 +230,17 @@ int RingBuffer::ReadFromFd(int fd) noexcept {
 int RingBuffer::WriteToFd(int fd) noexcept {
   struct iovec iov[2];
   int iovLen;
-  int tailContentLen = getTailContentLen();
+  int tailContentLen = GetTailContentLen();
 
   if (tailContentLen > 0) {
-    iov[0].iov_base = &(*buffer.begin()) + begin;
+    iov[0].iov_base = &(*m_buffer_.begin()) + m_begin_;
     iov[0].iov_len = tailContentLen;
-    iov[1].iov_base = &(*buffer.begin());
-    iov[1].iov_len = size - tailContentLen;
+    iov[1].iov_base = &(*m_buffer_.begin());
+    iov[1].iov_len = m_size_ - tailContentLen;
     iovLen = 2;
   } else {
-    iov[0].iov_base = &(*buffer.begin()) + begin;
-    iov[0].iov_len = size;
+    iov[0].iov_base = &(*m_buffer_.begin()) + m_begin_;
+    iov[0].iov_len = m_size_;
     iovLen = 1;
   }
 
@@ -246,7 +249,7 @@ int RingBuffer::WriteToFd(int fd) noexcept {
   if (writeSize < 0) {
     return -1;
   }
-  updateAfterRead(writeSize);
+  UpdateAfterRead(writeSize);
   return writeSize;
 }
 

@@ -28,12 +28,12 @@ class RpcCodeC : public CodeC {
 
   virtual void WriteSizeToPackage(size_t size) noexcept {
     PackageLengthType be = htonl(size);
-    std::copy(reinterpret_cast<char *>(&be), reinterpret_cast<char *>(&be) + sizeof(PackageLengthType), cache.get());
+    std::copy(reinterpret_cast<char *>(&be), reinterpret_cast<char *>(&be) + sizeof(PackageLengthType), m_cache_.get());
   }
 
  private:
-  inline static size_t cacheLength = sizeof(PackageLengthType) + sizeof(Crc32Type);
-  std::unique_ptr<char[]> cache{new char[cacheLength]};
+  inline static size_t m_cache_length = sizeof(PackageLengthType) + sizeof(Crc32Type);
+  std::unique_ptr<char[]> m_cache_{new char[m_cache_length]};
 };
 
 }  // namespace clsn

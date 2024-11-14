@@ -19,13 +19,13 @@ class Task {
  public:
   Task() noexcept = default;
 
-  Task(TaskType t) noexcept : task(std::move(t)) {}
+  Task(TaskType t) noexcept : m_task_(std::move(t)) {}
 
-  Task(Coroutine *t) noexcept : task(t) {}
+  Task(Coroutine *t) noexcept : m_task_(t) {}
 
   Task(const Task &) = default;
 
-  Task(Task &&other) noexcept : task(std::move(other.task)) {}
+  Task(Task &&other) noexcept : m_task_(std::move(other.m_task_)) {}
 
   template <class Lambda, typename = std::enable_if_t<!std::is_base_of_v<Task, Lambda>>>
   Task(Lambda t) noexcept : Task(std::move(TaskType(std::move(t)))) {}
@@ -34,195 +34,205 @@ class Task {
 
   Task &operator=(const Task &) = default;
 
-  Task &operator=(std::nullptr_t) noexcept { task = nullptr; }
+  Task &operator=(std::nullptr_t) noexcept {
+    m_task_ = nullptr;
+    return *this;
+  }
 
-  Task &operator=(Task &&other) noexcept { task = std::move(other.task); }
+  Task &operator=(Task &&other) noexcept {
+    m_task_ = std::move(other.m_task_);
+    return *this;
+  }
 
   void operator()() noexcept {
-    switch (task.index()) {
+    switch (m_task_.index()) {
       case 0: {
-        auto routine = std::get<Coroutine *>(task);
+        auto routine = std::get<Coroutine *>(m_task_);
         if (nullptr != routine) {
-          routine->swapIn();
+          routine->SwapIn();
         }
         break;
       }
       case 1:
-        std::get<TaskType>(task)();
+        std::get<TaskType>(m_task_)();
+        break;
+      default:
         break;
     }
   }
 
   bool operator==(std::nullptr_t) const noexcept {
-    if (0 == task.index()) {
-      return nullptr == std::get<Coroutine *>(task);
+    if (0 == m_task_.index()) {
+      return nullptr == std::get<Coroutine *>(m_task_);
     }
-    return nullptr == std::get<TaskType>(task);
+    return nullptr == std::get<TaskType>(m_task_);
   }
 
   bool operator!=(std::nullptr_t) const noexcept {
-    if (0 == task.index()) {
-      return nullptr != std::get<Coroutine *>(task);
+    if (0 == m_task_.index()) {
+      return nullptr != std::get<Coroutine *>(m_task_);
     }
-    return nullptr != std::get<TaskType>(task);
+    return nullptr != std::get<TaskType>(m_task_);
   }
 
  private:
-  std::variant<Coroutine *, TaskType> task{nullptr};
+  std::variant<Coroutine *, TaskType> m_task_{nullptr};
 };
 
 inline bool operator==(std::nullptr_t, Task &t) noexcept { return t == nullptr; }
 
-class FdDescriptor {
+class FileDescriptor {
  public:
-  explicit FdDescriptor(int fd) noexcept : fd(fd), mEvent(0), curEvent(0) {}
+  explicit FileDescriptor(int fd) noexcept : m_fd_(fd){}
 
-  FdDescriptor() noexcept = default;
+  FileDescriptor() noexcept = default;
 
-  ~FdDescriptor() = default;
+  ~FileDescriptor() = default;
 
-  FdDescriptor(const FdDescriptor &other) = default;
+  FileDescriptor(const FileDescriptor &other) = default;
 
-  FdDescriptor(FdDescriptor &&other) noexcept = default;
+  FileDescriptor(FileDescriptor &&other) noexcept = default;
 
-  FdDescriptor &operator=(const FdDescriptor &other) noexcept = default;
+  FileDescriptor &operator=(const FileDescriptor &other) noexcept = default;
 
-  FdDescriptor &operator=(FdDescriptor &&other) noexcept = default;
+  FileDescriptor &operator=(FileDescriptor &&other) noexcept = default;
 
-  FdDescriptor &operator=(std::nullptr_t) noexcept {
-    fd = 0;
-    mEvent = 0;
-    curEvent = 0;
-    task = nullptr;
+  FileDescriptor &operator=(std::nullptr_t) noexcept {
+    m_fd_ = 0;
+    m_event_ = 0;
+    m_cur_event_ = 0;
+    m_task_ = nullptr;
+    return *this;
+    ;
   }
 
   void operator()() noexcept {
-    if (curEvent != mEvent) {
-      CLSN_LOG_ERROR << "task should not be execute!";
+    if (m_cur_event_ != m_event_) {
+      CLSN_LOG_ERROR << "m_task_ should not be execute!";
       return;
     }
-    if (task != nullptr) {
-      task();
+    if (m_task_ != nullptr) {
+      m_task_();
     }
   }
 
-  void setCurEvent(uint32_t event) noexcept { curEvent = event; }
+  void SetCurEvent(uint32_t event) noexcept { m_cur_event_ = event; }
 
   void SetRead(Task t) noexcept {
-    mEvent = static_cast<uint32_t>(Event::Read);
-    task = std::move(t);
+    m_event_ = static_cast<uint32_t>(kEvent::Read);
+    m_task_ = std::move(t);
   }
 
   void SetWrite(Task t) noexcept {
-    mEvent = static_cast<uint32_t>(Event::Write);
-    task = std::move(t);
+    m_event_ = static_cast<uint32_t>(kEvent::Write);
+    m_task_ = std::move(t);
   }
 
-  void SetFd(int f) noexcept { fd = f; }
+  void SetFd(int f) noexcept { m_fd_ = f; }
 
-  [[nodiscard]] int GetFd() const noexcept { return fd; }
+  [[nodiscard]] int GetFd() const noexcept { return m_fd_; }
 
-  [[nodiscard]] uint32_t GetEvent() const noexcept { return mEvent; }
+  [[nodiscard]] uint32_t GetEvent() const noexcept { return m_event_; }
 
-  [[nodiscard]] bool IsNoneEvent() const noexcept { return 0 == mEvent; }
+  [[nodiscard]] bool IsNoneEvent() const noexcept { return 0 == m_event_; }
 
-  [[nodiscard]] bool IsReading() const noexcept { return 0 != (mEvent & static_cast<uint32_t>(Event::Read)); }
+  [[nodiscard]] bool IsReading() const noexcept { return 0 != (m_event_ & static_cast<uint32_t>(kEvent::Read)); }
 
-  [[nodiscard]] bool IsWrite() const noexcept { return 0 != (mEvent & static_cast<uint32_t>(Event::Write)); }
+  [[nodiscard]] bool IsWrite() const noexcept { return 0 != (m_event_ & static_cast<uint32_t>(kEvent::Write)); }
 
  private:
-  int fd{0};
-  uint32_t mEvent{0};
-  uint32_t curEvent{0};
-  Task task;
+  int m_fd_{0};
+  uint32_t m_event_{0};
+  uint32_t m_cur_event_{0};
+  Task m_task_;
 };
 
-//    class FdDescriptor {
+//    class FileDescriptor {
 //    public:
-//        explicit FdDescriptor(int sock) noexcept: sock(sock), mEvent(0), curEvent(0) {}
+//        explicit FileDescriptor(int m_socket_) noexcept: m_socket_(m_socket_), m_event_(0), m_cur_event_(0) {}
 //
-//        FdDescriptor() noexcept: FdDescriptor(0) {}
+//        FileDescriptor() noexcept: FileDescriptor(0) {}
 //
-//        FdDescriptor(const FdDescriptor &other) = default;
+//        FileDescriptor(const FileDescriptor &other) = default;
 //
-//        ~FdDescriptor() = default;
+//        FileDescriptoror() = default;
 //
-//        FdDescriptor &operator=(const FdDescriptor &other) noexcept = default;
+//        FileDescriptor &operator=(const FileDescriptor &other) noexcept = default;
 //
-//        FdDescriptor &operator=(std::nullptr_t) noexcept {
-//            sock = 0;
-//            mEvent = 0;
-//            curEvent = 0;
+//        FileDescriptor &operator=(std::nullptr_t) noexcept {
+//            m_socket_ = 0;
+//            m_event_ = 0;
+//            m_cur_event_ = 0;
 //            readTask = nullptr;
 //            writeTask = nullptr;
 //            errorTask = nullptr;
 //        }
 //
-//        FdDescriptor(FdDescriptor &&other) noexcept = default;
+//        FileDescriptor(FileDescriptor &&other) noexcept = default;
 //
-//        FdDescriptor &operator=(FdDescriptor &&other) noexcept = default;
+//        FileDescriptor &operator=(FileDescriptor &&other) noexcept = default;
 //
 //        template<class T>
-//        FdDescriptor &CombineWith(T &&other) noexcept {
-//            uint32_t temp = mEvent | other.mEvent;
+//        FileDescriptor &CombineWith(T &&other) noexcept {
+//            uint32_t m_temp_ = m_event_ | other.m_event_;
 //            operator=(std::forward<T>(other));
-//            mEvent = temp;
+//            m_event_ = m_temp_;
 //            return *this;
 //        }
 //
 //        void operator()() noexcept {
-//            uint32_t event = mEvent & curEvent;
-//            if (event & static_cast<uint32_t>(Event::Read) && !(nullptr == readTask)) {
+//            uint32_t event = m_event_ & m_cur_event_;
+//            if (event & static_cast<uint32_t>(kEvent::Read) && !(nullptr == readTask)) {
 //                readTask();
 //            }
 //
-//            if (event & static_cast<uint32_t>(Event::Write) && !(nullptr == writeTask)) {
+//            if (event & static_cast<uint32_t>(kEvent::Write) && !(nullptr == writeTask)) {
 //                writeTask();
 //            }
 //        }
 //
-//        void setCurEvent(uint32_t event) noexcept {
-//            curEvent = event;
+//        void SetCurEvent(uint32_t event) noexcept {
+//            m_cur_event_ = event;
 //        }
 //
-//        void setReadEvent(Task task) noexcept {
-//            readTask = std::move(task);
-//            mEvent |= static_cast<uint32_t>(Event::Read);
+//        void setReadEvent(Task m_task_) noexcept {
+//            readTask = std::move(m_task_);
+//            m_event_ |= static_cast<uint32_t>(kEvent::Read);
 //        }
 //
-//        void setWriteEvent(Task task) noexcept {
-//            writeTask = std::move(task);
-//            mEvent |= static_cast<uint32_t>(Event::Write);
+//        void setWriteEvent(Task m_task_) noexcept {
+//            writeTask = std::move(m_task_);
+//            m_event_ |= static_cast<uint32_t>(kEvent::Write);
 //        }
 //
-//        void setErrorEvent(Task task) noexcept {
-//            errorTask = std::move(task);
+//        void setErrorEvent(Task m_task_) noexcept {
+//            errorTask = std::move(m_task_);
 //        }
 //
 //        [[nodiscard]] int GetFd() const noexcept {
-//            return sock;
+//            return m_socket_;
 //        }
 //
 //        [[nodiscard]] uint32_t GetEvent() const noexcept {
-//            return mEvent;
+//            return m_event_;
 //        }
 //
 //        [[nodiscard]] bool IsNoneEvent() const noexcept {
-//            return 0 == mEvent;
+//            return 0 == m_event_;
 //        }
 //
 //        [[nodiscard]] bool IsReading() const noexcept {
-//            return 0 != (mEvent & static_cast<uint32_t>(Event::Read));
+//            return 0 != (m_event_ & static_cast<uint32_t>(kEvent::Read));
 //        }
 //
 //        [[nodiscard]] bool IsWrite() const noexcept {
-//            return 0 != (mEvent & static_cast<uint32_t>(Event::Write));
+//            return 0 != (m_event_ & static_cast<uint32_t>(kEvent::Write));
 //        }
 //
 //    private:
-//        int sock{0};
-//        uint32_t mEvent{0};
-//        uint32_t curEvent;
+//        int m_socket_{0};
+//        uint32_t m_event_{0};
+//        uint32_t m_cur_event_;
 //        Task readTask;
 //        Task writeTask;
 //        Task errorTask;

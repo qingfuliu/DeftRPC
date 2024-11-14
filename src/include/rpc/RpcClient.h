@@ -52,7 +52,7 @@ class RpcClient : public TcpClient {
     //=================== StringSerialize ===================//
     clsn::RPCRequest request;
     request.funcName = name;
-    request.async = static_cast<short>(clsn::RpcType::Sync);
+    request.async = static_cast<short>(clsn::kRpcType::Sync);
     {
       clsn::StringSerialize encode(request.args);
       encode(std::forward_as_tuple(args...));
@@ -64,7 +64,7 @@ class RpcClient : public TcpClient {
       encode(request);
       //=================== send data ===================//
       if (-1 == TcpClient::Send(data)) {
-        throw std::logic_error(SeverIsBase);
+        throw std::logic_error(sever_is_base);
       }
     }
 

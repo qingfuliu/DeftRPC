@@ -33,26 +33,26 @@ int CreateBlockSocket() noexcept {
   return fd;
 }
 
-int Socket::Listen() const noexcept { return ::listen(fd, MAX_LISTEN_COUNT); }
+int Socket::Listen() const noexcept { return ::listen(m_fd_, MAX_LISTEN_COUNT); }
 
 int Socket::Connect(const Addr *addr) const noexcept {
   int res;
-  res = ::connect(fd, addr->getSockAddr(), addr->getSockAddrSize());
+  res = ::connect(m_fd_, addr->getSockAddr(), addr->getSockAddrSize());
   return res;
 }
 
 int Socket::Accept(Addr *addr) const noexcept {
   socklen_t len = sizeof(sockaddr_in6);
   int newFd;
-  newFd = ::accept4(fd, addr->getSockAddr(), &len, SOCK_NONBLOCK | SOCK_CLOEXEC);
+  newFd = ::accept4(m_fd_, addr->getSockAddr(), &len, SOCK_NONBLOCK | SOCK_CLOEXEC);
   return newFd;
 }
 
-int Socket::Bind(const Addr *addr) const noexcept { return ::bind(fd, addr->getSockAddr(), addr->getSockAddrSize()); }
+int Socket::Bind(const Addr *addr) const noexcept { return ::bind(m_fd_, addr->getSockAddr(), addr->getSockAddrSize()); }
 
 int Socket::SetTcpKeepAlive(bool val) const noexcept {
   int flag = val ? 1 : 0;
-  if (0 != ::setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &flag, sizeof(int))) {
+  if (0 != ::setsockopt(m_fd_, SOL_SOCKET, SO_KEEPALIVE, &flag, sizeof(int))) {
     // log
     CLSN_LOG_WARNING << "SetTcpKeepAlive failed!! line: " << __LINE__ << " file: " << __FILE__;
     return -1;
@@ -62,7 +62,7 @@ int Socket::SetTcpKeepAlive(bool val) const noexcept {
 
 int Socket::SetTCPNoDelay(bool val) const noexcept {
   int flag = val ? 1 : 0;
-  if (0 != ::setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int))) {
+  if (0 != ::setsockopt(m_fd_, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int))) {
     // log
     CLSN_LOG_WARNING << "SetTCPNoDelay failed!! line: " << __LINE__ << " file: " << __FILE__;
 
@@ -73,7 +73,7 @@ int Socket::SetTCPNoDelay(bool val) const noexcept {
 
 int Socket::SetReusePort(bool val) const noexcept {
   int flag = val ? 1 : 0;
-  if (0 != ::setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &flag, sizeof(int))) {
+  if (0 != ::setsockopt(m_fd_, SOL_SOCKET, SO_REUSEPORT, &flag, sizeof(int))) {
     // log
     CLSN_LOG_WARNING << "SetReusePort failed!! line: " << __LINE__ << " file: " << __FILE__;
 
@@ -84,7 +84,7 @@ int Socket::SetReusePort(bool val) const noexcept {
 
 int Socket::SetReuseAddr(bool val) const noexcept {
   int flag = val ? 1 : 0;
-  if (0 != ::setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int))) {
+  if (0 != ::setsockopt(m_fd_, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int))) {
     // log
     CLSN_LOG_WARNING << "SetReuseAddr failed!! line: " << __LINE__ << " file: " << __FILE__;
 
@@ -94,15 +94,15 @@ int Socket::SetReuseAddr(bool val) const noexcept {
 }
 
 int Socket::SetNoBlock(bool val) const noexcept {
-  int oldSocketFlag = fcntl(fd, F_GETFL, 0);
+  int oldSocketFlag = fcntl(m_fd_, F_GETFL, 0);
   int newSocketFlag = oldSocketFlag;
   if (val) {
     newSocketFlag |= O_NONBLOCK;
   } else {
     newSocketFlag |= (~O_NONBLOCK);
   }
-  if (fcntl(fd, F_SETFL, newSocketFlag) == -1) {
-    ::close(fd);
+  if (fcntl(m_fd_, F_SETFL, newSocketFlag) == -1) {
+    ::close(m_fd_);
     CLSN_LOG_WARNING << "set socket to nonblock error.";
     return -1;
   }
@@ -113,18 +113,18 @@ int Socket::SetReadTimeout(int val) const noexcept {
   struct timeval timeout {
     val, 0
   };
-  return setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeval));
+  return setsockopt(m_fd_, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeval));
 }
 
 int Socket::SetWriteTimeout(int val) const noexcept {
   struct timeval timeout {
     val, 0
   };
-  return setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeval));
+  return setsockopt(m_fd_, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeval));
 }
 
 int Socket::Read(char *buf, size_t len) const noexcept {
-  int size = static_cast<int>(::read(fd, buf, len));
+  int size = static_cast<int>(::read(m_fd_, buf, len));
   if (size <= 0) {
     // log
     CLSN_LOG_WARNING << "Read failed!! line: " << __LINE__ << " file: " << __FILE__;
@@ -133,7 +133,7 @@ int Socket::Read(char *buf, size_t len) const noexcept {
 }
 
 [[maybe_unused]] int Socket::Readv(const struct iovec *buf, size_t len) const noexcept {
-  int size = static_cast<int>(::readv(fd, buf, static_cast<int>(len)));
+  int size = static_cast<int>(::readv(m_fd_, buf, static_cast<int>(len)));
   if (size <= 0) {
     // log
     CLSN_LOG_WARNING << "Readv failed!! line: " << __LINE__ << " file: " << __FILE__;
@@ -142,7 +142,7 @@ int Socket::Read(char *buf, size_t len) const noexcept {
 }
 
 int Socket::Write(char *buf, size_t len) const noexcept {
-  int size = static_cast<int>(::write(fd, buf, len));
+  int size = static_cast<int>(::write(m_fd_, buf, len));
   if (size <= 0) {
     // log
     CLSN_LOG_WARNING << "Write failed!! line: " << __LINE__ << " file: " << __FILE__;
@@ -151,7 +151,7 @@ int Socket::Write(char *buf, size_t len) const noexcept {
 }
 
 int Socket::Close() const noexcept {
-  int flag = ::close(fd);
+  int flag = ::close(m_fd_);
   if (flag < 0) {
     // log
     CLSN_LOG_WARNING << "Close failed!! line: " << __LINE__ << " file: " << __FILE__;

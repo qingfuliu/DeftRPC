@@ -15,7 +15,7 @@
 
 #define CLSN_LEVEL_CHECK(Id, Level)                                    \
   if (static_cast<unsigned short>(clsn::LogLevel::Level) <=            \
-      static_cast<unsigned short>(clsn::getLogger<Id>().getLevel())) { \
+      static_cast<unsigned short>(clsn::getLogger<Id>().GetLevel())) { \
     ;                                                                  \
   } else                                                               \
     clsn::getLogger<Id>() +=

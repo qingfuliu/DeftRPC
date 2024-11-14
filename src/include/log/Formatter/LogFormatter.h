@@ -14,7 +14,7 @@
 
 namespace clsn {
 
-class FormatterItem : public noncopyable {
+class FormatterItem : public Noncopyable {
  public:
   virtual ~FormatterItem() = default;
 
@@ -36,7 +36,7 @@ class FormatterItem : public noncopyable {
   FormatterItem *next = nullptr;
 };
 
-class LogFormatter : public noncopyable {
+class LogFormatter : public Noncopyable {
  public:
   LogFormatter(const std::string &format);
 

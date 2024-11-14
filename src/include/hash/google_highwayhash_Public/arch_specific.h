@@ -136,7 +136,7 @@ using TargetBits = unsigned;
 
 namespace HH_TARGET_NAME {
 
-// Calls func(bit_value) for every nonzero bit in "bits".
+// Calls m_func_(bit_value) for every nonzero bit in "bits".
 template <class Func>
 void ForeachTarget(TargetBits bits, const Func &func) {
   while (bits != 0) {

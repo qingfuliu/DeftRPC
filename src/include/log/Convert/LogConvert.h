@@ -21,20 +21,20 @@ namespace clsn {
 template <class T>
 class LogConvert {
  public:
-  static void convert(std::ostream &oss, const T &t) noexcept { oss << t; }
+  static void Convert(std::ostream &oss, const T &t) noexcept { oss << t; }
 };
 
 template <>
 class LogConvert<std::string> {
  public:
-  static void convert(std::ostream &oss, const std::string &t) noexcept { oss << t; }
+  static void Convert(std::ostream &oss, const std::string &t) noexcept { oss << t; }
 };
 
 #define CONVERTER_DEFINE(X)                                               \
   template <typename T>                                                   \
   class LogConvert<std::X<T>> {                                           \
    public:                                                                \
-    static void convert(std::ostream &oss, const std::X<T> &t) noexcept { \
+    static void Convert(std::ostream &oss, const std::X<T> &t) noexcept { \
       oss << "<" #X ">[";                                                 \
       auto begin = t.cbegin();                                            \
       if (begin != t.cend()) {                                            \
@@ -64,18 +64,18 @@ CONVERTER_DEFINE(deque)
   template <typename Key, typename Val>                                          \
   class LogConvert<std::X<Key, Val>> {                                           \
    public:                                                                       \
-    static void convert(std::ostream &oss, const std::X<Key, Val> &t) noexcept { \
+    static void Convert(std::ostream &oss, const std::X<Key, Val> &t) noexcept { \
       oss << "<" #X ">[";                                                        \
-      auto begin = t.cbegin();                                                   \
-      if (begin != t.cend()) {                                                   \
-        LogConvert<Key>::convert(oss, begin->pIovec);                            \
+      auto m_begin_ = t.cbegin();                                                   \
+      if (m_begin_ != t.cend()) {                                                   \
+        LogConvert<Key>::convert(oss, m_begin_->pIovec);                            \
         oss << ":";                                                              \
-        LogConvert<Val>::convert(oss, (begin++)->second);                        \
-        for (; begin != t.cend(); ++begin) {                                     \
+        LogConvert<Val>::convert(oss, (m_begin_++)->second);                        \
+        for (; m_begin_ != t.cend(); ++m_begin_) {                                     \
           oss << ",";                                                            \
-          LogConvert<Key>::convert(oss, begin->pIovec);                          \
+          LogConvert<Key>::convert(oss, m_begin_->pIovec);                          \
           oss << ":";                                                            \
-          LogConvert<Val>::convert(oss, begin->second);                          \
+          LogConvert<Val>::convert(oss, m_begin_->second);                          \
         }                                                                        \
       }                                                                          \
       oss << "]";                                                                \

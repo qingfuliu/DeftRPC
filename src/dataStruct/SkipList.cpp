@@ -98,7 +98,7 @@ std::pair<SkipListNode *, SizeType> SkipList::Modify(ScoreType score, const std:
 
 /**
  *
- * @param update 需要更新 next 的节点
+ * @param update 需要更新 m_next_ 的节点
  * @param rank   update[i]的排名
  * @param score
  * @param val

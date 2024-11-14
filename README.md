@@ -41,14 +41,14 @@ DeftRPC是一个rpc框架。拥有日志模块、协程模块、序列化与反�
 在使用日志前，需要调用初始化函数来初始化日志器。其中N是日志器的编号，Appender是vector形式的LogAppend数组。
 
 ```cpp
-clsn::init<N>(Appenders);
+clsn::Init<N>(Appenders);
 ```
 
 形如：
 
 ```cpp
-clsn::init<0>({
-    clsn::createConsoleLogAppender(
+clsn::Init<0>({
+    clsn::CreateConsoleLogAppender(
         "[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s",
                         clsn::LogLevel::Debug)});
 ```
@@ -84,8 +84,8 @@ clsn::init<0>({
 例如采用“[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s”，调用如下代码：
 
 ```cpp
-clsn::init<0>({
-    clsn::createConsoleLogAppender(
+clsn::Init<0>({
+    clsn::CreateConsoleLogAppender(
         "[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s",
                         clsn::LogLevel::Debug)});
         CLSN_LOG_DEBUG << "message";
@@ -109,8 +109,8 @@ clsn::init<0>({
 提供了对STL的输出支持。
 
 ```cpp
-std::vector<int>temp{1,2,3};
-CLSN_LOG_DEBUG << temp;
+std::vector<int>m_temp_{1,2,3};
+CLSN_LOG_DEBUG << m_temp_;
 ```
 
 ## RPC模块
@@ -170,7 +170,7 @@ int test_exception(int a, int b) {
 }
 
 int main() {
-    Enable_Hook();
+    EnableHook();
     
     auto r = new clsn::RpcRouter("test");       //新建路由并注册函数
     r->InsertFunc("test_router", test_router);
@@ -200,8 +200,8 @@ int main() {
 #include "rpc/RpcClient.h"
 
 int main() {
-    Enable_Hook();
-    Disable_Enable_Hook();
+    EnableHook();
+    DisableEnableHook();
     clsn::RpcClient client("0.0.0.0:5201");
     CLSN_LOG_DEBUG << "remote:" << client.GetRemote().toString();
     if (!client.Connect()) {

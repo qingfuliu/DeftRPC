@@ -5,8 +5,8 @@
 #include "rpc/RpcClient.h"
 
 int main() {
-  Enable_Hook();
-  Disable_Enable_Hook();
+  EnableHook();
+  DisableEnableHook();
   clsn::RpcClient client("0.0.0.0:5201");
   CLSN_LOG_DEBUG << "remote:" << client.GetRemote().toString();
   if (!client.Connect()) {

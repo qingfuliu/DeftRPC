@@ -7,9 +7,9 @@
 
 namespace clsn {
 
-using LevelType = unsigned short;
+using LevelType = std::uint16_t;
 
-enum class LogLevel : unsigned short { None = 0, Debug = 1, Warning = 2, Error = 3, Fatal = 4 };
+enum class LogLevel : std::uint16_t { None = 0, Debug = 1, Warning = 2, Error = 3, Fatal = 4 };
 
 inline std::string LogLevelToString(LogLevel level) noexcept {
   switch (level) {
@@ -30,7 +30,7 @@ inline std::string LogLevelToString(LogLevel level) noexcept {
 }
 
 inline LogLevel StringToLogLevel(const std::string &level) noexcept {
-  if (level.size() <= 0) {
+  if (level.empty()) {
     return LogLevel::None;
   }
   switch (level[0]) {
@@ -48,7 +48,7 @@ class FormatError : public std::invalid_argument {
  public:
   FormatError() : std::invalid_argument("The format of the argument is incorrect") {}
 
-  ~FormatError() = default;
+  ~FormatError() override = default;
 };
 
 }  // namespace clsn

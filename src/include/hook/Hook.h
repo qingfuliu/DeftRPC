@@ -39,11 +39,11 @@ HOOK_FUNC_DEFINE(int, usleep, useconds_t)
 HOOK_FUNC_DEFINE(int, nanosleep, const struct timespec *, struct timespec *)
 
 // namespace clsn {
-bool Is_Enable_Hook() noexcept;
+bool IsEnableHook() noexcept;
 
-void Enable_Hook() noexcept;
+void EnableHook() noexcept;
 
-bool Disable_Enable_Hook() noexcept;
+bool DisableEnableHook() noexcept;
 //}
 
 #endif  // DEFTRPC_HOOK_H

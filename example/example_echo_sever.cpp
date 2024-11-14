@@ -9,7 +9,7 @@
 std::string Echo(clsn::TcpConnection *, std::string_view msg, clsn::TimeStamp) { return {msg.data(), msg.size()}; }
 
 int main() {
-  Enable_Hook();
+  EnableHook();
   clsn::TcpSever sever("0.0.0.0:5201", 1);
   sever.SetMagCallback(Echo);
   sever.Start(100000);

@@ -34,7 +34,7 @@ class RpcExecuteException : public std::logic_error {
   RpcExecuteException &operator=(const RpcExecuteException &) noexcept = default;
 };
 
-inline void HandleException(std::string &res, std::exception_ptr eptr) {
+inline void HandleException(std::string &res, std::exception_ptr &eptr) {
   try {
     if (eptr != nullptr) {
       std::rethrow_exception(eptr);

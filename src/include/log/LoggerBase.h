@@ -17,56 +17,56 @@ class LoggerBase {
   SINGLETON_BASE_DEFINE(LoggerBase)
 
  public:
-  const std::string &getName() const noexcept { return name; }
+  const std::string &GetName() const noexcept { return m_name_; }
 
-  void setName(const std::string &name) noexcept { this->name = name; }
+  void SetName(const std::string &name) noexcept { this->m_name_ = name; }
 
-  LogLevel getLevel() const noexcept { return level; }
+  LogLevel GetLevel() const noexcept { return m_level_; }
 
-  void setLevel(LogLevel level) noexcept { this->level = level; }
+  void SetLevel(LogLevel level) noexcept { this->m_level_ = level; }
 
-  void addLogAppender(LogAppender *appender) noexcept {
-    appenders.resize(appenders.size() + 1);
-    appenders.emplace_back(appender);
+  void AddLogAppender(LogAppender *appender) noexcept {
+    m_appenders_.resize(m_appenders_.size() + 1);
+    m_appenders_.emplace_back(appender);
   }
 
-  void addLogAppender(const std::vector<LogAppender *> &appender) noexcept {
+  void AddLogAppender(const std::vector<LogAppender *> &appender) noexcept {
     for (auto v : appender) {
-      appenders.emplace_back(v);
+      m_appenders_.emplace_back(v);
     }
-    appenders.shrink_to_fit();
+    m_appenders_.shrink_to_fit();
   }
 
-  void doLog(LogRecord &&record) noexcept {
-    for (const auto &appender : appenders) {
-      appender->append(record);
+  void DoLog(LogRecord &&record) noexcept {
+    for (const auto &appender : m_appenders_) {
+      appender->Append(record);
     }
   }
 
   LoggerBase &operator+=(LogRecord &&record) noexcept {
-    doLog(std::move(record));
+    DoLog(std::move(record));
     return *this;
   }
 
  private:
-  std::string name{};
-  LogLevel level{};
-  std::vector<std::unique_ptr<LogAppender>> appenders;
+  std::string m_name_{};
+  LogLevel m_level_{};
+  std::vector<std::unique_ptr<LogAppender>> m_appenders_;
 };
 
-template <unsigned short Id = 0>
-class Logger : public Singleton<Logger<Id>>, public LoggerBase {
+template <std::uint16_t id = 0>
+class Logger : public Singleton<Logger<id>>, public LoggerBase {
   SINGLETON_DEFINE(Logger)
 };
 
-template <unsigned short Id = 0>
-inline Logger<Id> &getLogger() {
-  return Logger<Id>::getInstance();
+template <std::uint16_t id = 0>
+inline Logger<id> &getLogger() {
+  return Logger<id>::GetInstance();
 }
 
-template <unsigned short Id = 0>
-inline void init(const std::vector<LogAppender *> &appenders) {
-  getLogger<Id>().addLogAppender(appenders);
+template <std::uint16_t id = 0>
+inline void Init(const std::vector<LogAppender *> &appenders) {
+  getLogger<id>().AddLogAppender(appenders);
 }
 
 }  // namespace clsn

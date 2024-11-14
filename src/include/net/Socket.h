@@ -19,11 +19,11 @@ class Socket {
  public:
   explicit Socket() = default;
 
-  explicit Socket(int fd) : fd(fd) {}
+  explicit Socket(int fd) : m_fd_(fd) {}
 
   ~Socket() = default;
 
-  [[nodiscard]] int getFd() const noexcept { return fd; }
+  [[nodiscard]] int getFd() const noexcept { return m_fd_; }
 
   int Listen() const noexcept;
 
@@ -56,7 +56,7 @@ class Socket {
   int Close() const noexcept;
 
  private:
-  int fd;
+  int m_fd_;
 };
 }  // namespace clsn
 

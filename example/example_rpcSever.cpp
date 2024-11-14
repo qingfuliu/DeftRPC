@@ -12,7 +12,7 @@ int test_rpc(int a) { return a + 1; }
 int test_exception(int a, int b) { throw std::runtime_error("test exception"); }
 
 int main() {
-  Enable_Hook();
+  EnableHook();
 
   auto r = new clsn::RpcRouter("test");
   r->InsertFunc("test_router", test_router);

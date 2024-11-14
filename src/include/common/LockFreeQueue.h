@@ -10,9 +10,9 @@
 namespace clsn {
 template <typename Element>
 struct QueueNode {
-  using Storage = typename std::aligned_storage<sizeof(Element), std::alignment_of_v<Element>>::type;
-  std::atomic<QueueNode *> next;
-  Storage element;
+  using Storage = typename std::aligned_storage_t<sizeof(Element), std::alignment_of_v<Element>>;
+  std::atomic<QueueNode *> m_next_;
+  Storage m_element_;
 };
 
 template <typename Element>
@@ -20,41 +20,41 @@ class LockFreeQueue {
   using ElementNodeType = QueueNode<Element>;
 
  public:
-  LockFreeQueue() noexcept : head(), tail() {
-    auto newHead = new QueueNode<Element>{};
-    head.store(newHead, std::memory_order_release);
-    newHead->next.store(nullptr, std::memory_order_release);
-    tail.store(newHead, std::memory_order_release);
+  LockFreeQueue() noexcept : m_head_(), m_tail_() {
+    auto new_head = new QueueNode<Element>{};
+    m_head_.store(new_head, std::memory_order_release);
+    new_head->m_next_.store(nullptr, std::memory_order_release);
+    m_tail_.store(new_head, std::memory_order_release);
   }
 
   ~LockFreeQueue() noexcept {
-    while (0 != size.load(std::memory_order_acquire)) {
+    while (0 != m_size_.load(std::memory_order_acquire)) {
       Dequeue();
     }
-    delete head.load(std::memory_order_acquire);
+    delete m_head_.load(std::memory_order_acquire);
   }
 
-  size_t Size() const noexcept { return this->size.load(std::memory_order_acquire); }
+  size_t Size() const noexcept { return this->m_size_.load(std::memory_order_acquire); }
 
   template <class T>
   int EnQueue(T &&element) noexcept {
-    auto newNode = new ElementNodeType{};
-    newNode->next.store(nullptr, std::memory_order_release);
-    new (&newNode->element) Element(std::forward<T>(element));
+    auto new_node = new ElementNodeType{};
+    new_node->m_next_.store(nullptr, std::memory_order_release);
+    new (&new_node->m_element_) Element(std::forward<T>(element));
 
-    ElementNodeType *curTail = tail.load(std::memory_order_acquire);
-    ElementNodeType *curTailNext = curTail->next.load();
+    ElementNodeType *cur_tail = m_tail_.load(std::memory_order_acquire);
+    ElementNodeType *cur_tail_next = cur_tail->m_next_.load();
     do {
-      if (tail.load(std::memory_order_acquire) == curTail) {
-        if (nullptr == curTailNext) {
+      if (m_tail_.load(std::memory_order_acquire) == cur_tail) {
+        if (nullptr == cur_tail_next) {
           ElementNodeType *temp = nullptr;
-          if (curTail->next.compare_exchange_strong(temp, newNode, std::memory_order_release)) {
-            int res = size.fetch_add(1, std::memory_order_release);
-            tail.compare_exchange_strong(curTail, newNode, std::memory_order_release);
+          if (cur_tail->m_next_.compare_exchange_strong(temp, new_node, std::memory_order_release)) {
+            int res = m_size_.fetch_add(1, std::memory_order_release);
+            m_tail_.compare_exchange_strong(cur_tail, new_node, std::memory_order_release);
             return res;
           }
         } else {
-          tail.compare_exchange_strong(curTail, curTailNext, std::memory_order_release);
+          m_tail_.compare_exchange_strong(cur_tail, cur_tail_next, std::memory_order_release);
         }
       }
     } while (true);
@@ -62,22 +62,22 @@ class LockFreeQueue {
 
   Element Dequeue() noexcept {
     do {
-      ElementNodeType *curHead = head.load(std::memory_order_relaxed);
-      ElementNodeType *next = curHead->next.load(std::memory_order_relaxed);
-      ElementNodeType *curTail = tail.load(std::memory_order_acquire);
+      ElementNodeType *cur_head = m_head_.load(std::memory_order_relaxed);
+      ElementNodeType *next = cur_head->m_next_.load(std::memory_order_relaxed);
+      ElementNodeType *cur_tail = m_tail_.load(std::memory_order_acquire);
 
-      if (head.load(std::memory_order_relaxed) == curHead) {
-        if (curTail == head) {
+      if (m_head_.load(std::memory_order_relaxed) == cur_head) {
+        if (cur_tail == m_head_) {
           if (next != nullptr) {
-            tail.compare_exchange_strong(curTail, next, std::memory_order_release);
+            m_tail_.compare_exchange_strong(cur_tail, next, std::memory_order_release);
             continue;
           }
           return Element{};
         }
-        if (head.compare_exchange_strong(curHead, next, std::memory_order_release)) {
-          Element e = *reinterpret_cast<Element *>(&next->element);
-          size.fetch_add(-1, std::memory_order_release);
-          delete curHead;
+        if (m_head_.compare_exchange_strong(cur_head, next, std::memory_order_release)) {
+          Element e = *reinterpret_cast<Element *>(&next->m_element_);
+          m_size_.fetch_add(-1, std::memory_order_release);
+          delete cur_head;
           return e;
         }
       }
@@ -85,9 +85,9 @@ class LockFreeQueue {
   }
 
  private:
-  std::atomic<ElementNodeType *> head;
-  std::atomic<ElementNodeType *> tail;
-  std::atomic_uint size{0};
+  std::atomic<ElementNodeType *> m_head_;
+  std::atomic<ElementNodeType *> m_tail_;
+  std::atomic_uint m_size_{0};
 };
 
 }  // namespace clsn

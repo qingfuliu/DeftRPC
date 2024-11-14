@@ -28,8 +28,8 @@ class RpcRouter {
   void InsertFunc(const std::string &funcName, Func f, Args &&...args) {
     if (auto p = functions.Insert(funcName, MakeRpcFunc(std::forward<Func>(f), std::forward<Args>(args)...));
         nullptr == p) {
-      CLSN_LOG_FATAL << MakeRpcException(FuncAlreadyExists, funcName);
-      throw clsn::RpcExecuteException(MakeRpcException(FuncAlreadyExists, funcName));
+      CLSN_LOG_FATAL << MakeRpcException(func_already_exists, funcName);
+      throw clsn::RpcExecuteException(MakeRpcException(func_already_exists, funcName));
     }
   }
 

@@ -25,7 +25,7 @@ class RingBuffer {
 
   int Read(char *buf, int len) noexcept;
 
-  [[nodiscard]] int GetReadableCapacity() const noexcept { return size; }
+  [[nodiscard]] int GetReadableCapacity() const noexcept { return m_size_; }
 
   int ReadFromFd(int fd) noexcept;
 
@@ -39,30 +39,30 @@ class RingBuffer {
 
   void Append(const char *buf, int len) noexcept { Write(buf, len); }
 
-  [[nodiscard]] bool IsEmpty() const noexcept { return begin == end && size == 0; }
+  [[nodiscard]] bool IsEmpty() const noexcept { return m_begin_ == m_end_ && m_size_ == 0; }
 
  private:
-  [[nodiscard]] bool isFull() const noexcept { return begin == end && size == buffer.capacity(); }
+  [[nodiscard]] bool IsFull() const noexcept { return m_begin_ == m_end_ && m_size_ == m_buffer_.capacity(); }
 
-  [[nodiscard]] int getTailSpaceLen() const noexcept;
+  [[nodiscard]] int GetTailSpaceLen() const noexcept;
 
-  [[nodiscard]] int getTailContentLen() const noexcept;
+  [[nodiscard]] int GetTailContentLen() const noexcept;
 
-  [[nodiscard]] int getWritableCapacity() const noexcept;
+  [[nodiscard]] int GetWritableCapacity() const noexcept;
 
-  void updateAfterRead(int len) noexcept;
+  void UpdateAfterRead(int len) noexcept;
 
-  void updateAfterWrite(int len) noexcept;
+  void UpdateAfterWrite(int len) noexcept;
 
-  void enableWritableSpace(int targetSize) noexcept;
+  void EnableWritableSpace(int targetSize) noexcept;
 
  private:
-  int begin;
-  int end;
-  int size;
-  std::vector<char> buffer;
-  int tempCapacity;
-  std::unique_ptr<char[]> temp;
+  int m_begin_;
+  int m_end_;
+  int m_size_;
+  std::vector<char> m_buffer_;
+  int m_temp_capacity_;
+  std::unique_ptr<char[]> m_temp_;
 };
 
 }  // namespace clsn

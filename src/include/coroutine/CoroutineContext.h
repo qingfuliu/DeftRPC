@@ -11,22 +11,22 @@
 #include "common/common.h"
 #include "log/Log.h"
 
-struct coctx_t {
+struct Coctx {
 #if defined(__i386__)
-  void *regs[8];
+  void *m_regs_[8];
 #else
-  void *regs[14];
+  void *m_regs_[14];
 #endif
 };
 
-struct stStackMem_t {
-  void *savedStack;
-  size_t validSize;
-  size_t saveStackSize;
+struct StStackMem {
+  void *m_saved_stack_;
+  size_t m_valid_size_;
+  size_t m_save_stack_size_;
 
-  size_t stack_size;
-  char *stack_bp;  // stack_buffer + stack_size
-  char *stack_buffer;
+  size_t m_stack_size_;
+  char *m_stack_bp_;  // m_stack_buffer_ + m_stack_size_
+  char *m_stack_buffer_;
 };
 
 namespace clsn {
@@ -39,26 +39,26 @@ class SharedStack {
 
   ~SharedStack();
 
-  CoroutineContext *GetOwner() noexcept { return owner; }
+  CoroutineContext *GetOwner() noexcept { return m_owner_; }
 
-  void SetOwner(CoroutineContext *o) noexcept { owner = o; }
+  void SetOwner(CoroutineContext *o) noexcept { m_owner_ = o; }
 
-  size_t GetStackSize() const noexcept { return stackSize; }
+  size_t GetStackSize() const noexcept { return m_stack_size_; }
 
-  void *GetStack() noexcept { return stack; }
+  void *GetStack() noexcept { return m_stack_; }
 
   void SaveCtxToStack(void *mStack, size_t size) const noexcept {
-    std::copy(static_cast<const char *>(stack), static_cast<const char *>(stack) + size, static_cast<char *>(mStack));
+    std::copy(static_cast<const char *>(m_stack_), static_cast<const char *>(m_stack_) + size, static_cast<char *>(mStack));
   }
 
   void LoadCtxFromStack(const void *mStack, size_t size) noexcept {
-    std::copy(static_cast<const char *>(mStack), static_cast<const char *>(mStack) + size, static_cast<char *>(stack));
+    std::copy(static_cast<const char *>(mStack), static_cast<const char *>(mStack) + size, static_cast<char *>(m_stack_));
   }
 
  private:
-  CoroutineContext *owner;
-  void *stack;
-  size_t stackSize;
+  CoroutineContext *m_owner_;
+  void *m_stack_;
+  size_t m_stack_size_;
 };
 
 inline std::unique_ptr<SharedStack> MakeSharedStack(size_t size) {
@@ -72,55 +72,55 @@ inline std::unique_ptr<SharedStack> MakeSharedStack(size_t size) {
   return res;
 }
 
-class CoroutineContext : protected noncopyable {
+class CoroutineContext : protected Noncopyable {
  public:
   explicit CoroutineContext(CoroutineFunc Func, CoroutineArg Arg, SharedStack *sharedStack = nullptr) noexcept
-      : hasCtx(false), func(Func), arg(Arg), sharedMem(sharedStack) {}
+      : m_has_ctx_(false), m_func_(Func), m_arg_(Arg), m_shared_mem_(sharedStack) {}
 
   explicit CoroutineContext(SharedStack *sharedStack = nullptr) noexcept
       : CoroutineContext(nullptr, nullptr, sharedStack) {}
 
   ~CoroutineContext() noexcept override {
-    if (nullptr == sharedMem) {
-      delete[] mem.stack_buffer;
+    if (nullptr == m_shared_mem_) {
+      delete[] m_mem_.m_stack_buffer_;
     } else {
-      delete[] static_cast<char *>(mem.savedStack);
+      delete[] static_cast<char *>(m_mem_.m_saved_stack_);
     }
   }
 
   void SwapCtx(CoroutineContext *other) noexcept;
 
-  coctx_t &GetCtxRef() noexcept { return ctx; }
+  Coctx &GetCtxRef() noexcept { return m_ctx_; }
 
-  stStackMem_t &GetStackRef() noexcept { return mem; }
+  StStackMem &GetStackRef() noexcept { return m_mem_; }
 
   /**
    * 分配内存
    */
   void Init() noexcept;
 
-  bool HasCtx() const noexcept { return hasCtx; }
+  bool HasCtx() const noexcept { return m_has_ctx_; }
 
-  void MakeSelfMainCtx() noexcept { hasCtx = true; }
+  void MakeSelfMainCtx() noexcept { m_has_ctx_ = true; }
 
-  void reset() noexcept { hasCtx = false; }
-
- private:
-  void makeCtx() noexcept;
-
-  void saveOtherStack();
-
-  void saveStackToSavedStack();
-
-  void loadStackFromSavedStack();
+  void Reset() noexcept { m_has_ctx_ = false; }
 
  private:
-  bool hasCtx;
-  CoroutineFunc func;
-  CoroutineArg arg;
-  coctx_t ctx{};
-  stStackMem_t mem{};
-  SharedStack *sharedMem;
+  void MakeCtx() noexcept;
+
+  void SaveOtherStack();
+
+  void SaveStackToSavedStack();
+
+  void LoadStackFromSavedStack();
+
+ private:
+  bool m_has_ctx_;
+  CoroutineFunc m_func_;
+  CoroutineArg m_arg_;
+  Coctx m_ctx_{};
+  StStackMem m_mem_{};
+  SharedStack *m_shared_mem_;
 };
 
 }  // namespace clsn

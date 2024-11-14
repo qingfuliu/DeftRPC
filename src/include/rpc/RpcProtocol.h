@@ -44,7 +44,7 @@ struct RPCResponse {
   template <class Res>
   Res GetResponseRes() {
     if (!clsn::CheckCec32(res.data(), res.size())) {
-      throw std::logic_error(PackageIsInvalid);
+      throw std::logic_error(package_is_invalid);
     }
     Res r;
     clsn::StringSerialize decode(res);
@@ -55,7 +55,7 @@ struct RPCResponse {
   template <class Res>
   void GetResponseRes(Res &r) {
     if (!clsn::CheckCec32(res.data(), res.size())) {
-      throw std::logic_error(PackageIsInvalid);
+      throw std::logic_error(package_is_invalid);
     }
     clsn::StringSerialize decode(res);
     res(r);

@@ -16,14 +16,14 @@
 #include <gtest/gtest.h>
 
 TEST(test_net_helper, test_net_helper) {
-  Enable_Hook();
-  Disable_Enable_Hook();
-  //    int sock;
+  EnableHook();
+  DisableEnableHook();
+  //    int m_socket_;
   //    struct sockaddr_in serv_addr;
   //
   //    int str_len;
-  //    sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-  //    if (sock == -1) {
+  //    m_socket_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  //    if (m_socket_ == -1) {
   //        std::cout << "Create socket error!!" << std::endl;
   //        return 0;
   //    }
@@ -33,7 +33,7 @@ TEST(test_net_helper, test_net_helper) {
   //    serv_addr.sin_port = htons(5201);
   clsn::Socket socket1(socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));
   clsn::Addr addr("0.0.0.0:5201");
-  //    if (connect(sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) == -1) {
+  //    if (connect(m_socket_, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) == -1) {
   //    if (0 != connect(socket1.getFd(), addr.getSockAddr(), addr.getSockAddrSize())) {
   if (0 != socket1.Connect(&addr)) {
     std::cout << "connect socket error!!" << strerror(errno) << std::endl;
@@ -41,5 +41,5 @@ TEST(test_net_helper, test_net_helper) {
 
   sleep(1000);
 
-  //    close(sock);
+  //    close(m_socket_);
 }

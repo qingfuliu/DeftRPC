@@ -17,45 +17,45 @@ class LoggerBase;
 
 class LogRecord {
  public:
-  explicit LogRecord(const LoggerBase *logger, time_t time, std::string &&file, unsigned short line, LogLevel level,
+  explicit LogRecord(const LoggerBase *logger, time_t time, std::string &&file, std::uint16_t line, LogLevel level,
                      pthread_t pid) noexcept;
 
-  const LoggerBase *getLogger() const noexcept { return logger; }
+  const LoggerBase *GetLogger() const noexcept { return m_logger_; }
 
-  inline time_t getTime() const noexcept { return time; }
+  inline time_t GetTime() const noexcept { return m_time_; }
 
-  inline const std::string &getFile() const noexcept { return file; }
+  inline const std::string &GetFile() const noexcept { return m_file_; }
 
-  inline unsigned short getLine() const noexcept { return line; }
+  inline std::uint16_t GetLine() const noexcept { return m_line_; }
 
-  inline LogLevel getLevel() const noexcept { return level; }
+  inline LogLevel GetLevel() const noexcept { return m_level_; }
 
-  inline pthread_t getPid() const noexcept { return pid; }
+  inline pthread_t GetPid() const noexcept { return m_pid_; }
 
-  inline std::stringstream &getMessage() noexcept { return message; }
+  inline std::stringstream &GetMessage() noexcept { return m_message_; }
 
-  inline const std::stringstream &getMessage() const noexcept { return message; }
+  inline const std::stringstream &GetMessage() const noexcept { return m_message_; }
 
   //        template<typename T>
   //        inline std::stringstream &operator<<(const T &t) noexcept {
-  //            LogConvert<T>::convert(message, t);
+  //            LogConvert<T>::Convert(message, t);
   //            return message;
   //        }
 
   template <typename T>
   LogRecord &&operator<<(const T &t) && noexcept {
-    LogConvert<T>::convert(message, t);
+    LogConvert<T>::Convert(m_message_, t);
     return std::move(*this);
   }
 
  private:
-  const LoggerBase *logger;
-  time_t time;
-  std::string file;
-  unsigned short line;
-  LogLevel level;
-  pthread_t pid;
-  std::stringstream message;
+  const LoggerBase *m_logger_;
+  time_t m_time_;
+  std::string m_file_;
+  std::uint16_t m_line_;
+  LogLevel m_level_;
+  pthread_t m_pid_;
+  std::stringstream m_message_;
 };
 
 }  // namespace clsn

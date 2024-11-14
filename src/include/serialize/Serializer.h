@@ -78,7 +78,7 @@ class Serializer : public detail::SerializeBase {
  private:
   template <typename T>
   inline std::enable_if_t<!has_serialize_v<Drive, T>> serializeImpl(T &&arg) {
-    static_assert(!has_serialize_v<Drive, T>, "type t has no serialize func");
+    static_assert(!has_serialize_v<Drive, T>, "type t has no serialize m_func_");
   }
 
   template <typename T>
@@ -120,7 +120,7 @@ class DeSerializer : public detail::SerializeBase {
   template <typename T>
   inline std::enable_if_t<!has_deserialize_v<Drive, T> && !has_load_and_construct_v<Drive, T>> deSerializeImpl(
       T &&arg) {
-    static_assert(has_deserialize_v<Drive, T> || has_load_and_construct_v<Drive, T>, "type T has no deserialize func");
+    static_assert(has_deserialize_v<Drive, T> || has_load_and_construct_v<Drive, T>, "type T has no deserialize m_func_");
   }
 
   template <typename T>

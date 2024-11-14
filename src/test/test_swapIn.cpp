@@ -22,13 +22,13 @@ void otherFunc() {
   std::cout << "before otherFunc11!!" << std::endl;
 
   auto routine = clsn::CreateCoroutine();
-  routine->setTask(otherFunc1);
-  routine->swapIn();
+  routine->SetTask(otherFunc1);
+  routine->SwapIn();
   std::cout << "after otherFunc11!!" << std::endl;
   assert(a == 1);
-  routine->reset(otherFunc1);
+  routine->Reset(otherFunc1);
   std::cout << "before otherFunc122!!" << std::endl;
-  routine->swapIn();
+  routine->SwapIn();
   std::cout << "after otherFunc122!!" << std::endl;
   assert(b == 10000);
   for (int i = 0; i < 20; i++) {
@@ -39,8 +39,8 @@ void otherFunc() {
 static void test_SwapIn() {
   std::cout << "before test_SwapIn!!" << std::endl;
   auto routine = clsn::CreateCoroutine();
-  routine->setTask(otherFunc);
-  routine->swapIn();
+  routine->SetTask(otherFunc);
+  routine->SwapIn();
   std::cout << "after test_SwapIn!!" << std::endl;
 }
 
@@ -57,12 +57,12 @@ void otherFuncShared() {
   std::cout << "before otherFunc11!!" << std::endl;
 
   auto routine = clsn::CreateCoroutine();
-  routine->swapIn();
+  routine->SwapIn();
   std::cout << "after otherFunc11!!" << std::endl;
   assert(a == 1);
-  routine->reset(otherFunc1);
+  routine->Reset(otherFunc1);
   std::cout << "before otherFunc122!!" << std::endl;
-  routine->swapIn();
+  routine->SwapIn();
   std::cout << "after otherFunc122!!" << std::endl;
   assert(b == 10000);
   for (int i = 0; i < 20; i++) {
@@ -73,7 +73,7 @@ void otherFuncShared() {
 static void test_sharedPtr_SwapIn() {
   std::cout << "before test_SwapIn!!" << std::endl;
   auto routine = clsn::CreateCoroutine(otherFuncShared, sharedMem.get());
-  routine->swapIn();
+  routine->SwapIn();
   std::cout << "after test_SwapIn!!" << std::endl;
   std::cout << "success!!" << std::endl;
 }

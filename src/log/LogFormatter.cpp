@@ -23,7 +23,7 @@ class TimeFormatterItem : public FormatterItem {
 
   void format(std::ostream &os, const LogRecord &record) noexcept override {
     struct tm tm {};
-    time_t time = record.getTime();
+    time_t time = record.GetTime();
     localtime_r(&time, &tm);
     char buf[64];
     strftime(buf, sizeof(buf), timeFormat.c_str(), &tm);
@@ -57,8 +57,8 @@ class MessageFormatterItem : public FormatterItem {
   ~MessageFormatterItem() override = default;
 
   void format(std::ostream &os, const LogRecord &recode) noexcept override {
-    os.rdbuf()->sputn(recode.getMessage().str().c_str(),
-                      static_cast<std::streamsize>(recode.getMessage().str().size()));
+    os.rdbuf()->sputn(recode.GetMessage().str().c_str(),
+                      static_cast<std::streamsize>(recode.GetMessage().str().size()));
   }
 };
 
@@ -69,7 +69,7 @@ class LineFormatterItem : public FormatterItem {
   ~LineFormatterItem() override = default;
 
   void format(std::ostream &os, const LogRecord &recode) noexcept override {
-    LogConvert<unsigned short>::convert(os, recode.getLine());
+    LogConvert<unsigned short>::Convert(os, recode.GetLine());
   }
 };
 
@@ -80,7 +80,7 @@ class FileNameFormatterItem : public FormatterItem {
   ~FileNameFormatterItem() override = default;
 
   void format(std::ostream &os, const LogRecord &recode) noexcept override {
-    os.rdbuf()->sputn(recode.getFile().c_str(), static_cast<std::streamsize>(recode.getFile().size()));
+    os.rdbuf()->sputn(recode.GetFile().c_str(), static_cast<std::streamsize>(recode.GetFile().size()));
   }
 };
 
@@ -91,7 +91,7 @@ class ThreadIdFormatterItem : public FormatterItem {
   ~ThreadIdFormatterItem() override = default;
 
   void format(std::ostream &os, const LogRecord &recode) noexcept override {
-    LogConvert<pthread_t>::convert(os, recode.getPid());
+    LogConvert<pthread_t>::Convert(os, recode.GetPid());
   }
 };
 
@@ -102,7 +102,7 @@ class LogLevelNameFormatterItem : public FormatterItem {
   ~LogLevelNameFormatterItem() override = default;
 
   void format(std::ostream &os, const LogRecord &recode) noexcept override {
-    std::string level = LogLevelToString(recode.getLevel());
+    std::string level = LogLevelToString(recode.GetLevel());
     os.rdbuf()->sputn(level.c_str(), static_cast<std::streamsize>(level.size()));
   }
 };
@@ -114,7 +114,7 @@ class LoggerNameFormatterItem : public FormatterItem {
   ~LoggerNameFormatterItem() override = default;
 
   void format(std::ostream &os, const LogRecord &recode) noexcept override {
-    auto name = recode.getLogger()->getName();
+    auto name = recode.GetLogger()->GetName();
     os.rdbuf()->sputn(name.c_str(), static_cast<std::streamsize>(name.size()));
   }
 };
@@ -128,7 +128,7 @@ class LoggerNameFormatterItem : public FormatterItem {
  *日志等级：%l
  *日志器名字：%o
  */
-LogFormatter::LogFormatter(const std::string &format) : noncopyable(), first(new TempFormatterItem()) {
+LogFormatter::LogFormatter(const std::string &format) : Noncopyable(), first(new TempFormatterItem()) {
   size_t timeBegin = -1;
   size_t prev = 0;
   size_t index = format.find('%');

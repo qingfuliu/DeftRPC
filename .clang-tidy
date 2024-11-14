@@ -51,6 +51,8 @@ Checks: '
             -google-explicit-constructor,
             -bugprone-branch-clone
             -modernize-use-trailing-return-type
+            -bugprone-macro-parentheses,-warnings-as-errors
+            -readability-inconsistent-declaration-parameter-name
             '
 CheckOptions:
   - { key: readability-identifier-naming.ClassCase,           value: CamelCase }
@@ -66,7 +68,7 @@ CheckOptions:
   - { key: readability-identifier-naming.UnionCase,           value: CamelCase }
   - { key: readability-identifier-naming.VariableCase,        value: lower_case }
 WarningsAsErrors: '*'
-HeaderFilterRegex: '/src/include/'
+HeaderFilterRegex: '/src/include'
 AnalyzeTemporaryDtors: true
 
 #### Disabled checks and why: #####

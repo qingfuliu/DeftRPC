@@ -23,37 +23,37 @@ class TcpConnection;
 
 using MagCallback = std::function<std::string(TcpConnection *, std::string_view, clsn::TimeStamp)>;
 
-class TcpConnection : public noncopyable {
+class TcpConnection : public Noncopyable {
  public:
   explicit TcpConnection(int f, const Addr &addr) noexcept;
 
   ~TcpConnection() override;
 
-  void Write(const std::string &msg) noexcept { writeInThread(msg); }
+  void Write(const std::string &msg) noexcept { WriteInThread(msg); }
 
-  void Write(const char *msg, size_t len) noexcept { writeInThread(msg, len); }
+  void Write(const char *msg, size_t len) noexcept { WriteInThread(msg, len); }
 
   static void NewTcpConnectionArrive(int fd, const Addr &remote) noexcept;
 
  private:
-  void writeInThread(const std::string &msg) noexcept {
-    assert(mScheduler->IsInLoopThread());
-    writeInThread(msg.c_str(), msg.size());
+  void WriteInThread(const std::string &msg) noexcept {
+    assert(m_scheduler_->IsInLoopThread());
+    WriteInThread(msg.c_str(), msg.size());
   }
 
-  void writeInThread(const char *msg, size_t len) noexcept {
-    assert(mScheduler->IsInLoopThread());
-    //            outputBuffer->Write(msg, len);
+  void WriteInThread(const char *msg, size_t len) noexcept {
+    assert(m_scheduler_->IsInLoopThread());
+    //            m_output_buffer_->Write(msg, len);
   }
 
-  void processMag();
+  void ProcessMag();
 
  private:
-  const Socket sock;
-  const Addr remote;
-  std::unique_ptr<RingBuffer> inputBuffer;
-  std::unique_ptr<EVBuffer> outputBuffer;
-  Scheduler *const mScheduler = Scheduler::GetThreadScheduler();
+  const Socket m_socket_;
+  const Addr m_remote_addr_;
+  std::unique_ptr<RingBuffer> m_input_buffer_;
+  std::unique_ptr<EVBuffer> m_output_buffer_;
+  Scheduler *const m_scheduler_ = Scheduler::GetThreadScheduler();
 };
 }  // namespace clsn
 

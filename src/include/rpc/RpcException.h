@@ -9,11 +9,11 @@
 
 namespace clsn {
 
-inline const char *NoSuchFunction = "No Such Function.";
-inline const char *FuncAlreadyExists = "Func Already Exists.";
-inline const char *RouterIsInvalid = "Router Is Invalid.";
-inline const char *PackageIsInvalid = "Package is Invalid.";
-inline const char *SeverIsBase = "Sever is base or Connection is invalid.";
+inline const char *no_such_function = "No Such Function.";
+inline const char *func_already_exists = "Func Already Exists.";
+inline const char *router_is_invalid = "Router Is Invalid.";
+inline const char *package_is_invalid = "Package is Invalid.";
+inline const char *sever_is_base = "Sever is base or Connection is invalid.";
 
 inline std::string MakeRpcException(const char *eptr, const std::string &funcName) {
   return std::string(eptr).append("The FuncName is ").append(funcName);

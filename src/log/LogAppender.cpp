@@ -8,33 +8,33 @@
 
 namespace clsn {
 
-LogAppender *createConsoleLogAppender(const std::string &format, LogLevel level) {
+LogAppender *CreateConsoleLogAppender(const std::string &format, LogLevel level) {
   return new ConsoleLogAppender(format, level);
 }
 
-LogAppender *createFileLogAppender(const std::string &filename, const std::string &format, LogLevel level) {
+LogAppender *CreateFileLogAppender(const std::string &filename, const std::string &format, LogLevel level) {
   return new FileLogAppender(filename, format, level);
 }
 
-LogAppender::LogAppender(LogLevel level) noexcept : noncopyable(), formatter(nullptr), appenderLevel(level) {}
+LogAppender::LogAppender(LogLevel level) noexcept : Noncopyable(), m_formatter_(nullptr), m_appender_level_(level) {}
 
 LogAppender::LogAppender(const std::string &format, LogLevel level)
-    : noncopyable(), formatter(new LogFormatter(format)), appenderLevel(level) {}
+    : Noncopyable(), m_formatter_(new LogFormatter(format)), m_appender_level_(level) {}
 
 LogAppender::~LogAppender() = default;
 
-void LogAppender::setLogFormatter(const std::string &arg) { formatter.reset(new LogFormatter(arg)); }
+void LogAppender::SetLogFormatter(const std::string &arg) { m_formatter_.reset(new LogFormatter(arg)); }
 
-void LogAppender::setLogFormatter(LogFormatter *IFormatter) noexcept { formatter.reset(IFormatter); }
+void LogAppender::SetLogFormatter(LogFormatter *IFormatter) noexcept { m_formatter_.reset(IFormatter); }
 
-void ConsoleLogAppender::append(const LogRecord &record) noexcept {
-  clsn::MutexGuard lock(&mutex);
-  if (recordValid(record)) formatter->format(std::cout, record);
+void ConsoleLogAppender::Append(const LogRecord &record) noexcept {
+  clsn::MutexGuard lock(&m_mutex_);
+  if (RecordValid(record)) m_formatter_->format(std::cout, record);
 }
 
-void FileLogAppender::append(const LogRecord &record) noexcept {
-  clsn::MutexGuard lock(&mutex);
-  if (recordValid(record)) formatter->format(ofStream, record);
+void FileLogAppender::Append(const LogRecord &record) noexcept {
+  clsn::MutexGuard lock(&m_mutex_);
+  if (RecordValid(record)) m_formatter_->format(m_of_stream_, record);
 }
 
 //    ConsoleLogAppender::

@@ -82,7 +82,7 @@ void test_HashTableIterator(HashTable *hash) {
 };
 
 TEST(tset_hash, test_hash) {
-  clsn::init<0>({clsn::createConsoleLogAppender("[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s", clsn::LogLevel::Debug)});
+  clsn::Init<0>({clsn::CreateConsoleLogAppender("[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s", clsn::LogLevel::Debug)});
   HashTable t;
   std::vector<std::string> vec(5000);
   CLSN_LOG_DEBUG << vec.capacity() << " " << vec.size();

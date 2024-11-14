@@ -10,7 +10,7 @@
 #include "net/EVBuffer.h"
 #include "net/RingBuffer.h"
 
-// std::string func(std::shared_ptr<conn>, std::string_view, TimeStamp);
+// std::string m_func_(std::shared_ptr<conn>, std::string_view, TimeStamp);
 
 namespace clsn {
 class TcpConnection;
@@ -51,7 +51,7 @@ class DefaultCodeC : public CodeC {
 
   void Encode(EVBuffer &buffer, const char *data, size_t len) override {
     WriteSizeToPackage(len + sizeof(PackageLengthType));
-    buffer.Write(cache.get(), sizeof(PackageLengthType));
+    buffer.Write(m_cache_.get(), sizeof(PackageLengthType));
     buffer.Write(data, len);
   }
 
@@ -62,11 +62,11 @@ class DefaultCodeC : public CodeC {
 
   virtual void WriteSizeToPackage(size_t size) noexcept {
     PackageLengthType be = htonl(size);
-    std::copy(reinterpret_cast<char *>(&be), reinterpret_cast<char *>(&be) + sizeof(PackageLengthType), cache.get());
+    std::copy(reinterpret_cast<char *>(&be), reinterpret_cast<char *>(&be) + sizeof(PackageLengthType), m_cache_.get());
   }
 
  private:
-  std::unique_ptr<char[]> cache{new char[sizeof(PackageLengthType)]};
+  std::unique_ptr<char[]> m_cache_{new char[sizeof(PackageLengthType)]};
 };
 
 class DefaultCodeCFactory : public CodeCFactory {

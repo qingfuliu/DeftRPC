@@ -29,15 +29,15 @@ class Mutex {
 
 class MutexGuard {
  public:
-  explicit MutexGuard(Mutex *m) noexcept : mutex(m) {
+  explicit MutexGuard(Mutex *m) noexcept : m_mutex_(m) {
     assert(nullptr != m);
-    mutex->Lock();
+    m_mutex_->Lock();
   }
 
-  ~MutexGuard() { mutex->UnLock(); }
+  ~MutexGuard() { m_mutex_->UnLock(); }
 
  public:
-  Mutex *mutex;
+  Mutex *m_mutex_;
 };
 
 template <typename mutex, typename v = std::enable_if_t<std::is_base_of_v<Mutex, mutex> > >
@@ -50,39 +50,39 @@ class ReentrantMutex : public mutex {
   ~ReentrantMutex() override = default;
 
   void Lock() noexcept override {
-    auto temp = threadId.load(std::memory_order_acquire);
-    auto thisId = Thread::thisThreadId();
-    if (temp == thisId) {
+    auto temp = m_thread_id_.load(std::memory_order_acquire);
+    auto this_id = Thread::thisThreadId();
+    if (temp == this_id) {
       return;
     }
 
     if (-1 == temp) {
       Base::Lock();
-      threadId.store(thisId, std::memory_order_release);
+      m_thread_id_.store(this_id, std::memory_order_release);
       return;
     }
   }
 
   void UnLock() noexcept override {
-    threadId.store(-1, std::memory_order_release);
+    m_thread_id_.store(-1, std::memory_order_release);
     Base::UnLock();
   }
 
   bool TryLock() noexcept override {
-    auto thisId = Thread::thisThreadId();
-    auto temp = threadId.load(std::memory_order_acquire);
-    if (temp == thisId) {
+    auto this_id = Thread::thisThreadId();
+    auto temp = m_thread_id_.load(std::memory_order_acquire);
+    if (temp == this_id) {
       return true;
     }
     if (temp == -1 && Base::TryLock()) {
-      threadId.store(thisId, std::memory_order_release);
+      m_thread_id_.store(this_id, std::memory_order_release);
       return true;
     }
     return false;
   }
 
  private:
-  std::atomic_int threadId{-1};
+  std::atomic_int m_thread_id_{-1};
 };
 
 }  // namespace clsn

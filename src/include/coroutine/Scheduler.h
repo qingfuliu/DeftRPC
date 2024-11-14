@@ -27,13 +27,13 @@ class Coroutine;
 
 class Poller;
 
-class FdDescriptor;
+class FileDescriptor;
 
 class Coroutine;
 
 /**
  * Read  Accept
- * 加入到当前线程的 poller 设置读事件
+ * 加入到当前线程的 m_poller_ 设置读事件
  * 阻塞 with yield
  *
  * epollWait
@@ -46,11 +46,11 @@ class Coroutine;
  * Write
  *
  */
-class Scheduler : protected noncopyable {
+class Scheduler : protected Noncopyable {
  public:
   using ExtraTask = Task;
 
-  enum class SchedulerState : short { DoNothing = 0, EpollWait, HandleActiveFd, HandleExtraState };
+  enum class kSchedulerState : std::uint16_t { DoNothing = 0, EpollWait, HandleActiveFd, HandleExtraState };
 
   /**
    *
@@ -76,7 +76,7 @@ class Scheduler : protected noncopyable {
   static bool InsertToTail(Coroutine *routine) noexcept {
     if (nullptr != routine) {
       Scheduler *scheduler = Scheduler::GetThreadScheduler();
-      scheduler->coroutines.emplace_back(routine);
+      scheduler->m_coroutines_.emplace_back(routine);
       return true;
     }
     return false;
@@ -87,26 +87,26 @@ class Scheduler : protected noncopyable {
       f();
       return;
     }
-    extraTasks.EnQueue(std::move(f));
-    if (auto curState = state.load(std::memory_order_acquire);
-        curState == SchedulerState::EpollWait || SchedulerState::DoNothing == curState) {
-      notify();
+    m_extra_tasks_.EnQueue(std::move(f));
+    if (auto cur_state = m_state_.load(std::memory_order_acquire);
+        cur_state == kSchedulerState::EpollWait || kSchedulerState::DoNothing == cur_state) {
+      Notify();
     }
   }
 
   void AddDefer(ExtraTask f) noexcept {
-    extraTasks.EnQueue(std::move(f));
-    if (auto curState = state.load(std::memory_order_acquire);
-        curState == SchedulerState::EpollWait || SchedulerState::DoNothing == curState) {
-      notify();
+    m_extra_tasks_.EnQueue(std::move(f));
+    if (auto cur_state = m_state_.load(std::memory_order_acquire);
+        cur_state == kSchedulerState::EpollWait || kSchedulerState::DoNothing == cur_state) {
+      Notify();
     }
   }
 
-  virtual void Start(int timeout = 10000) noexcept;
+  virtual void Start(int timeout) noexcept;
 
   virtual void Stop() noexcept;
 
-  [[nodiscard]] bool IsStop() const noexcept { return stop.load(std::memory_order_acquire); }
+  [[nodiscard]] bool IsStop() const noexcept { return m_stop_.load(std::memory_order_acquire); }
 
   template <typename Rep, typename Period>
   TimerIdType DoAfter(const std::chrono::duration<Rep, Period> &interval, ExtraTask f) {
@@ -115,68 +115,68 @@ class Scheduler : protected noncopyable {
 
   template <typename Clock, typename Dur>
   uint64_t DoUntil(const std::chrono::time_point<Clock, Dur> &timePoint, ExtraTask f) noexcept {
-    typename Clock::time_point nowClock = Clock::now();
-    auto delta = nowClock - timePoint;
+    typename Clock::time_point now_clock = Clock::now();
+    auto delta = now_clock - timePoint;
     if (IsInLoopThread()) {
-      return timerQueue->AddTimer(delta, std::move(f));
+      return m_timer_queue_->AddTimer(delta, std::move(f));
     }
 
-    AddTask([this, delta, f]() mutable { timerQueue->AddTimer(delta, std::move(f)); });
+    AddTask([this, delta, f]() mutable { m_timer_queue_->AddTimer(delta, std::move(f)); });
     return -1;
   }
 
   template <typename Rep, typename Period>
   TimerIdType DoEvery(const std::chrono::duration<Rep, Period> &interval, ExtraTask f, bool repeated = true) {
     if (IsInLoopThread()) {
-      return timerQueue->AddTimer(interval, std::move(f), repeated);
+      return m_timer_queue_->AddTimer(interval, std::move(f), repeated);
     }
-    AddTask([this, interval, f, repeated]() mutable { timerQueue->AddTimer(interval, std::move(f), repeated); });
+    AddTask([this, interval, f, repeated]() mutable { m_timer_queue_->AddTimer(interval, std::move(f), repeated); });
     return -1;
   }
 
   void CancelTimer(TimerIdType id) noexcept {
     if (IsInLoopThread()) {
-      timerQueue->CancelTimer(id);
+      m_timer_queue_->CancelTimer(id);
       return;
     }
-    AddTask([this, id]() mutable { timerQueue->CancelTimer(id); });
+    AddTask([this, id]() mutable { m_timer_queue_->CancelTimer(id); });
   }
 
-  [[nodiscard]] bool IsInLoopThread() const noexcept { return Thread::thisThreadId() == mPid; }
+  [[nodiscard]] bool IsInLoopThread() const noexcept { return Thread::thisThreadId() == m_pid_; }
 
  private:
-  void notify() noexcept { writeEventFd(); }
+  void Notify() noexcept { WriteEventFd(); }
 
-  void readEventFd() const noexcept;
+  void ReadEventFd() const noexcept;
 
-  void writeEventFd() const noexcept;
+  void WriteEventFd() const noexcept;
 
  private:
-  const bool userCall;
-  const pid_t mPid;
+  const bool m_user_call_;
+  const pid_t m_pid_;
 
  protected:
-  std::atomic_bool stop;
+  std::atomic_bool m_stop_;
 
  private:
-  std::atomic<SchedulerState> state;
+  std::atomic<kSchedulerState> m_state_;
 
-  std::unique_ptr<Coroutine> mainCoroutines;  // header of coroutines
-  std::list<Coroutine *> coroutines;
+  std::unique_ptr<Coroutine> m_main_coroutine_;  // header of m_coroutines_
+  std::list<Coroutine *> m_coroutines_;
   // ExtraTask
-  LockFreeQueue<ExtraTask> extraTasks;
+  LockFreeQueue<ExtraTask> m_extra_tasks_;
   // 共享栈
-  std::unique_ptr<SharedStack> sharedStack;
-  // poller
-  std::unique_ptr<Poller> poller;
-  std::vector<FdDescriptor *> activeFds;
-  // event sock
-  int eventFd;
+  std::unique_ptr<SharedStack> m_shared_stack_;
+  // m_poller_
+  std::unique_ptr<Poller> m_poller_;
+  std::vector<FileDescriptor *> m_active_fds_;
+  // event m_socket_
+  int m_event_fd_;
   // timer queue
-  std::unique_ptr<TimerQueue> timerQueue;
+  std::unique_ptr<TimerQueue> m_timer_queue_;
 };
 
-class multiThreadScheduler : protected Scheduler {
+class MultiThreadScheduler : protected Scheduler {
  private:
 };
 

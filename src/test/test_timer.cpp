@@ -7,12 +7,12 @@
 #include "log/Log.h"
 
 static void test_timer() {
-  clsn::init<0>({clsn::createConsoleLogAppender("[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s", clsn::LogLevel::Debug)});
+  clsn::Init<0>({clsn::CreateConsoleLogAppender("[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s", clsn::LogLevel::Debug)});
   {
     auto poller = clsn::CreateNewPoller();
     auto timerQueue = clsn::CreateNewTimerQueue();
     poller->RegisterRead(timerQueue->GetTimerFd(), *timerQueue);
-    std::vector<clsn::FdDescriptor *> vec;
+    std::vector<clsn::FileDescriptor *> vec;
     int stop = false;
 
     timerQueue->AddTimer(std::chrono::seconds(5), std::function<void(void)>([&stop]() { stop = true; }));

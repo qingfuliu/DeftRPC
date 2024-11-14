@@ -8,8 +8,8 @@
 #include <gtest/gtest.h>
 
 TEST(test_tcpClient, test_tcpClient) {
-  Enable_Hook();
-  Disable_Enable_Hook();
+  EnableHook();
+  DisableEnableHook();
 
   clsn::TcpClient client("0.0.0.0:5201");
   CLSN_LOG_DEBUG << "remote:" << client.GetRemote().toString();

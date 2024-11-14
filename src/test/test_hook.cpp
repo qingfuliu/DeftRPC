@@ -43,7 +43,7 @@ void test_hook() {
 }
 
 TEST(test_hook, test_hook) {
-  Enable_Hook();
+  EnableHook();
   clsn::Scheduler s;
   auto cotoutine = clsn::CreateCoroutine(test_hook);
   s.DoAfter(std::chrono::seconds{1}, cotoutine.get());

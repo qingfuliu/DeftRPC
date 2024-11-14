@@ -12,72 +12,70 @@
 
 namespace clsn {
 
-class Coroutine : protected noncopyable {
+class Coroutine : protected Noncopyable {
  public:
   using Task = std::function<void(void)>;
 
   friend std::unique_ptr<Coroutine> CreateCoroutine(Task t, SharedStack *sharedStack);
 
-  void setIsMain(bool v) noexcept {
+  void SetIsMain(bool v) noexcept {
     if (v) {
-      isMain = v;
-      ctx->MakeSelfMainCtx();
+      m_main_ = v;
+      m_ctx_->MakeSelfMainCtx();
     }
   }
 
-  [[nodiscard]] bool getIsMain() const noexcept { return isMain; }
+  [[nodiscard]] bool GetIsMain() const noexcept { return m_main_; }
 
-  void setTask(Task t) noexcept { task = std::move(t); }
+  void SetTask(Task t) noexcept { m_task_ = std::move(t); }
 
   static Coroutine *GetCurCoroutine();
 
   static void Yield();
 
-  void swapIn() noexcept;
+  void SwapIn() noexcept;
 
-  void swapOutWithExecuting() {
-    state = CoroutineState::executing;
-    swapOut();
+  void SwapOutWithExecuting() {
+    m_state_ = kCoroutineState::executing;
+    SwapOut();
   }
 
-  void swapOutWithYield() {
-    state = CoroutineState::yield;
-    swapOut();
+  void SwapOutWithYield() {
+    m_state_ = kCoroutineState::yield;
+    SwapOut();
   }
 
-  void swapOutWithFinished() {
-    state = CoroutineState::finished;
-    swapOut();
+  void SwapOutWithFinished() {
+    m_state_ = kCoroutineState::finished;
+    SwapOut();
   }
 
-  void swapOutWithTerminal() {
-    state = CoroutineState::terminal;
-    swapOut();
+  void SwapOutWithTerminal() {
+    m_state_ = kCoroutineState::terminal;
+    SwapOut();
   }
 
-  void reset(Task f) noexcept;
+  void Reset(Task f) noexcept;
 
-  void operator()() noexcept { swapIn(); }
+  void operator()() noexcept { SwapIn(); }
 
-  bool operator==(std::nullptr_t) noexcept { return nullptr == task; }
+  bool operator==(std::nullptr_t) noexcept { return nullptr == m_task_; }
 
  protected:
   explicit Coroutine(Task t = nullptr, SharedStack *sharedStack = nullptr) noexcept
-      : isMain(false),
-        state(CoroutineState::construct),
-        task(std::move(t)),
-        ctx(std::make_unique<CoroutineContext>(&Coroutine::CoroutineFunc, this, sharedStack)){};
+      : m_task_(std::move(t)),
+        m_ctx_(std::make_unique<CoroutineContext>(&Coroutine::CoroutineFunc, this, sharedStack)){};
 
  private:
   static void CoroutineFunc(void *);
 
-  void swapOut();
+  void SwapOut();
 
  private:
-  bool isMain;
-  CoroutineState state;
-  std::unique_ptr<CoroutineContext> ctx;
-  Task task;
+  bool m_main_{false};
+  kCoroutineState m_state_{kCoroutineState::construct};
+  std::unique_ptr<CoroutineContext> m_ctx_;
+  Task m_task_;
 };
 
 inline std::unique_ptr<Coroutine> CreateCoroutine(Coroutine::Task t = nullptr, SharedStack *sharedStack = nullptr) {

@@ -9,7 +9,7 @@
 #include "log/Log.h"
 
 int main() {
-  clsn::init<0>({clsn::createConsoleLogAppender("[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s", clsn::LogLevel::Debug)});
+  clsn::Init<0>({clsn::CreateConsoleLogAppender("[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s", clsn::LogLevel::Debug)});
   clsn::SkipList list;
   std::vector<std::tuple<clsn::ScoreType, std::string, clsn::SizeType>> t;
 

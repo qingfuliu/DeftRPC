@@ -27,13 +27,13 @@ class TcpSever : public Scheduler {
 
   ~TcpSever() override;
 
-  [[nodiscard]] CodeC *GetCodeC() noexcept { return mCodeC.get(); }
+  [[nodiscard]] CodeC *GetCodeC() noexcept { return m_codec_.get(); }
 
   void SetCodeC(CodeC *codeC) noexcept;
 
-  void SetMagCallback(MagCallback callback) noexcept { magCallback = std::move(callback); }
+  void SetMagCallback(MagCallback callback) noexcept { m_msg_callback_ = std::move(callback); }
 
-  MagCallback &GetMagCallback() noexcept { return magCallback; }
+  MagCallback &GetMagCallback() noexcept { return m_msg_callback_; }
 
   void CloseConnection(int fd, bool activelyClose = false) noexcept;
 
@@ -42,21 +42,21 @@ class TcpSever : public Scheduler {
   void Stop() noexcept override;
 
  private:
-  void acceptTask() noexcept;
+  void AcceptTask() noexcept;
 
-  void newConnectionArrives(int fd, const Addr &remote) noexcept;
+  void NewConnectionArrives(int fd, const Addr &remote) noexcept;
 
-  void closeAllConnection() noexcept;
+  void CloseAllConnection() noexcept;
 
-  void closeAcceptor() const noexcept;
+  void CloseAcceptor() const noexcept;
 
  private:
-  Socket acceptSock;
-  const Addr local;
-  std::unique_ptr<CodeC> mCodeC;
-  std::unique_ptr<Coroutine> acceptCoroutine;
-  std::unordered_map<int, std::unique_ptr<Coroutine>> connections;
-  MagCallback magCallback;
+  Socket m_accept_socket_;
+  const Addr m_local_addr_;
+  std::unique_ptr<CodeC> m_codec_;
+  std::unique_ptr<Coroutine> m_accept_coroutine_;
+  std::unordered_map<int, std::unique_ptr<Coroutine>> m_connections_;
+  MagCallback m_msg_callback_;
 };
 
 }  // namespace clsn

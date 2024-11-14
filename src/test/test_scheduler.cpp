@@ -5,7 +5,7 @@
 #include "coroutine/Scheduler.h"
 
 static void scheduler_test() noexcept {
-  clsn::init<0>({clsn::createConsoleLogAppender("[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s", clsn::LogLevel::Debug)});
+  clsn::Init<0>({clsn::CreateConsoleLogAppender("[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s", clsn::LogLevel::Debug)});
   clsn::Scheduler s;
   auto now = std::chrono::system_clock::now();
   auto id = s.DoEvery(std::chrono::seconds{5}, [now, &s]() {

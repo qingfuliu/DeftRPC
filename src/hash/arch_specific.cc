@@ -80,10 +80,10 @@ std::string BrandString() {
 void Cpuid( uint32_t level,  uint32_t count,
            uint32_t* HH_RESTRICT abcd) {
 #if HH_MSC_VERSION
-  int regs[4];
-  __cpuidex(regs, level, count);
+  int m_regs_[4];
+  __cpuidex(m_regs_, level, count);
   for (int i = 0; i < 4; ++i) {
-    abcd[i] = regs[i];
+    abcd[i] = m_regs_[i];
   }
 #else
   uint32_t a, b, c, d;

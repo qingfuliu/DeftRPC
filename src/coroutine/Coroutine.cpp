@@ -11,40 +11,40 @@ Coroutine *Coroutine::GetCurCoroutine() { return Scheduler::GetCurCoroutine(); }
 
 void Coroutine::Yield() {
   auto curCoroutine = Scheduler::GetCurCoroutine();
-  assert(!curCoroutine->getIsMain());
-  curCoroutine->swapOutWithYield();
+  assert(!curCoroutine->GetIsMain());
+  curCoroutine->SwapOutWithYield();
 }
 
-void Coroutine::swapIn() noexcept {
+void Coroutine::SwapIn() noexcept {
   Coroutine *cur = Scheduler::GetCurCoroutine();
   Scheduler::InsertToTail(this);
 
-  ctx->SwapCtx(cur->ctx.get());
+  m_ctx_->SwapCtx(cur->m_ctx_.get());
 }
 
 void Coroutine::CoroutineFunc(void *arg) {
   auto cur = static_cast<Coroutine *>(arg);
-  assert(CoroutineState::construct == cur->state);
+  assert(kCoroutineState::construct == cur->m_state_);
   try {
-    cur->state = CoroutineState::executing;
-    if (static_cast<bool>(cur->task)) {
-      cur->task();
-      //                cur->task = nullptr;
+    cur->m_state_ = kCoroutineState::executing;
+    if (static_cast<bool>(cur->m_task_)) {
+      cur->m_task_();
+      //                cur->m_task_ = nullptr;
     }
   } catch (std::exception &e) {
-    cur->swapOutWithTerminal();
+    cur->SwapOutWithTerminal();
   } catch (...) {
-    cur->swapOutWithTerminal();
+    cur->SwapOutWithTerminal();
   }
-  cur->task = nullptr;
-  cur->swapOutWithFinished();
+  cur->m_task_ = nullptr;
+  cur->SwapOutWithFinished();
 }
 
-void Coroutine::reset(Task t) noexcept {
-  task = std::move(t);
-  if (CoroutineState::construct != state) {
-    ctx->reset();
-    state = CoroutineState::construct;
+void Coroutine::Reset(Task f) noexcept {
+  m_task_ = std::move(f);
+  if (kCoroutineState::construct != m_state_) {
+    m_ctx_->Reset();
+    m_state_ = kCoroutineState::construct;
   }
 }
 
@@ -54,17 +54,17 @@ void Coroutine::reset(Task t) noexcept {
  *  2. get the scheduler coroutine
  *  3. swap to the scheduler coroutine
  */
-void Coroutine::swapOut() {
+void Coroutine::SwapOut() {
   Coroutine *cur = Scheduler::GetCurCoroutine();
   assert(this == cur);
   Coroutine *father = Scheduler::GetFatherAndPopCur();
-  father->ctx->SwapCtx(cur->ctx.get());
+  father->m_ctx_->SwapCtx(cur->m_ctx_.get());
 }
 
 //    void Coroutine::makeCtxInit() noexcept {
-//        if (CoroutineState::construct == state) {
-//            ctx.Init();
-//            state = CoroutineState::init;
+//        if (kCoroutineState::construct == state) {
+//            m_ctx_.Init();
+//            state = kCoroutineState::Init;
 //        }
 //    }
 

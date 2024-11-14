@@ -30,7 +30,7 @@ using CoroutineFunc = void (*)(void *);
 
 using CoroutineArg = void *;
 
-enum class CoroutineState : short {
+enum class kCoroutineState : std::int16_t {
   construct = 0,  // before load the register viable
   init,
   executing,
@@ -39,37 +39,37 @@ enum class CoroutineState : short {
   terminal  // except
 };
 
-extern inline constexpr unsigned DefaultStackSize = 1024 * 1024 * 1280;
+extern inline constexpr unsigned DEFAULT_STACK_SIZE = 1024 * 1024 * 1280;
 
-enum class Event : uint32_t { Read = EPOLLIN, Write = EPOLLOUT, Error = EPOLLERR };
+enum class kEvent : uint32_t { Read = EPOLLIN, Write = EPOLLOUT, Error = EPOLLERR };
 
 inline constexpr size_t MAXEPOLLSIZE = 1024 << 1;
 
-class noncopyable {
+class Noncopyable {
  public:
-  noncopyable() = default;
+  Noncopyable() = default;
 
-  virtual ~noncopyable() = default;
+  virtual ~Noncopyable() = default;
 
-  noncopyable(const noncopyable &) = delete;
+  Noncopyable(const Noncopyable &) = delete;
 
-  noncopyable &operator=(const noncopyable &) = delete;
+  Noncopyable &operator=(const Noncopyable &) = delete;
 };
 
 //    template<typename T>
-//    class Singleton : protected noncopyable {
+//    class Singleton : protected Noncopyable {
 //    public:
 //
 //        static T &GetInstance() noexcept {
 //            std::call_once(flag, [] {
-//                instance.reset(new T);
+//                instance.Reset(new T);
 //            });
 //            return *instance.get();
 //        }
 //
 //        static const T *GetInstancePtr() noexcept {
 //            std::call_once(flag, [] {
-//                instance.reset(new T);
+//                instance.Reset(new T);
 //            });
 //            return instance.get();
 //        }
@@ -105,9 +105,9 @@ class Singleton {
   SINGLETON_BASE_DEFINE(Singleton)
 
  public:
-  static T &getInstance() {
+  static T &GetInstance() {
     std::call_once(flag, [] {
-      autoRelease = AutoRelease();
+      auto_release = AutoRelease();
       Singleton::instance = new T{};
     });
     return *instance;
@@ -119,21 +119,21 @@ class Singleton {
     AutoRelease() noexcept = default;
 
     ~AutoRelease() {
-      if (instance != nullptr) delete instance;
+      delete instance;
     }
   };
 
   inline static std::once_flag flag;
-  inline static AutoRelease autoRelease;
+  inline static AutoRelease auto_release;
   inline static T *instance = nullptr;
 };
 
-//********************buffer***************************//
-using PackageLengthType = uint32_t;
-using Crc32Type = uint32_t;
+//********************m_buffer_***************************//
+using PackageLengthType = std::uint32_t;
+using Crc32Type = std::uint32_t;
 //********************RPC***************************//
 
-enum class RpcType : short { Async = 1, Sync = 2 };
+enum class kRpcType : std::int16_t { Async = 1, Sync = 2 };
 
 }  // namespace clsn
 

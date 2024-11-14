@@ -26,14 +26,14 @@ class RPCSever : public TcpSever {
   template <class Func, class... Args>
   void InsertFunc(const std::string &funcName, Func f, Args &&...args) {
     if (router == nullptr) {
-      throw std::logic_error(RouterIsInvalid);
+      throw std::logic_error(router_is_invalid);
     }
     router->InsertFunc(funcName, std::move(f), std::forward<Args>(args)...);
   }
 
   void DeleteFunc(const std::string &funcName) {
     if (router == nullptr) {
-      throw std::logic_error(RouterIsInvalid);
+      throw std::logic_error(router_is_invalid);
     }
     router->DeleteFunc(funcName);
   }

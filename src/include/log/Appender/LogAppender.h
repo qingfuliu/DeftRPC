@@ -20,35 +20,35 @@ class LogFormatter;
 
 class LogAppender;
 
-LogAppender *createConsoleLogAppender(const std::string &format, LogLevel level = LogLevel::Debug);
+LogAppender *CreateConsoleLogAppender(const std::string &format, LogLevel level = LogLevel::Debug);
 
-LogAppender *createFileLogAppender(const std::string &filename, const std::string &format,
+LogAppender *CreateFileLogAppender(const std::string &filename, const std::string &format,
                                    LogLevel level = LogLevel::Debug);
 
-class LogAppender : noncopyable {
+class LogAppender : Noncopyable {
  public:
   explicit LogAppender(LogLevel level = LogLevel::Debug) noexcept;
 
   explicit LogAppender(const std::string &format, LogLevel level = LogLevel::Debug);
 
-  virtual ~LogAppender();
+  ~LogAppender() override;
 
-  virtual void append(const LogRecord &) noexcept = 0;
+  virtual void Append(const LogRecord &) noexcept = 0;
 
-  void setLogFormatter(const std::string &arg);
+  void SetLogFormatter(const std::string &arg);
 
-  void setLogFormatter(LogFormatter *IFormatter) noexcept;
+  void SetLogFormatter(LogFormatter *IFormatter) noexcept;
 
-  [[nodiscard]] virtual bool valid() const noexcept = 0;
+  [[nodiscard]] virtual bool Valid() const noexcept = 0;
 
-  [[nodiscard]] bool recordValid(const LogRecord &record) const noexcept {
-    return (static_cast<short>(record.getLevel()) >= static_cast<short>(appenderLevel)) && valid();
+  [[nodiscard]] bool RecordValid(const LogRecord &record) const noexcept {
+    return (static_cast<std::int16_t>(record.GetLevel()) >= static_cast<std::int16_t>(m_appender_level_)) && Valid();
   }
 
  protected:
-  clsn::SpanMutex mutex;
-  std::unique_ptr<LogFormatter> formatter;
-  LogLevel appenderLevel;
+  clsn::SpanMutex m_mutex_;
+  std::unique_ptr<LogFormatter> m_formatter_;
+  LogLevel m_appender_level_;
 };
 
 class ConsoleLogAppender : public LogAppender {
@@ -60,44 +60,46 @@ class ConsoleLogAppender : public LogAppender {
 
   ~ConsoleLogAppender() override = default;
 
-  void append(const LogRecord &record) noexcept override;
+  void Append(const LogRecord &record) noexcept override;
 
-  [[nodiscard]] bool valid() const noexcept override { return static_cast<bool>(formatter); }
+  [[nodiscard]] bool Valid() const noexcept override { return static_cast<bool>(m_formatter_); }
 };
 
 class FileLogAppender : public LogAppender {
  public:
   FileLogAppender(const std::string &filename, const std::string &format, LogLevel level = LogLevel::Debug)
       : LogAppender(format, level) {
-    reSetFileName(filename);
+    ReSetFileName(filename);
   }
 
   explicit FileLogAppender(const std::string &filename, LogLevel level = LogLevel::Debug) : LogAppender(level) {
-    reSetFileName(filename);
+    ReSetFileName(filename);
   }
 
   explicit FileLogAppender(LogLevel level = LogLevel::Debug) noexcept : LogAppender(level) {}
 
   ~FileLogAppender() override {
-    if (ofStream.is_open()) ofStream.close();
+    if (m_of_stream_.is_open()) {
+      m_of_stream_.close();
+    }
   }
 
-  void reSetFileName(const std::string &filename) {
-    if (ofStream.is_open()) {
-      ofStream.close();
+  void ReSetFileName(const std::string &filename) {
+    if (m_of_stream_.is_open()) {
+      m_of_stream_.close();
     }
-    ofStream.open(filename, std::ofstream::out | std::ofstream::app);
-    if (!ofStream.is_open()) {
+    m_of_stream_.open(filename, std::ofstream::out | std::ofstream::app);
+    if (!m_of_stream_.is_open()) {
       throw std::invalid_argument("filename is invalid");
     }
   }
 
-  void append(const LogRecord &record) noexcept override;
+  void Append(const LogRecord &record) noexcept override;
 
-  bool valid() const noexcept override { return ofStream.is_open() && static_cast<bool>(formatter); }
+  bool Valid() const noexcept override { return m_of_stream_.is_open() && static_cast<bool>(m_formatter_); }
 
  private:
-  std::ofstream ofStream;
+  std::ofstream m_of_stream_;
 };
 
 }  // namespace clsn

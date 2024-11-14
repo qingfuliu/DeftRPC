@@ -109,7 +109,7 @@ using SipHash13State = SipHashStateT<1, 3>;
 template <>
 HH_INLINE void PaddedUpdate<SipHashState>(const HH_U64 size, const char *remaining_bytes, const HH_U64 remaining_size,
                                           SipHashState *state) {
-  // Copy to avoid overrunning the input buffer.
+  // Copy to avoid overrunning the input m_buffer_.
   char final_packet[SipHashState::kPacketSize] = {0};
   memcpy(final_packet, remaining_bytes, remaining_size);
   final_packet[SipHashState::kPacketSize - 1] = static_cast<char>(size & 0xFF);
@@ -119,7 +119,7 @@ HH_INLINE void PaddedUpdate<SipHashState>(const HH_U64 size, const char *remaini
 template <>
 HH_INLINE void PaddedUpdate<SipHash13State>(const HH_U64 size, const char *remaining_bytes, const HH_U64 remaining_size,
                                             SipHash13State *state) {
-  // Copy to avoid overrunning the input buffer.
+  // Copy to avoid overrunning the input m_buffer_.
   char final_packet[SipHash13State::kPacketSize] = {0};
   memcpy(final_packet, remaining_bytes, remaining_size);
   final_packet[SipHash13State::kPacketSize - 1] = static_cast<char>(size & 0xFF);

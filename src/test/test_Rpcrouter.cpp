@@ -7,7 +7,7 @@
 int test_router(int a) { return a + 1; }
 
 int main() {
-  clsn::init<0>({clsn::createConsoleLogAppender("[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s", clsn::LogLevel::Debug)});
+  clsn::Init<0>({clsn::CreateConsoleLogAppender("[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s", clsn::LogLevel::Debug)});
 
   clsn::RpcRouter r("test");
   r.InsertFunc("test", test_router);

@@ -31,7 +31,7 @@ namespace highwayhash {
 // for interoperability with TensorFlow.
 typedef unsigned long long HH_U64;  // NOLINT
 
-// Copies the remaining bytes to a zero-padded buffer, sets the upper byte to
+// Copies the remaining bytes to a zero-padded m_buffer_, sets the upper byte to
 // size % 256 (always possible because this should only be called if the
 // total size is not a multiple of the packet size) and updates hash state.
 //

@@ -38,7 +38,7 @@ std::string RPCSever::MessageCallBack(clsn::TcpConnection *connection, std::stri
   clsn::StringDeSerialize deCode(arg);
   try {
     deCode(request);
-    if (request.async == static_cast<short>(RpcType::Sync)) {
+    if (request.async == static_cast<short>(kRpcType::Sync)) {
       response.res = router->CallFuncSync(request.funcName, request.args);
       response.succeed = true;
     }

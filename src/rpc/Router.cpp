@@ -19,8 +19,8 @@ std::string RpcRouter::CallFuncSync(const std::string &funcName, std::string_vie
     }
 
   } else {
-    CLSN_LOG_DEBUG << MakeRpcException(NoSuchFunction, funcName);
-    eptr = std::make_exception_ptr(clsn::RpcExecuteException(MakeRpcException(NoSuchFunction, funcName)));
+    CLSN_LOG_DEBUG << MakeRpcException(no_such_function, funcName);
+    eptr = std::make_exception_ptr(clsn::RpcExecuteException(MakeRpcException(no_such_function, funcName)));
   }
 
   HandleException(res, eptr);

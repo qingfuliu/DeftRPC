@@ -67,14 +67,14 @@ class FunctionHelper : public RpcFunction {
 
   template <typename T, size_t... index>
   auto InterExecute(T &&tuple, Sequence<index...>) -> typename FuncTraitType::ResType {
-    return f(std::get<index>(tuple)...);
+    return m_f_(std::get<index>(tuple)...);
   }
 
  public:
-  explicit FunctionHelper(Func &&f) noexcept : f(std::forward<Func>(f)) {}
+  explicit FunctionHelper(Func &&f) noexcept : m_f_(std::forward<Func>(f)) {}
 
   std::string Call(std::string_view arg) override {
-    std::string resStr;
+    std::string m_res_str_;
     std::exception_ptr eptr;
     typename FuncTraitType::ResType res;
 
@@ -89,17 +89,17 @@ class FunctionHelper : public RpcFunction {
     }
 
     if (eptr != nullptr) {
-      HandleException(resStr, eptr);
-      return resStr;
+      HandleException(m_res_str_, eptr);
+      return m_res_str_;
     }
 
-    clsn::StringSerialize encoder(resStr);
+    clsn::StringSerialize encoder(m_res_str_);
     encoder(res);
-    return resStr;
+    return m_res_str_;
   }
 
  private:
-  Func f;
+  Func m_f_;
 };
 }  // namespace detail
 
