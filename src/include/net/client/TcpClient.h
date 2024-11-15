@@ -19,7 +19,7 @@ namespace clsn {
 
 class TcpClient {
  public:
-  enum class State : short { Construct, Connecting, Connected, ConnectFailed, ErrorOccurred, Closed };
+  enum class kState : short { Construct, Connecting, Connected, ConnectFailed, ErrorOccurred, Closed };
 
  public:
   explicit TcpClient(const std::string &ipPort) noexcept;
@@ -27,29 +27,29 @@ class TcpClient {
   ~TcpClient() noexcept;
 
   bool Connect(int timeOut = 0) noexcept {
-    if (state >= State::Connected) {
-      return state == State::Connected;
+    if (m_state_ >= kState::Connected) {
+      return m_state_ == kState::Connected;
     }
-    if ((timeOut > 0 && 0 != SetReadTimeOut(timeOut)) || 0 != sock.Connect(&remote)) {
-      state = State::ConnectFailed;
+    if ((timeOut > 0 && 0 != SetReadTimeOut(timeOut)) || 0 != m_sock_.Connect(&m_remote_)) {
+      m_state_ = kState::ConnectFailed;
       return false;
     }
     if (timeOut > 0) {
-      return SetReadTimeOut(readTimeout);
+      return SetReadTimeOut(m_read_timeout_);
     }
     return true;
   }
 
   bool ConnectWithAddr(const Addr &addr, int timeOut = 0) noexcept {
-    if (state >= State::Connected) {
-      return state == State::Connected;
+    if (m_state_ >= kState::Connected) {
+      return m_state_ == kState::Connected;
     }
-    if ((timeOut > 0 && 0 != SetReadTimeOut(timeOut)) || 0 != sock.Connect(&addr)) {
-      state = State::ConnectFailed;
+    if ((timeOut > 0 && 0 != SetReadTimeOut(timeOut)) || 0 != m_sock_.Connect(&addr)) {
+      m_state_ = kState::ConnectFailed;
       return false;
     }
     if (timeOut > 0) {
-      return SetReadTimeOut(readTimeout);
+      return SetReadTimeOut(m_read_timeout_);
     }
     return true;
   }
@@ -60,13 +60,13 @@ class TcpClient {
     if (len == 0) {
       return 0;
     }
-    codeC->Encode(*outputBuffer, msg, len);
+    m_codec_->Encode(*m_output_buffer_, msg, len);
     int res = 0;
     int temp;
     do {
-      temp = outputBuffer->WriteToFd(sock.GetFd());
+      temp = m_output_buffer_->WriteToFd(m_sock_.GetFd());
       res += temp;
-    } while (temp >= 0 && !outputBuffer->IsEmpty());
+    } while (temp >= 0 && !m_output_buffer_->IsEmpty());
     if (temp < 0) {
       return -1;
     }
@@ -77,10 +77,10 @@ class TcpClient {
     if (len <= 0) {
       return 0;
     }
-    int res = inputBuffer->ReadFromFd(sock.GetFd());
+    int res = m_input_buffer_->ReadFromFd(m_sock_.GetFd());
     if (res > 0) {
       len = res > len ? len : res;
-      inputBuffer->Read(data, static_cast<int>(len));
+      m_input_buffer_->Read(data, static_cast<int>(len));
     }
     return res;
   }
@@ -88,59 +88,59 @@ class TcpClient {
   std::string_view Receive() {
     std::string_view view;
     do {
-      int res = inputBuffer->ReadFromFd(sock.GetFd());
+      int res = m_input_buffer_->ReadFromFd(m_sock_.GetFd());
       if (res < 0) {
         break;
       }
-      view = codeC->Decode(*inputBuffer);
+      view = m_codec_->Decode(*m_input_buffer_);
     } while (view.empty());
     return view;
   }
 
-  [[nodiscard]] int MakeSelfNonblock(bool val) const noexcept { return sock.SetNoBlock(val); }
+  [[nodiscard]] int MakeSelfNonblock(bool val) const noexcept { return m_sock_.SetNoBlock(val); }
 
   [[nodiscard]] int Close() noexcept {
-    state = State::Closed;
-    return sock.Close();
+    m_state_ = kState::Closed;
+    return m_sock_.Close();
   }
 
-  [[nodiscard]] State GetClientState() const noexcept { return state; }
+  [[nodiscard]] kState GetClientState() const noexcept { return m_state_; }
 
   int SetReadTimeOut(int timeOut) noexcept {
-    readTimeout = timeOut;
-    int res = sock.SetReadTimeout(timeOut);
+    m_read_timeout_ = timeOut;
+    int res = m_sock_.SetReadTimeout(timeOut);
     if (res != 0) {
-      state = State::ErrorOccurred;
+      m_state_ = kState::ErrorOccurred;
       CLSN_LOG_ERROR << "set read timeout failed after connected,error is " << strerror(errno);
     }
     return res;
   }
 
   int SetWriteTimeOut(int timeOut) noexcept {
-    writeTimeout = timeOut;
-    int res = sock.SetWriteTimeout(timeOut);
+    m_write_timeout_ = timeOut;
+    int res = m_sock_.SetWriteTimeout(timeOut);
     if (res != 0) {
-      state = State::ErrorOccurred;
+      m_state_ = kState::ErrorOccurred;
       CLSN_LOG_ERROR << "set write timeout failed,error is " << strerror(errno);
     }
     return res;
   }
 
-  Socket &GetSocket() noexcept { return sock; }
+  Socket &GetSocket() noexcept { return m_sock_; }
 
-  Addr &GetRemote() noexcept { return remote; }
+  Addr &GetRemote() noexcept { return m_remote_; }
 
-  void SetCodeC(CodeC *enCodeC) noexcept { codeC.reset(enCodeC); }
+  void SetCodeC(CodeC *enCodeC) noexcept { m_codec_.reset(enCodeC); }
 
  private:
-  Socket sock;
-  Addr remote;
-  State state;
-  int readTimeout;
-  int writeTimeout;
-  std::unique_ptr<CodeC> codeC;
-  std::unique_ptr<RingBuffer> inputBuffer;
-  std::unique_ptr<EVBuffer> outputBuffer;
+  Socket m_sock_;
+  Addr m_remote_;
+  kState m_state_;
+  int m_read_timeout_;
+  int m_write_timeout_;
+  std::unique_ptr<CodeC> m_codec_;
+  std::unique_ptr<RingBuffer> m_input_buffer_;
+  std::unique_ptr<EVBuffer> m_output_buffer_;
 };
 
 }  // namespace clsn

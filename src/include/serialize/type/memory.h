@@ -14,7 +14,7 @@ template <typename Sr, typename T>
 std::enable_if_t<!has_load_and_construct_v<Sr, T>> DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(
     Sr &sr, const std::shared_ptr<T> &ptr) noexcept {
   id_type id = sr.RegisterPrt(ptr);
-  sr(make_size_tag(id));
+  sr(MakeSizeTag(id));
   if (static_cast<bool>(id & ptr_id_mask)) {
     sr(*ptr);
   }
@@ -24,7 +24,7 @@ template <typename Sr, typename T>
 std::enable_if_t<!has_load_and_construct_v<Sr, T>> DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(
     Sr &sr, std::shared_ptr<T> &ptr) noexcept(noexcept(access::Construct<T>())) {
   id_type id = 0;
-  sr(make_size_tag(id));
+  sr(MakeSizeTag(id));
   if (static_cast<bool>(id & ptr_id_mask)) {
     ptr.reset(access::Construct<T>());
     sr.RegisterPrt(ptr);
@@ -38,7 +38,7 @@ template <typename Sr, typename T>
 std::enable_if_t<has_load_and_construct_v<Sr, T>> DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(
     Sr &sr, std::shared_ptr<T> &ptr) noexcept(ConstructNavigation(std::declval<Sr>(), std::declval<Construct<T> &>())) {
   id_type id = 0;
-  sr(make_size_tag(id));
+  sr(MakeSizeTag(id));
   if (static_cast<bool>(id & ptr_id_mask)) {
     using RemoveCVT = std::remove_cv_t<T>;
     using Storage = std::aligned_storage_t<sizeof(RemoveCVT), std::alignment_of_v<RemoveCVT>>;
@@ -71,7 +71,7 @@ template <typename Sr, typename T>
 std::enable_if_t<!has_load_and_construct_v<Sr, T>> DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(
     Sr &sr, std::unique_ptr<T> &ptr) noexcept(noexcept(access::Construct<T>())) {
   std::int16_t id;
-  sr(make_size_tag(id));
+  sr(MakeSizeTag(id));
   if (static_cast<std::int16_t>(0) != id) {
     ptr.reset(access::Construct<T>());
     sr(*ptr);
@@ -84,7 +84,7 @@ template <typename Sr, typename T>
 std::enable_if_t<has_load_and_construct_v<Sr, T>> DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(
     Sr &sr, std::unique_ptr<T> &ptr) noexcept(ConstructNavigation(std::declval<Sr>(), std::declval<Construct<T> &>())) {
   id_type id = 0;
-  sr(make_size_tag(id));
+  sr(MakeSizeTag(id));
   if (static_cast<id_type>(0) != id) {
     using RemoveCVT = std::remove_cv_t<T>;
     using Storage = std::aligned_storage_t<sizeof(RemoveCVT), std::alignment_of_v<RemoveCVT>>;

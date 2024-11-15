@@ -9,10 +9,10 @@ namespace clsn {
 std::string RpcRouter::CallFuncSync(const std::string &funcName, std::string_view arg) {
   std::string res;
   std::exception_ptr eptr;
-  if (auto func = functions.FindByKey(funcName); func != nullptr) {
-    auto rpcFunction = *static_cast<RpcFunction **>(func->GetVal());
+  if (auto func = m_functions_.FindByKey(funcName); func != nullptr) {
+    auto rpc_function = *static_cast<RpcFunction **>(func->GetVal());
     try {
-      res = rpcFunction->Call(arg);
+      res = rpc_function->Call(arg);
     } catch (...) {
       CLSN_LOG_FATAL << "An Exception happened.";
       eptr = std::current_exception();

@@ -14,7 +14,7 @@ namespace clsn {
 template <typename Sr, typename T, typename A>
 inline std::enable_if_t<ConditionalAnd_v<std::is_arithmetic<T>, is_binary_serialize<Sr> >, void>
 DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(Sr &sr, const std::vector<T, A> &vec) noexcept {
-  sr(make_size_tag(static_cast<size_t>(vec.size())));
+  sr(MakeSizeTag(static_cast<size_t>(vec.size())));
   if (!vec.empty()) {
     sr.OutPut(static_cast<const void *>(vec.data()), vec.size() * sizeof(T));
   }
@@ -24,7 +24,7 @@ template <typename Sr, typename T, typename A>
 inline std::enable_if_t<ConditionalAnd_v<std::is_arithmetic<T>, is_binary_deserialize<Sr> >, void>
 DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr, std::vector<T, A> &vec) noexcept {
   size_t size = 0;
-  sr(make_size_tag(size));
+  sr(MakeSizeTag(size));
   if (size == 0) {
     return;
   }
@@ -35,7 +35,7 @@ DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr, std::vector<T, A> &vec) noexcept {
 template <typename Sr, typename T, typename A>
 inline std::enable_if_t<!ConditionalOr_v<is_binary_serialize<Sr>, std::is_same<bool, T> >, void>
 DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(Sr &sr, const std::vector<T, A> &vec) noexcept {
-  sr(make_size_tag(vec.size()));
+  sr(MakeSizeTag(vec.size()));
   for (const auto &val : vec) {
     ar(val);
   }
@@ -45,7 +45,7 @@ template <typename Sr, typename T, typename A>
 inline std::enable_if_t<!ConditionalOr_v<is_binary_deserialize<Sr>, std::is_same<bool, T> >, void>
 DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr, std::vector<T, A> &vec) noexcept {
   size_t size = 0;
-  sr(make_size_tag(size));
+  sr(MakeSizeTag(size));
   if (size == 0) {
     return;
   }
@@ -57,7 +57,7 @@ DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr, std::vector<T, A> &vec) noexcept {
 
 template <typename Sr>
 inline void DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(Sr &sr, const std::vector<bool> &vec) noexcept {
-  sr(make_size_tag(vec.size()));
+  sr(MakeSizeTag(vec.size()));
   for (bool it : vec) {
     sr(static_cast<bool>(it));
   }
@@ -66,7 +66,7 @@ inline void DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(Sr &sr, const std::vector<bool> &v
 template <typename Sr>
 inline void DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr, std::vector<bool> &vec) noexcept {
   size_t size = 0;
-  sr(make_size_tag(size));
+  sr(MakeSizeTag(size));
   if (size == 0) {
     return;
   }

@@ -153,23 +153,23 @@ HASFUNC(load_and_construct)
 #undef HASFUNC
 
 template <typename T>
-class size_tag {
+class SizeTag {
   using type = std::conditional_t<std::is_lvalue_reference_v<T>, T, std::decay_t<T>>;
 
  public:
-  size_tag(T &&s) noexcept : size(std::forward<T>(s)) {}
+  SizeTag(T &&s) noexcept : m_size_(std::forward<T>(s)) {}
 
-  ~size_tag() = default;
+  ~SizeTag() = default;
 
-  size_tag(const size_tag &) = delete;
+  SizeTag(const SizeTag &) = delete;
 
-  size_tag &operator()(const size_tag &) = delete;
+  SizeTag &operator()(const SizeTag &) = delete;
 
-  type size;
+  type m_size_;
 };
 
 template <typename T>
-size_tag<T> make_size_tag(T &&size) noexcept {
+SizeTag<T> MakeSizeTag(T &&size) noexcept {
   return {std::forward<T>(size)};
 }
 

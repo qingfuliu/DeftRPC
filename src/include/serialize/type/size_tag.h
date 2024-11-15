@@ -10,13 +10,13 @@
 namespace clsn {
 
 template <typename Sr, typename T>
-void DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(Sr &sr, size_tag<T> &&tag) noexcept {
-  sr(tag.size);
+void DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(Sr &sr, SizeTag<T> &&tag) noexcept {
+  sr(tag.m_size_);
 }
 
 template <typename Sr, typename T>
-void DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr, size_tag<T> &&tag) noexcept {
-  sr(tag.size);
+void DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr, SizeTag<T> &&tag) noexcept {
+  sr(tag.m_size_);
 }
 
 }  // namespace clsn

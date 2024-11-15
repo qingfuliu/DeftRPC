@@ -26,14 +26,14 @@ inline void DEFTRPC_DESERIALIZE_INPUT_FUNCNAME_HELPER(Sr &sr, std::tuple<Args...
 
 template <typename Sr, typename... Args>
 inline void DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(Sr &sr, const std::tuple<Args...> &tp) noexcept {
-  sr(make_size_tag(sizeof...(Args)));
+  sr(MakeSizeTag(sizeof...(Args)));
   DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME_HELPER(sr, tp, MakeSequenceIndex<sizeof...(Args)>());
 }
 
 template <typename Sr, typename... Args>
 inline void DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr, std::tuple<Args...> &tp) {
   size_t size = 0;
-  sr(make_size_tag(size));
+  sr(MakeSizeTag(size));
   if (size != sizeof...(Args)) {
     throw std::logic_error(ArgsSizeError);
   }

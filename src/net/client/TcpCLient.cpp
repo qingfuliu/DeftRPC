@@ -6,17 +6,17 @@
 
 namespace clsn {
 TcpClient::TcpClient(const std::string &ipPort) noexcept
-    : sock(CreateBlockSocket()),
-      remote(ipPort),
-      state(State::Construct),
-      readTimeout(0),
-      writeTimeout(0),
-      codeC(DefaultCodeCFactory::CreateCodeC()),
-      inputBuffer(std::make_unique<RingBuffer>()),
-      outputBuffer(std::make_unique<EVBuffer>()) {}
+    : m_sock_(CreateBlockSocket()),
+      m_remote_(ipPort),
+      m_state_(kState::Construct),
+      m_read_timeout_(0),
+      m_write_timeout_(0),
+      m_codec_(DefaultCodeCFactory::CreateCodeC()),
+      m_input_buffer_(std::make_unique<RingBuffer>()),
+      m_output_buffer_(std::make_unique<EVBuffer>()) {}
 
 TcpClient::~TcpClient() noexcept {
-  if (state == State::Connected) {
+  if (m_state_ == kState::Connected) {
     if (0 != Close()) {
       CLSN_LOG_ERROR << "close connect failed,error is " << strerror(errno);
     }

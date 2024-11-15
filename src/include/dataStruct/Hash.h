@@ -21,72 +21,73 @@ class HashEntryBase {
 
   virtual ~HashEntryBase() = default;
 
-  [[nodiscard]] const std::string &GetKey() const noexcept { return key; }
+  [[nodiscard]] const std::string &GetKey() const noexcept { return m_key_; }
 
-  void SetKey(std::string k) noexcept { key = std::move(k); }
+  void SetKey(std::string k) noexcept { m_key_ = std::move(k); }
 
   virtual void *GetVal() noexcept = 0;
 
   virtual void SetVal(void *) noexcept = 0;
 
-  HashEntryBase *GetNext() noexcept { return next; }
+  HashEntryBase *GetNext() noexcept { return m_next_; }
 
-  void SetNext(HashEntryBase *n) noexcept { next = n; }
+  void SetNext(HashEntryBase *n) noexcept { m_next_ = n; }
 
-  HashEntryBase *GetPrev() noexcept { return prev; }
+  HashEntryBase *GetPrev() noexcept { return m_prev_; }
 
-  void SetPrev(HashEntryBase *n) noexcept { prev = n; }
+  void SetPrev(HashEntryBase *n) noexcept { m_prev_ = n; }
 
  private:
-  std::string key;
-  HashEntryBase *next{nullptr};
-  HashEntryBase *prev{nullptr};
+  std::string m_key_;
+  HashEntryBase *m_next_{nullptr};
+  HashEntryBase *m_prev_{nullptr};
 };
 
 template <typename T>
 class HashEntry : public HashEntryBase {
-  using storage = typename std::aligned_storage<sizeof(T), std::alignment_of_v<T>>::type;
+  using storage = typename std::aligned_storage_t<sizeof(T), std::alignment_of_v<T>>;
 
  public:
   HashEntry() noexcept = default;
 
   explicit HashEntry(T &&v) noexcept : HashEntryBase() {
     if constexpr (std::is_trivial_v<T>) {
-      std::copy(reinterpret_cast<char *>(&v), reinterpret_cast<char *>(&v) + sizeof(T), reinterpret_cast<char *>(&val));
+      std::copy(reinterpret_cast<char *>(&v), reinterpret_cast<char *>(&v) + sizeof(T), reinterpret_cast<char *>(&m_val_));
     } else {
-      new (&val) T(std::move(v));
+      new (&m_val_) T(std::move(v));
     }
   }
 
   explicit HashEntry(T &v) noexcept : HashEntryBase() {
     if constexpr (std::is_trivial_v<T>) {
-      std::copy(reinterpret_cast<char *>(&v), reinterpret_cast<char *>(&v) + sizeof(T), reinterpret_cast<char *>(&val));
+      std::copy(reinterpret_cast<char *>(&v), reinterpret_cast<char *>(&v) + sizeof(T), reinterpret_cast<char *>(&m_val_));
     } else {
-      new (&val) T(v);
+      new (&m_val_) T(v);
     }
   }
 
   ~HashEntry() override = default;
 
-  void *GetVal() noexcept override { return static_cast<void *>(&val); }
+  void *GetVal() noexcept override { return static_cast<void *>(&m_val_); }
 
   void SetVal(void *v) noexcept override {
     if constexpr (std::is_trivial_v<T>) {
-      std::copy(reinterpret_cast<char *>(v), reinterpret_cast<char *>(v) + sizeof(T), reinterpret_cast<char *>(&val));
+      std::copy(reinterpret_cast<char *>(v), reinterpret_cast<char *>(v) + sizeof(T), reinterpret_cast<char *>(&m_val_));
     } else {
-      new (&val) T(*static_cast<T *>(v));
+      new (&m_val_) T(*static_cast<T *>(v));
     }
   }
 
  private:
-  storage val{};
+  storage m_val_{};
 };
 
 class HashTable {
   class HashIterator;
 
-  using HashLenType = unsigned long long;
-  const HashLenType sipHashKey[2] = {0x0706050403020100ULL, 0x0F0E0D0C0B0A0908ULL};
+  using HashLenType = std::uint64_t;
+  static inline constexpr highwayhash::SipHashState::Key m_sip_hash_key_ = {0x0706050403020100ULL,
+                                                                            0x0F0E0D0C0B0A0908ULL};
   using Bucket = HashEntryBase **;
   using Position = HashEntryBase **;
   using EntryType = HashEntryBase *;
@@ -95,13 +96,13 @@ class HashTable {
   ~HashTable() noexcept {
     {
       auto f = [](EntryType entry) -> void { delete entry; };
-      forEachTable(table.get(), 1 << size[0], std::function<void(EntryType)>(std::move(f)));
+      forEachTable(m_table_.get(), 1 << m_size_[0], std::function<void(EntryType)>(std::move(f)));
     }
 
-    if (isReHashing()) {
+    if (IsReHashing()) {
       {
         auto f = [](EntryType entry) -> void { delete entry; };
-        forEachTable(reHashTable.get(), 1 << size[1], std::move(f));
+        forEachTable(m_rehash_table_.get(), 1 << m_size_[1], std::move(f));
       }
     }
   }
@@ -117,7 +118,7 @@ class HashTable {
     if (bucket == nullptr) {
       return nullptr;
     }
-    return insertToBucket(key, std::forward<T>(value), bucket);
+    return InsertToBucket(key, std::forward<T>(value), bucket);
   }
 
   HashEntryBase *FindByKey(const std::string &str) noexcept { return FindByKey(str.c_str(), str.size()); }
@@ -134,9 +135,9 @@ class HashTable {
 
   void Delete(const char *key, HashLenType len) noexcept;
 
-  [[nodiscard]] bool IsEmpty() const noexcept { return (used[0] + used[1]) == 0; }
+  [[nodiscard]] bool IsEmpty() const noexcept { return (m_used_[0] + m_used_[1]) == 0; }
 
-  [[nodiscard]] int32_t Size() const noexcept { return used[0] + used[1]; }
+  [[nodiscard]] int32_t Size() const noexcept { return m_used_[0] + m_used_[1]; }
 
   std::unique_ptr<clsn::Iterator> GetIterator() noexcept { return std::make_unique<HashIterator>(this); }
 
@@ -156,10 +157,10 @@ class HashTable {
 
  private:
   template <class T>
-  EntryType insertToBucket(const char *key, T &&value, Bucket bucket) noexcept {
+  EntryType InsertToBucket(const char *key, T &&value, Bucket bucket) noexcept {
     using EntryT = std::decay_t<T>;
-    int i = isReHashing() ? 1 : 0;
-    ++used[i];
+    int i = IsReHashing() ? 1 : 0;
+    ++m_used_[i];
     auto entry = new HashEntry<EntryT>(std::forward<T>(value));
     entry->SetKey(key);
     entry->SetNext(*bucket);
@@ -173,27 +174,27 @@ class HashTable {
 
   Bucket FindBucketByKey(const char *key, HashLenType len, Position pos) noexcept;
 
-  void reHash() noexcept;
+  void ReHash() noexcept;
 
   [[nodiscard]] int32_t ExpendSize() const noexcept;
 
-  [[nodiscard]] bool needExpend() const noexcept;
+  [[nodiscard]] bool NeedExpend() const noexcept;
 
-  [[nodiscard]] bool needReduce() const noexcept;
+  [[nodiscard]] bool NeedReduce() const noexcept;
 
   void ExpendOrReduce(int32_t len) noexcept;
 
-  [[nodiscard]] static uint64_t getKeyMask(uint64_t len) noexcept { return (1 << len) - 1; }
+  [[nodiscard]] static uint64_t GetKeyMask(uint64_t len) noexcept { return (1 << len) - 1; }
 
-  [[nodiscard]] bool isReHashing() const noexcept { return -1 != reHashIdx; }
+  [[nodiscard]] bool IsReHashing() const noexcept { return -1 != m_rehash_idx_; }
 
   static void forEachTable(Bucket bucket, int tableSize, const std::function<void(EntryType)> &func) {
     for (auto i = 0; i < tableSize; ++i) {
-      forEachBucket(bucket + i, func);
+      ForEachBucket(bucket + i, func);
     }
   }
 
-  static void forEachBucket(Bucket bucket, const std::function<void(EntryType)> &func) noexcept {
+  static void ForEachBucket(Bucket bucket, const std::function<void(EntryType)> &func) noexcept {
     HashEntryBase *entry = *bucket;
     while (entry != nullptr) {
       auto next = entry->GetNext();
@@ -205,10 +206,9 @@ class HashTable {
  private:
   class HashIterator : public Iterator {
    public:
-    explicit HashIterator(HashTable *hash) noexcept
-        : Iterator(), table(nullptr), curBucket(0), curElement(nullptr), hashTable(hash) {
-      if (hashTable != nullptr && !hashTable->IsEmpty()) {
-        reset();
+    explicit HashIterator(HashTable *hash) noexcept : m_hash_table_(hash) {
+      if (m_hash_table_ != nullptr && !m_hash_table_->IsEmpty()) {
+        MReset();
       }
     }
 
@@ -218,14 +218,14 @@ class HashTable {
 
     HashIterator &operator()(const HashIterator &other) noexcept {
       Iterator::operator=(other);
-      table = other.table;
-      curElement = other.curElement;
-      curBucket = other.curBucket;
-      hashTable = other.hashTable;
+      m_table_ = other.m_table_;
+      m_cur_element_ = other.m_cur_element_;
+      m_cur_bucket_ = other.m_cur_bucket_;
+      m_hash_table_ = other.m_hash_table_;
       return *this;
     }
 
-    [[nodiscard]] bool IsValid() const noexcept override { return curElement != nullptr; }
+    [[nodiscard]] bool IsValid() const noexcept override { return m_cur_element_ != nullptr; }
 
     void Next() noexcept override;
 
@@ -235,29 +235,31 @@ class HashTable {
       if (!IsValid()) {
         return nullptr;
       }
-      return curElement;
+      return m_cur_element_;
     }
 
-    void Reset() noexcept override { reset(); }
+    void Reset() noexcept override { MReset(); }
 
    private:
-    void reset() noexcept;
+    void MReset() noexcept;
 
    private:
-    HashEntryBase **table;
-    size_t curBucket;
-    HashEntryBase *curElement;
-    HashTable *hashTable;
+    HashEntryBase **m_table_{nullptr};
+    size_t m_cur_bucket_{0};
+    HashEntryBase *m_cur_element_{nullptr};
+    HashTable *m_hash_table_{nullptr};
   };
 
  private:
-  std::unique_ptr<HashEntryBase *[]> table{nullptr};
-  std::unique_ptr<HashEntryBase *[]> reHashTable{nullptr};
-  int32_t size[2]{0, 0};
-  int32_t used[2]{0, 0};
-  int32_t reHashIdx{-1};
-  std::function<HashLenType(const char *, HashLenType)> hashFunc =
-      [this](const char *data, HashLenType len) -> HashLenType { return highwayhash::SipHash(sipHashKey, data, len); };
+  std::unique_ptr<HashEntryBase *[]> m_table_{nullptr};
+  std::unique_ptr<HashEntryBase *[]> m_rehash_table_{nullptr};
+  int32_t m_size_[2]{0, 0};
+  int32_t m_used_[2]{0, 0};
+  int32_t m_rehash_idx_{-1};
+  std::function<HashLenType(const char *, HashLenType)> m_hash_func_ = [](const char *data,
+                                                                          HashLenType len) -> HashLenType {
+    return highwayhash::SipHash(HashTable::m_sip_hash_key_, data, len);
+  };
 };
 }  // namespace clsn
 

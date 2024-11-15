@@ -74,7 +74,7 @@ class FunctionHelper : public RpcFunction {
   explicit FunctionHelper(Func &&f) noexcept : m_f_(std::forward<Func>(f)) {}
 
   std::string Call(std::string_view arg) override {
-    std::string m_res_str_;
+    std::string res_str;
     std::exception_ptr eptr;
     typename FuncTraitType::ResType res;
 
@@ -89,13 +89,13 @@ class FunctionHelper : public RpcFunction {
     }
 
     if (eptr != nullptr) {
-      HandleException(m_res_str_, eptr);
-      return m_res_str_;
+      HandleException(res_str, eptr);
+      return res_str;
     }
 
-    clsn::StringSerialize encoder(m_res_str_);
+    clsn::StringSerialize encoder(res_str);
     encoder(res);
-    return m_res_str_;
+    return res_str;
   }
 
  private:
