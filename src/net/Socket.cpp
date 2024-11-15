@@ -48,7 +48,9 @@ int Socket::Accept(Addr *addr) const noexcept {
   return new_fd;
 }
 
-int Socket::Bind(const Addr *addr) const noexcept { return ::bind(m_fd_, addr->GetSockAddr(), addr->GetSockAddrSize()); }
+int Socket::Bind(const Addr *addr) const noexcept {
+  return ::bind(m_fd_, addr->GetSockAddr(), addr->GetSockAddrSize());
+}
 
 int Socket::SetTcpKeepAlive(bool val) const noexcept {
   int flag = val ? 1 : 0;

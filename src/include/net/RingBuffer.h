@@ -6,6 +6,7 @@
 #define MCLOUDDISK_MCLOUDBUFFER_H
 
 #include <arpa/inet.h>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>

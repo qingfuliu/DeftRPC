@@ -47,7 +47,7 @@ class StringDeSerialize : public DeSerializer<StringDeSerialize> {
       throw std::logic_error(args_length_error);
     }
     m_str_.copy(static_cast<char *>(data), size);
-      m_str_ = m_str_.substr(size);
+    m_str_ = m_str_.substr(size);
   }
 
  private:

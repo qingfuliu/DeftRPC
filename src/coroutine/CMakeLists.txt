@@ -7,10 +7,6 @@ aux_source_directory(. COROUTINE_SRC)
 list(APPEND COROUTINE_SRC asm/coctx_swap.S)
 
 
-set_source_files_properties(asm/coctx_swap.S PROPERTIES
-        SKIP_LINTING ON
-)
-
 add_library(CLSN_COROUTINE SHARED ${COROUTINE_SRC})
 
 target_link_libraries(CLSN_COROUTINE LOG)

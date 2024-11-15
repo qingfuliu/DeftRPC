@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.25)
 set(CMAKE_CXX_STANDARD 17) # Compile as C++17.
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Require C++17 support.
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # For clang-tidy.
-include(GNUInstallDirs)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/lib)
 
@@ -204,6 +203,8 @@ add_custom_target(check-lint echo '${LINT_FILES}' | xargs -n12 -P8
 )
 
 include_directories(${CMAKE_SOURCE_DIR}/src/include)
+include_directories(${CMAKE_SOURCE_DIR}/third_part)
+
 add_executable(DeftRPC main.cpp)
 add_subdirectory(./src)
 add_subdirectory(./example)

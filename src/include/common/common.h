@@ -118,9 +118,7 @@ class Singleton {
    public:
     AutoRelease() noexcept = default;
 
-    ~AutoRelease() {
-      delete instance;
-    }
+    ~AutoRelease() { delete instance; }
   };
 
   inline static std::once_flag flag;

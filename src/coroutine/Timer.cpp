@@ -6,8 +6,6 @@
 
 namespace clsn {
 
-
-
 static inline void ReadFromTimerFd(int timerFd) {
   uint64_t res;
   size_t size = read(timerFd, &res, sizeof res);
@@ -16,8 +14,7 @@ static inline void ReadFromTimerFd(int timerFd) {
   }
 }
 
-TimerQueue::TimerQueue()
-    : Task([this]() { this->HandleExpireEvent(); }) {
+TimerQueue::TimerQueue() : Task([this]() { this->HandleExpireEvent(); }) {
   Timer timer;
   m_timers_.insert(std::make_pair(timer.GetId(), timer));
 }

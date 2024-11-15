@@ -18,9 +18,7 @@ class Poller {
   friend class std::unique_ptr<Poller>;
 
  public:
-
   Poller() : m_epoll_fd_(epoll_create(MAXEPOLLSIZE)) {}
-
 
   ~Poller() {
     if (m_epoll_fd_ != -1) {
@@ -84,7 +82,6 @@ class Poller {
   }
 
  private:
-
   void RegisterFd(FileDescriptor fdDescriptor) noexcept;
 
   int EpollCtl(int fd, int op, uint32_t event) {

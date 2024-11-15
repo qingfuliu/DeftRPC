@@ -12,9 +12,9 @@
 
 namespace clsn {
 class Addr {
-  static int FromString(const std::string &ip, uint16_t port, struct sockaddr_in *);
+  static int FromString(const std::string &ip, uint16_t port, struct sockaddr_in *addr);
 
-  static int FromString(const std::string &ip, uint16_t port, struct sockaddr_in6 *);
+  static int FromString(const std::string &ip, uint16_t port, struct sockaddr_in6 *addr6);
 
  public:
   Addr() noexcept = default;

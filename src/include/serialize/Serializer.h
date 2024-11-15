@@ -120,7 +120,8 @@ class DeSerializer : public detail::SerializeBase {
   template <typename T>
   inline std::enable_if_t<!has_deserialize_v<Drive, T> && !has_load_and_construct_v<Drive, T>> DeSerializeImpl(
       T &&arg) {
-    static_assert(has_deserialize_v<Drive, T> || has_load_and_construct_v<Drive, T>, "type T has no deserialize m_func_");
+    static_assert(has_deserialize_v<Drive, T> || has_load_and_construct_v<Drive, T>,
+                  "type T has no deserialize m_func_");
   }
 
   template <typename T>

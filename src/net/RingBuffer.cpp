@@ -7,8 +7,6 @@
 #include <algorithm>
 #include "common/common.h"
 
-
-
 namespace clsn {
 
 PackageLengthType RingBuffer::GetPackageLength() const noexcept {
@@ -186,7 +184,7 @@ void RingBuffer::EnableWritableSpace(int targetSize) noexcept {
 int RingBuffer::ReadFromFd(int fd) noexcept {
   char expansion_space[MAX_PACKAGE_LEN];
   struct iovec iov[3];
-  int iovLen;
+  int iov_len;
   int writable = GetWritableCapacity();
   if (GetTailSpaceLen() > 0) {
     iov[0].iov_base = &(*m_buffer_.begin()) + m_end_;
@@ -195,19 +193,19 @@ int RingBuffer::ReadFromFd(int fd) noexcept {
     iov[1].iov_len = m_begin_;
     iov[2].iov_base = expansion_space;
     iov[2].iov_len = MAX_PACKAGE_LEN;
-    iovLen = 3;
+    iov_len = 3;
   } else {
     iov[0].iov_base = &(*m_buffer_.begin()) + m_end_;
     iov[0].iov_len = writable;
     iov[1].iov_base = expansion_space;
     iov[1].iov_len = MAX_PACKAGE_LEN;
-    iovLen = 2;
+    iov_len = 2;
   }
   if (writable >= MAX_PACKAGE_LEN) {
-    --iovLen;
+    --iov_len;
   }
 
-  auto res_size = static_cast<int>(readv(fd, iov, iovLen));
+  auto res_size = static_cast<int>(readv(fd, iov, iov_len));
   if (res_size < 0) {
     return -1;
   }

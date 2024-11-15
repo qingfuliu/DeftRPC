@@ -31,7 +31,7 @@ class EVBuffer {
         --m_end_;
       } else {
         ++m_size_;
-        auto  temp = std::make_unique<struct iovec[] >(m_size_);
+        auto temp = std::make_unique<struct iovec[]>(m_size_);
         std::copy(m_iovecs_.get(), m_iovecs_.get() + m_end_, temp.get());
         m_iovecs_.swap(temp);
       }
@@ -55,7 +55,7 @@ class EVBuffer {
       ++m_end_;
     } else {
       ++m_size_;
-      auto  temp = std::make_unique<struct iovec[] >(m_size_ +1);
+      auto temp = std::make_unique<struct iovec[]>(m_size_ + 1);
       std::copy(m_iovecs_.get(), m_iovecs_.get() + m_end_, temp.get() + 1);
       m_iovecs_.swap(temp);
       ++m_end_;

@@ -92,7 +92,7 @@ struct has_no_member_load_and_construct_func
 template <class Sr, typename T>
 inline constexpr bool has_no_member_load_and_construct_func_v = has_no_member_load_and_construct_func<Sr, T>::value;
 
-}  // namespace m_temp_
+}  // namespace temp
 
 static void test_binary_serialize() {
   {

@@ -83,7 +83,7 @@ inline bool operator==(std::nullptr_t, Task &t) noexcept { return t == nullptr; 
 
 class FileDescriptor {
  public:
-  explicit FileDescriptor(int fd) noexcept : m_fd_(fd){}
+  explicit FileDescriptor(int fd) noexcept : m_fd_(fd) {}
 
   FileDescriptor() noexcept = default;
 

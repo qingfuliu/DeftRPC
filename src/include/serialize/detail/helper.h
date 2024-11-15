@@ -38,8 +38,8 @@ template <class T>
 struct IsBinarySerialize : ConditionalOr<std::is_base_of<T, BinarySerialize>, std::is_same<T, BinarySerialize>> {};
 
 template <class T>
-struct IsBinaryDeserialize
-    : ConditionalOr<std::is_base_of<T, BinaryDeSerialize>, std::is_same<T, BinaryDeSerialize>> {};
+struct IsBinaryDeserialize : ConditionalOr<std::is_base_of<T, BinaryDeSerialize>, std::is_same<T, BinaryDeSerialize>> {
+};
 
 class StringSerialize;
 
@@ -49,8 +49,8 @@ template <class T>
 struct IsStringSerialize : ConditionalOr<std::is_base_of<T, StringSerialize>, std::is_same<T, StringSerialize>> {};
 
 template <class T>
-struct IsStringDeserialize
-    : ConditionalOr<std::is_base_of<T, StringDeSerialize>, std::is_same<T, StringDeSerialize>> {};
+struct IsStringDeserialize : ConditionalOr<std::is_base_of<T, StringDeSerialize>, std::is_same<T, StringDeSerialize>> {
+};
 
 template <class T>
 class Serializer;

@@ -3,6 +3,7 @@
 //
 
 #include "rpc/RpcCodeC.h"
+#include <stdexcept>
 #include "common/Crc32.h"
 #include "rpc/RpcException.h"
 

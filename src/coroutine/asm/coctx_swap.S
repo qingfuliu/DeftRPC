@@ -16,11 +16,11 @@
 * limitations under the License.
 */
 
-.globl coctx_swap
+.globl CoctxSwap
 #if !defined( __APPLE__ )
-.type  coctx_swap, @function
+.type  CoctxSwap, @function
 #endif
-        coctx_swap:
+        CoctxSwap:
 
 #if defined(__i386__)
 movl 4(%esp), %eax

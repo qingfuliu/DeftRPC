@@ -66,16 +66,16 @@ CONVERTER_DEFINE(deque)
    public:                                                                       \
     static void Convert(std::ostream &oss, const std::X<Key, Val> &t) noexcept { \
       oss << "<" #X ">[";                                                        \
-      auto m_begin_ = t.cbegin();                                                   \
-      if (m_begin_ != t.cend()) {                                                   \
-        LogConvert<Key>::convert(oss, m_begin_->pIovec);                            \
+      auto m_begin_ = t.cbegin();                                                \
+      if (m_begin_ != t.cend()) {                                                \
+        LogConvert<Key>::convert(oss, m_begin_->pIovec);                         \
         oss << ":";                                                              \
-        LogConvert<Val>::convert(oss, (m_begin_++)->second);                        \
-        for (; m_begin_ != t.cend(); ++m_begin_) {                                     \
+        LogConvert<Val>::convert(oss, (m_begin_++)->second);                     \
+        for (; m_begin_ != t.cend(); ++m_begin_) {                               \
           oss << ",";                                                            \
-          LogConvert<Key>::convert(oss, m_begin_->pIovec);                          \
+          LogConvert<Key>::convert(oss, m_begin_->pIovec);                       \
           oss << ":";                                                            \
-          LogConvert<Val>::convert(oss, m_begin_->second);                          \
+          LogConvert<Val>::convert(oss, m_begin_->second);                       \
         }                                                                        \
       }                                                                          \
       oss << "]";                                                                \
