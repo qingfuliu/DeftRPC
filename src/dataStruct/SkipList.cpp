@@ -10,12 +10,12 @@ std::pair<SkipListNode *, SizeType> SkipList::Insert(ScoreType score, const std:
   SkipLevelType lv = GetRandomLevel();
   auto node = new SkipListNode(score, val, lv);
 
-  int size = lv >= level ? lv + 1 : level;
+  int size = lv >= m_level_ ? lv + 1 : m_level_;
   std::vector<SkipListNode *> update(size, nullptr);
   std::vector<SizeType> rank(size);
-  getUpdateVec(update, rank, score, val, size);
+  GetUpdateVec(update, rank, score, val, size);
 
-  for (int i = level - 1; i > lv; --i) {
+  for (int i = m_level_ - 1; i > lv; --i) {
     update[i]->SetSpan(i, update[i]->GetSpan(i) + 1);
   }
 
@@ -27,28 +27,28 @@ std::pair<SkipListNode *, SizeType> SkipList::Insert(ScoreType score, const std:
     update[i]->SetSpan(i, 1 + (rank[0] - rank[i]));
   }
 
-  if (level <= lv) {
-    level = lv + 1;
+  if (m_level_ <= lv) {
+    m_level_ = lv + 1;
   }
 
   node->SetPrev(update[0]);
   if (node->GetNext(0) != nullptr) {
     node->GetNext(0)->SetPrev(node);
   } else {
-    tail = node;
+    m_tail_ = node;
   }
-  ++length;
+  ++m_length_;
   return {node, rank[0] + 1};
 }
 
 bool SkipList::Delete(ScoreType score, const std::string &val) noexcept {
-  std::vector<SkipListNode *> update(level, nullptr);
-  std::vector<SizeType> rank(level, 0);
-  getUpdateVec(update, rank, score, val, level);
+  std::vector<SkipListNode *> update(m_level_, nullptr);
+  std::vector<SizeType> rank(m_level_, 0);
+  GetUpdateVec(update, rank, score, val, m_level_);
 
   SkipListNode *node = update[0]->GetNext(0);
   if (node != nullptr && node->GetScore() == score && node->GetVal() == val) {
-    int i = level - 1;
+    int i = m_level_ - 1;
     for (; i >= 0; --i) {
       if (update[i]->GetNext(i) == node) {
         break;
@@ -62,14 +62,14 @@ bool SkipList::Delete(ScoreType score, const std::string &val) noexcept {
 
       update[i]->SetSpan(i, update[i]->GetSpan(i) + node->GetSpan(i) - 1);
     }
-    for (i = level; i >= 0; --i) {
-      if (head->GetNext(i) == nullptr) {
-        --level;
+    for (i = m_level_; i >= 0; --i) {
+      if (m_head_->GetNext(i) == nullptr) {
+        --m_level_;
       } else {
         break;
       }
     }
-    --length;
+    --m_length_;
     delete node;
     return true;
   }
@@ -77,10 +77,10 @@ bool SkipList::Delete(ScoreType score, const std::string &val) noexcept {
 }
 
 std::pair<SkipListNode *, SizeType> SkipList::Find(ScoreType score, const std::string &val) noexcept {
-  std::vector<SkipListNode *> update(level, nullptr);
-  std::vector<SizeType> rank(level, 0);
-  getUpdateVec(update, rank, score, val, level);
-  for (int i = level - 1; i >= 0; --i) {
+  std::vector<SkipListNode *> update(m_level_, nullptr);
+  std::vector<SizeType> rank(m_level_, 0);
+  GetUpdateVec(update, rank, score, val, m_level_);
+  for (int i = m_level_ - 1; i >= 0; --i) {
     auto next = update[i]->GetNext(i);
     if (next != nullptr && next->GetScore() == score && next->GetVal() == val) {
       return {next, rank[i] + update[i]->GetSpan(i)};
@@ -104,17 +104,17 @@ std::pair<SkipListNode *, SizeType> SkipList::Modify(ScoreType score, const std:
  * @param val
  * @param mLevel
  */
-void SkipList::getUpdateVec(std::vector<SkipListNode *> &update, std::vector<SizeType> &rank, ScoreType score,
+void SkipList::GetUpdateVec(std::vector<SkipListNode *> &update, std::vector<SizeType> &rank, ScoreType score,
                             const std::string &val, SkipLevelType mLevel) noexcept {
   assert(mLevel <= update.size());
-  SkipListNode *header = head.get();
+  SkipListNode *header = m_head_.get();
   for (int i = mLevel - 1; i >= 0; --i) {
-    if (i >= level) {
+    if (i >= m_level_) {
       rank[i] = 0;
-      header->SetSpan(i, length);
-    } else if (i == level - 1 || i == mLevel - 1) {
+      header->SetSpan(i, m_length_);
+    } else if (i == m_level_ - 1 || i == mLevel - 1) {
       rank[i] = 0;
-    } else if (rank[i] < level) {
+    } else if (rank[i] < m_level_) {
       rank[i] = rank[i + 1];
     }
     while (header->GetNext(i) != nullptr &&

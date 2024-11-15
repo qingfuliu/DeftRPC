@@ -12,53 +12,53 @@
 
 namespace clsn {
 struct RPCRequest {
-  std::string funcName;
-  std::string args;
-  short async;
+  std::string m_func_name_;
+  std::string m_args_;
+  short m_async_;
 
   template <class Sr>
   void DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(Sr &sr) {
-    sr(funcName, args, async);
+    sr(m_func_name_, m_args_, m_async_);
   }
 
   template <class Sr>
   void DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr) {
-    sr(funcName, args, async);
+    sr(m_func_name_, m_args_, m_async_);
   }
 };
 
 struct RPCResponse {
-  std::string res;
-  bool succeed;
+  std::string m_res_;
+  bool m_succeed_;
 
   template <class Sr>
   void DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(Sr &sr) {
-    sr(succeed, res);
+    sr(m_succeed_, m_res_);
   }
 
   template <class Sr>
   void DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr) {
-    sr(succeed, res);
+    sr(m_succeed_, m_res_);
   }
 
   template <class Res>
   Res GetResponseRes() {
-    if (!clsn::CheckCec32(res.data(), res.size())) {
+    if (!clsn::CheckCec32(m_res_.data(), m_res_.size())) {
       throw std::logic_error(package_is_invalid);
     }
     Res r;
-    clsn::StringSerialize decode(res);
-    res(r);
+    clsn::StringSerialize decode(m_res_);
+    m_res_(r);
     return r;
   }
 
   template <class Res>
   void GetResponseRes(Res &r) {
-    if (!clsn::CheckCec32(res.data(), res.size())) {
+    if (!clsn::CheckCec32(m_res_.data(), m_res_.size())) {
       throw std::logic_error(package_is_invalid);
     }
-    clsn::StringSerialize decode(res);
-    res(r);
+    clsn::StringSerialize decode(m_res_);
+    m_res_(r);
   }
 };
 }  // namespace clsn

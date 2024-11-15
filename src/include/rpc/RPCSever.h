@@ -21,21 +21,21 @@ class RPCSever : public TcpSever {
  public:
   explicit RPCSever(const std::string &ipPort, size_t sharedStackSize = 0) noexcept;
 
-  void SetRouter(RpcRouter *rpcRouter) noexcept { router.reset(rpcRouter); }
+  void SetRouter(RpcRouter *rpcRouter) noexcept { m_router_.reset(rpcRouter); }
 
   template <class Func, class... Args>
   void InsertFunc(const std::string &funcName, Func f, Args &&...args) {
-    if (router == nullptr) {
+    if (m_router_ == nullptr) {
       throw std::logic_error(router_is_invalid);
     }
-    router->InsertFunc(funcName, std::move(f), std::forward<Args>(args)...);
+    m_router_->InsertFunc(funcName, std::move(f), std::forward<Args>(args)...);
   }
 
   void DeleteFunc(const std::string &funcName) {
-    if (router == nullptr) {
+    if (m_router_ == nullptr) {
       throw std::logic_error(router_is_invalid);
     }
-    router->DeleteFunc(funcName);
+    m_router_->DeleteFunc(funcName);
   }
 
   void Start(int timeout) noexcept override;
@@ -44,7 +44,7 @@ class RPCSever : public TcpSever {
   std::string MessageCallBack(clsn::TcpConnection *connection, std::string_view arg, clsn::TimeStamp t);
 
  private:
-  std::unique_ptr<RpcRouter> router;
+  std::unique_ptr<RpcRouter> m_router_;
 };
 
 std::unique_ptr<RPCSever> CreateRpcSever(const std::string &ipPort, size_t sharedStackSize = 0) noexcept {

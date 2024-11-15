@@ -44,7 +44,7 @@ DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(Sr &sr, const std::vector<T, A> &vec) noexcept
 template <typename Sr, typename T, typename A>
 inline std::enable_if_t<!ConditionalOr_v<is_binary_deserialize<Sr>, std::is_same<bool, T> >, void>
 DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr, std::vector<T, A> &vec) noexcept {
-  int size = 0;
+  size_t size = 0;
   sr(make_size_tag(size));
   if (size == 0) {
     return;
@@ -58,23 +58,23 @@ DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr, std::vector<T, A> &vec) noexcept {
 template <typename Sr>
 inline void DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(Sr &sr, const std::vector<bool> &vec) noexcept {
   sr(make_size_tag(vec.size()));
-  for (auto it = vec.begin(); it != vec.end(); it++) {
-    sr(static_cast<bool>(*it));
+  for (bool it : vec) {
+    sr(static_cast<bool>(it));
   }
 }
 
 template <typename Sr>
 inline void DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr, std::vector<bool> &vec) noexcept {
-  int size = 0;
+  size_t size = 0;
   sr(make_size_tag(size));
   if (size == 0) {
     return;
   }
   vec.resize(size);
   bool temp;
-  for (auto it = vec.begin(); it != vec.end(); it++) {
+  for (size_t index = 0; index < size; ++index) {
     sr(temp);
-    *it = temp;
+    vec[index] = temp;
   }
 }
 

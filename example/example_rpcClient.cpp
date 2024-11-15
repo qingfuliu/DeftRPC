@@ -8,7 +8,7 @@ int main() {
   EnableHook();
   DisableEnableHook();
   clsn::RpcClient client("0.0.0.0:5201");
-  CLSN_LOG_DEBUG << "remote:" << client.GetRemote().toString();
+  CLSN_LOG_DEBUG << "remote:" << client.GetRemote().ToString();
   if (!client.Connect()) {
     CLSN_LOG_ERROR << "connect failed,error is " << strerror(errno);
     return -1;

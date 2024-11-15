@@ -51,7 +51,7 @@ class ReentrantMutex : public mutex {
 
   void Lock() noexcept override {
     auto temp = m_thread_id_.load(std::memory_order_acquire);
-    auto this_id = Thread::thisThreadId();
+    auto this_id = thread::ThisThreadId();
     if (temp == this_id) {
       return;
     }
@@ -69,7 +69,7 @@ class ReentrantMutex : public mutex {
   }
 
   bool TryLock() noexcept override {
-    auto this_id = Thread::thisThreadId();
+    auto this_id = thread::ThisThreadId();
     auto temp = m_thread_id_.load(std::memory_order_acquire);
     if (temp == this_id) {
       return true;

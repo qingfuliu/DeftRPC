@@ -23,7 +23,7 @@ class Socket {
 
   ~Socket() = default;
 
-  [[nodiscard]] int getFd() const noexcept { return m_fd_; }
+  [[nodiscard]] int GetFd() const noexcept { return m_fd_; }
 
   int Listen() const noexcept;
 
@@ -33,7 +33,7 @@ class Socket {
 
   int Bind(const Addr *addr) const noexcept;
 
-  int SetTcpKeepAlive(bool) const noexcept;
+  int SetTcpKeepAlive(bool val) const noexcept;
 
   int SetTCPNoDelay(bool val) const noexcept;
 

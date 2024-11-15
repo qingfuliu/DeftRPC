@@ -142,7 +142,7 @@ class Scheduler : protected Noncopyable {
     AddTask([this, id]() mutable { m_timer_queue_->CancelTimer(id); });
   }
 
-  [[nodiscard]] bool IsInLoopThread() const noexcept { return Thread::thisThreadId() == m_pid_; }
+  [[nodiscard]] bool IsInLoopThread() const noexcept { return thread::ThisThreadId() == m_pid_; }
 
  private:
   void Notify() noexcept { WriteEventFd(); }

@@ -88,7 +88,7 @@ HH_INLINE void UpdateState(const char *bytes, const HH_U64 size, State *state) {
 template <class String, class State>
 HH_INLINE void UpdateState(const String &s, State *state) {
   const char *bytes = reinterpret_cast<const char *>(s.data());
-  const size_t size = s.length() * sizeof(typename String::value_type);
+  const size_t size = s.m_length_() * sizeof(typename String::value_type);
   UpdateState(bytes, size, state);
 }
 

@@ -15,17 +15,17 @@
 
 #define CLSN_LEVEL_CHECK(Id, Level)                                    \
   if (static_cast<unsigned short>(clsn::LogLevel::Level) <=            \
-      static_cast<unsigned short>(clsn::getLogger<Id>().GetLevel())) { \
+      static_cast<unsigned short>(clsn::GetLogger<Id>().GetLevel())) { \
     ;                                                                  \
   } else                                                               \
-    clsn::getLogger<Id>() +=
+    clsn::GetLogger<Id>() +=
 
 #define CLSN_DEFAULT_LEVEL_CHECK(Level) CLSN_LEVEL_CHECK(CLSN_LOGGER_DEFAULT_ID, Level)
 
 #define CLSN_DO_LOG(Id, Level)                                                                     \
   CLSN_LEVEL_CHECK(Id, Level)                                                                      \
-  clsn::LogRecord(&clsn::getLogger<Id>(), ::time(NULL), __FILE__, __LINE__, clsn::LogLevel::Level, \
-                  clsn::Thread::thisThreadId())
+  clsn::LogRecord(&clsn::GetLogger<Id>(), ::time(NULL), __FILE__, __LINE__, clsn::LogLevel::Level, \
+                  clsn::thread::ThisThreadId())
 
 #define CLSN_DEFAULT_DO_LOG(Level) CLSN_DO_LOG(CLSN_LOGGER_DEFAULT_ID, Level)
 

@@ -12,8 +12,8 @@
 #include "vector.h"
 
 namespace clsn {
-using AddressType = uint64_t;
-using IdType = uint64_t;
+using address_type = uint64_t;
+using id_type = uint64_t;
 }  // namespace clsn
 
 #endif  // DEFTRPC_TYPE_COMMON_H

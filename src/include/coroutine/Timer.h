@@ -73,6 +73,14 @@ class TimeStamp {
   TimeType m_time_;
 };
 
+static inline int CreateTimerFd() noexcept {
+  int timer_fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
+  if (-1 == timer_fd) {
+    CLSN_LOG_FATAL << "timer m_socket_ create failed,error is " << errno;
+  }
+  return timer_fd;
+}
+
 static inline void ResetTimerFd(int timerFd, const TimeStamp &time) {
   struct itimerspec new_time {};
   struct itimerspec old_time {};
@@ -168,8 +176,8 @@ class TimerQueue : public Task {
   }
 
  private:
-  int m_timer_fd_;
-  bool m_handling_event_;
+  int m_timer_fd_{CreateTimerFd()};
+  bool m_handling_event_{false};
   std::unordered_map<TimerIdType, Timer> m_timers_;
   std::unordered_set<TimerIdType> m_cancel_timer_;
   std::set<Timer *, decltype(&TimerComparer)> m_active_timers_{&TimerComparer};

@@ -9,17 +9,16 @@
 #include <type_traits>
 #include "config.h"
 
-namespace clsn {
-namespace access {
+namespace clsn::access {
 
 template <class T, class... Args>
-std::enable_if_t<std::is_constructible_v<T, Args...>, T *> construct(T *ptr, Args &&...arg) noexcept(
+std::enable_if_t<std::is_constructible_v<T, Args...>, T *> Construct(T *ptr, Args &&...arg) noexcept(
     std::is_nothrow_constructible_v<T, Args...>) {
   new (ptr) T(std::forward<Args>(arg)...);
 }
 
 template <class T>
-std::enable_if_t<std::is_constructible_v<T>, T *> construct() noexcept(std::is_nothrow_constructible_v<T>) {
+std::enable_if_t<std::is_constructible_v<T>, T *> Construct() noexcept(std::is_nothrow_constructible_v<T>) {
   return new T{};
 }
 
@@ -36,13 +35,12 @@ void DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr, T &t) noexcept {
 }
 
 template <typename Sr, typename T,
-          typename v = decltype(std::declval<T>().get()->DEFTRPC_DESERIALIZE_LOAD_AND_CONSTRUCT_FUNCNANE(
+          typename v = decltype(std::declval<T>().Get()->DEFTRPC_DESERIALIZE_LOAD_AND_CONSTRUCT_FUNCNANE(
               std::declval<Sr &>(), std::declval<T &>()))>
 void DEFTRPC_DESERIALIZE_LOAD_AND_CONSTRUCT_FUNCNANE(Sr &sr, T &t) noexcept {
-  t.get()->DEFTRPC_DESERIALIZE_LOAD_AND_CONSTRUCT_FUNCNANE(sr, t);
+  t.Get()->DEFTRPC_DESERIALIZE_LOAD_AND_CONSTRUCT_FUNCNANE(sr, t);
 }
 
-}  // namespace access
-}  // namespace clsn
+}  // namespace clsn::access
 
 #endif  // DEFTRPC_ACCESS_H

@@ -19,7 +19,7 @@ TcpConnection::TcpConnection(int f, const Addr &addr) noexcept
 TcpConnection::~TcpConnection() = default;
 
 void TcpConnection::NewTcpConnectionArrive(int fd, const Addr &remote) noexcept {
-  CLSN_LOG_DEBUG << "new connection arrive,remote address is " << remote.toString();
+  CLSN_LOG_DEBUG << "new connection arrive,remote address is " << remote.ToString();
   TcpConnection connection(fd, remote);
   connection.ProcessMag();
   CLSN_LOG_DEBUG << "connection close,coroutine deconstruct";
@@ -32,7 +32,7 @@ void TcpConnection::ProcessMag() {
   do {
     int res;
     do {
-      res = m_input_buffer_->ReadFromFd(m_socket_.getFd());
+      res = m_input_buffer_->ReadFromFd(m_socket_.GetFd());
       if (res <= 0) {
         break;
       }
@@ -49,7 +49,7 @@ void TcpConnection::ProcessMag() {
       }
 
       do {
-        res = m_output_buffer_->WriteToFd(m_socket_.getFd());
+        res = m_output_buffer_->WriteToFd(m_socket_.GetFd());
       } while (!m_output_buffer_->IsEmpty() && res >= 0);
 
     } while (true);
@@ -58,7 +58,7 @@ void TcpConnection::ProcessMag() {
       if (-1 == m_socket_.Close()) {
         CLSN_LOG_ERROR << "connection close error,error is " << strerror(errno);
       }
-      int fd = m_socket_.getFd();
+      int fd = m_socket_.GetFd();
       mSever->AddDefer([mSever, fd]() { mSever->CloseConnection(fd); });
       break;
     } else if (res == -1 && errno == EBADF) {

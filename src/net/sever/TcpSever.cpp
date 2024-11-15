@@ -117,7 +117,7 @@ void TcpSever::CloseAllConnection() noexcept {
 }
 
 void TcpSever::CloseAcceptor() const noexcept {
-  close(m_accept_socket_.getFd());
+  close(m_accept_socket_.GetFd());
   m_accept_coroutine_->SwapIn();
 }
 

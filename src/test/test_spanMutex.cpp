@@ -21,7 +21,7 @@ void test_spanMutex_Reentrant() {
   clsn::ReentrantMutex<clsn::SpanMutex> mutexRe{};
   {
     mutexRe.Lock();
-    std::cout << clsn::Thread::thisThreadId() << std::endl;
+    std::cout << clsn::thread::ThisThreadId() << std::endl;
     std::cout << "Lock" << std::endl;
     mutexRe.Lock();
     std::cout << "Lock1" << std::endl;

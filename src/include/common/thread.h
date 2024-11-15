@@ -8,8 +8,8 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
-namespace clsn::Thread {
-inline pid_t thisThreadId() noexcept { return static_cast<pid_t>(syscall(SYS_gettid)); }
-}  // namespace clsn::Thread
+namespace clsn::thread {
+inline pid_t ThisThreadId() noexcept { return static_cast<pid_t>(syscall(SYS_gettid)); }
+}  // namespace clsn::thread
 
 #endif  // DEFTRPC_THREAD_H

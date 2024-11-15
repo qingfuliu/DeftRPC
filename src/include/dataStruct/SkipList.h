@@ -19,80 +19,80 @@ using SkipLevelType = uint8_t;
 using SizeType = uint32_t;
 //    using SkipRankType = uint32_t;
 
-constexpr SkipLevelType MaxLevel = UINT8_MAX;
-constexpr double LevelRadio = 0.25;
+constexpr SkipLevelType MAX_LEVEL = UINT8_MAX;
+constexpr double LEVEL_RADIO = 0.25;
 
 class SkipListNode;
 namespace detail {
 class SkipListLevel {
  public:
-  SkipListNode *next{nullptr};
-  SizeType span{0};
+  SkipListNode *m_next_{nullptr};
+  SizeType m_span_{0};
 };
 }  // namespace detail
 
 class SkipListNode {
  public:
-  SkipListNode() noexcept : SkipListNode(-1, "", MaxLevel) {}
+  SkipListNode() noexcept : SkipListNode(-1, "", MAX_LEVEL) {}
 
   SkipListNode(ScoreType s, std::string v, SkipLevelType lv) noexcept
-      : score(s), val(std::move(v)), prev(nullptr), level(std::make_unique<detail::SkipListLevel[]>(lv + 1)) {
+      : m_score_(s), m_val_(std::move(v)), m_prev_(nullptr), m_level_(std::make_unique<detail::SkipListLevel[]>(lv + 1)) {
     for (int i = 0; i < lv; i++) {
-      level[i].next = nullptr;
-      level[i].span = 0;
+      m_level_[i].m_next_ = nullptr;
+      m_level_[i].m_span_ = 0;
     }
   }
 
   ~SkipListNode() = default;
 
-  SkipListNode *GetNext(SkipLevelType i) noexcept { return level[i].next; }
+  SkipListNode *GetNext(SkipLevelType i) noexcept { return m_level_[i].m_next_; }
 
-  SizeType GetSpan(SkipLevelType i) noexcept { return level[i].span; }
+  SizeType GetSpan(SkipLevelType i) noexcept { return m_level_[i].m_span_; }
 
-  void SetSpan(SkipLevelType i, SizeType s) noexcept { level[i].span = s; }
+  void SetSpan(SkipLevelType i, SizeType s) noexcept { m_level_[i].m_span_ = s; }
 
-  [[nodiscard]] const SkipListNode *GetNext(SkipLevelType i) const noexcept { return level[i].next; }
+  [[nodiscard]] const SkipListNode *GetNext(SkipLevelType i) const noexcept { return m_level_[i].m_next_; }
 
   SkipListNode *SetNext(SkipLevelType lv, SkipListNode *n) noexcept {
     assert(this != n);
-    auto prev = level[lv].next;
-    level[lv].next = n;
+    auto prev = m_level_[lv].m_next_;
+    m_level_[lv].m_next_ = n;
 
     if (lv == 0) {
-      auto temp = next.release();
+      auto temp = m_next_.release();
       assert(temp == prev);
-      next.reset(n);
+      m_next_.reset(n);
     }
     return prev;
   }
 
-  void SetPrev(SkipListNode *p) noexcept { prev = p; }
+  void SetPrev(SkipListNode *p) noexcept { m_prev_ = p; }
 
-  [[nodiscard]] const std::string &GetVal() const noexcept { return val; }
+  [[nodiscard]] const std::string &GetVal() const noexcept { return m_val_; }
 
-  std::string &GetVal() noexcept { return val; }
+  std::string &GetVal() noexcept { return m_val_; }
 
-  [[nodiscard]] ScoreType GetScore() const noexcept { return score; }
+  [[nodiscard]] ScoreType GetScore() const noexcept { return m_score_; }
 
   bool operator<(const SkipListNode *node) const noexcept {
-    return node == nullptr || (node->score > score) || (node->score == score && node->val > val);
+    return node == nullptr || (node->m_score_ > m_score_) || (node->m_score_ == m_score_ && node->m_val_ > m_val_);
   }
 
  private:
-  ScoreType score{0};
-  std::string val{};
-  SkipListNode *prev{nullptr};
-  std::unique_ptr<SkipListNode> next{nullptr};
-  std::unique_ptr<detail::SkipListLevel[]> level;
+  ScoreType m_score_{0};
+  std::string m_val_{};
+  SkipListNode *m_prev_{nullptr};
+  std::unique_ptr<SkipListNode> m_next_{nullptr};
+  std::unique_ptr<detail::SkipListLevel[]> m_level_;
 };
 
 class SkipList {
  public:
-  SkipList() noexcept : level(1), length(0), head(std::make_unique<SkipListNode>()), tail(head.get()) {}
+  SkipList() noexcept : m_level_(1), m_length_(0), m_head_(std::make_unique<SkipListNode>()), m_tail_(m_head_.get()) {}
 
   ~SkipList() = default;
 
-  [[nodiscard]] SizeType GetSize() const noexcept { return length; }
+  [[nodiscard]] SizeType GetSize() const noexcept { return m_length_; }
 
   std::pair<SkipListNode *, SizeType> Insert(ScoreType score, const std::string &val) noexcept;
 
@@ -105,21 +105,21 @@ class SkipList {
  private:
   static inline SkipLevelType GetRandomLevel() noexcept {
     SkipLevelType res = 0;
-    while ((static_cast<unsigned int>(random()) & MaxLevel) < (MaxLevel >> 2)) {
+    while ((static_cast<unsigned int>(random()) & MAX_LEVEL) < (MAX_LEVEL >> 2)) {
       ++res;
     }
-    res = res > MaxLevel ? MaxLevel : res;
+    res = res > MAX_LEVEL ? MAX_LEVEL : res;
     return res;
   }
 
-  void getUpdateVec(std::vector<SkipListNode *> &update, std::vector<SizeType> &rank, ScoreType score,
+  void GetUpdateVec(std::vector<SkipListNode *> &update, std::vector<SizeType> &rank, ScoreType score,
                     const std::string &val, SkipLevelType mLevel) noexcept;
 
  private:
-  SizeType length;
-  SkipLevelType level;
-  std::unique_ptr<SkipListNode> head;
-  SkipListNode *tail;
+  SizeType m_length_;
+  SkipLevelType m_level_;
+  std::unique_ptr<SkipListNode> m_head_;
+  SkipListNode *m_tail_;
 };
 
 }  // namespace clsn

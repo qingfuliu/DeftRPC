@@ -177,24 +177,24 @@ size_tag<T> make_size_tag(T &&size) noexcept {
  * sequence idx
  */
 template <size_t... Idx>
-struct sequence_index {
-  using next = sequence_index<Idx..., sizeof...(Idx)>;
+struct SequenceIndex {
+  using next = SequenceIndex<Idx..., sizeof...(Idx)>;
 };
 
 template <size_t size>
-struct sequence_index_maker {
+struct SequenceIndexMaker {
   static_assert(0 < size);
-  using type = typename sequence_index_maker<size - 1>::type::next;
+  using type = typename SequenceIndexMaker<size - 1>::type::next;
 };
 
 template <>
-struct sequence_index_maker<0> {
-  using type = sequence_index<>;
+struct SequenceIndexMaker<0> {
+  using type = SequenceIndex<>;
 };
 
 template <size_t size>
-auto make_sequence_index() noexcept {
-  return typename sequence_index_maker<size>::type{};
+auto MakeSequenceIndex() noexcept {
+  return typename SequenceIndexMaker<size>::type{};
 }
 
 }  // namespace clsn

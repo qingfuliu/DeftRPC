@@ -60,13 +60,13 @@ class Logger : public Singleton<Logger<id>>, public LoggerBase {
 };
 
 template <std::uint16_t id = 0>
-inline Logger<id> &getLogger() {
+inline Logger<id> &GetLogger() {
   return Logger<id>::GetInstance();
 }
 
 template <std::uint16_t id = 0>
 inline void Init(const std::vector<LogAppender *> &appenders) {
-  getLogger<id>().AddLogAppender(appenders);
+  GetLogger<id>().AddLogAppender(appenders);
 }
 
 }  // namespace clsn

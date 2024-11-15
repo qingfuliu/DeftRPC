@@ -13,22 +13,22 @@ namespace clsn {
 template <typename T>
 class Construct {
  public:
-  explicit Construct(T *p) noexcept : ptr(p) {}
+  explicit Construct(T *p) noexcept : m_ptr_(p) {}
 
   ~Construct() = default;
 
   template <typename... Args>
-  T *operator()(Args &&...args) noexcept(access::construct(std::declval<T *>(), std::declval<Args>()...)) {
-    access::construct(ptr, std::forward<Args>(args)...);
-    return ptr;
+  T *operator()(Args &&...args) noexcept(access::Construct(std::declval<T *>(), std::declval<Args>()...)) {
+    access::Construct(m_ptr_, std::forward<Args>(args)...);
+    return m_ptr_;
   }
 
-  T *operator->() noexcept { return ptr; }
+  T *operator->() noexcept { return m_ptr_; }
 
-  T *get() noexcept { return ptr; }
+  T *Get() noexcept { return m_ptr_; }
 
  private:
-  T *ptr;
+  T *m_ptr_;
 };
 
 template <typename Sr, typename T>

@@ -17,7 +17,7 @@ static thread_local std::unique_ptr<Scheduler> thread_scheduler{nullptr};
 
 Scheduler::Scheduler(size_t sharedStackSize, bool UserCall)
     : m_user_call_(UserCall),
-      m_pid_(Thread::thisThreadId()),
+      m_pid_(thread::ThisThreadId()),
       m_stop_(true),
       m_state_(kSchedulerState::DoNothing),
       m_main_coroutine_(clsn::CreateCoroutine()),

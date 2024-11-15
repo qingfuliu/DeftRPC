@@ -10,9 +10,9 @@ namespace clsn {
 Coroutine *Coroutine::GetCurCoroutine() { return Scheduler::GetCurCoroutine(); }
 
 void Coroutine::Yield() {
-  auto curCoroutine = Scheduler::GetCurCoroutine();
-  assert(!curCoroutine->GetIsMain());
-  curCoroutine->SwapOutWithYield();
+  auto cur_coroutine = Scheduler::GetCurCoroutine();
+  assert(!cur_coroutine->GetIsMain());
+  cur_coroutine->SwapOutWithYield();
 }
 
 void Coroutine::SwapIn() noexcept {

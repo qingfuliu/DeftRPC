@@ -24,40 +24,40 @@ class SerializeBase {
   virtual ~SerializeBase() = default;
 
   template <class T>
-  IdType RegisterPrt(const std::shared_ptr<T> ptr) {
+  id_type RegisterPrt(const std::shared_ptr<T> ptr) {
     auto address = ptr.get();
     if (address == nullptr) {
       return 0;
     }
-    auto it = addressToId.find(reinterpret_cast<AddressType>(address));
-    if (it == addressToId.end()) {
-      ++curIdx;
-      addressToId.emplace(reinterpret_cast<AddressType>(address), curIdx);
-      IdToPtr.emplace(curIdx, ptr);
-      return curIdx | PtrIdMask;
+    auto it = m_address_to_id_.find(reinterpret_cast<address_type>(address));
+    if (it == m_address_to_id_.end()) {
+      ++m_cur_idx_;
+      m_address_to_id_.emplace(reinterpret_cast<address_type>(address), m_cur_idx_);
+      m_id_to_ptr_.emplace(m_cur_idx_, ptr);
+      return m_cur_idx_ | ptr_id_mask;
     }
     return it->second;
   }
 
-  std::shared_ptr<void> GetPrt(IdType id) {
-    auto it = IdToPtr.find(id);
-    if (IdToPtr.end() == it) {
+  std::shared_ptr<void> GetPrt(id_type id) {
+    auto it = m_id_to_ptr_.find(id);
+    if (m_id_to_ptr_.end() == it) {
       return nullptr;
     }
     return it->second;
   }
 
  private:
-  std::map<AddressType, IdType> addressToId;
-  std::map<IdType, std::shared_ptr<void>> IdToPtr;
-  AddressType curIdx{0};
+  std::map<address_type, id_type> m_address_to_id_;
+  std::map<id_type, std::shared_ptr<void>> m_id_to_ptr_;
+  address_type m_cur_idx_{0};
 };
 }  // namespace detail
 
 template <class Drive>
 class Serializer : public detail::SerializeBase {
  public:
-  explicit Serializer(Drive *d) noexcept : SerializeBase(), self(d) {}
+  explicit Serializer(Drive *d) noexcept : SerializeBase(), m_self_(d) {}
 
   ~Serializer() override = default;
 
@@ -71,35 +71,35 @@ class Serializer : public detail::SerializeBase {
 
   template <typename Arg>
   inline Serializer &operator()(Arg &&arg) {
-    serializeImpl(std::forward<Arg>(arg));
+    SerializeImpl(std::forward<Arg>(arg));
     return *this;
   }
 
  private:
   template <typename T>
-  inline std::enable_if_t<!has_serialize_v<Drive, T>> serializeImpl(T &&arg) {
+  inline std::enable_if_t<!has_serialize_v<Drive, T>> SerializeImpl(T &&arg) {
     static_assert(!has_serialize_v<Drive, T>, "type t has no serialize m_func_");
   }
 
   template <typename T>
   inline std::enable_if_t<has_no_member_serialize_func_v<Drive, T> && !has_member_serialize_func_v<Drive, T>>
-  serializeImpl(T &&arg) {
-    DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(*self, std::forward<T>(arg));
+  SerializeImpl(T &&arg) {
+    DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(*m_self_, std::forward<T>(arg));
   }
 
   template <typename T>
-  inline std::enable_if_t<has_member_serialize_func_v<Drive, T>> serializeImpl(T &&arg) {
-    access::DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(*self, std::forward<T>(arg));
+  inline std::enable_if_t<has_member_serialize_func_v<Drive, T>> SerializeImpl(T &&arg) {
+    access::DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(*m_self_, std::forward<T>(arg));
   }
 
  public:
-  Drive *self;
+  Drive *m_self_;
 };
 
 template <typename Drive>
 class DeSerializer : public detail::SerializeBase {
  public:
-  explicit DeSerializer(Drive *d) noexcept : SerializeBase(), self(d) {}
+  explicit DeSerializer(Drive *d) noexcept : SerializeBase(), m_self_(d) {}
 
   ~DeSerializer() override = default;
 
@@ -112,39 +112,39 @@ class DeSerializer : public detail::SerializeBase {
 
   template <typename Arg>
   inline DeSerializer &operator()(Arg &&arg) {
-    deSerializeImpl(std::forward<Arg>(arg));
+    DeSerializeImpl(std::forward<Arg>(arg));
     return *this;
   }
 
  private:
   template <typename T>
-  inline std::enable_if_t<!has_deserialize_v<Drive, T> && !has_load_and_construct_v<Drive, T>> deSerializeImpl(
+  inline std::enable_if_t<!has_deserialize_v<Drive, T> && !has_load_and_construct_v<Drive, T>> DeSerializeImpl(
       T &&arg) {
     static_assert(has_deserialize_v<Drive, T> || has_load_and_construct_v<Drive, T>, "type T has no deserialize m_func_");
   }
 
   template <typename T>
-  inline std::enable_if_t<has_no_member_deserialize_func_v<Drive, T>> deSerializeImpl(T &&arg) {
-    DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(*self, std::forward<T>(arg));
+  inline std::enable_if_t<has_no_member_deserialize_func_v<Drive, T>> DeSerializeImpl(T &&arg) {
+    DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(*m_self_, std::forward<T>(arg));
   }
 
   template <typename T>
-  inline std::enable_if_t<has_member_deserialize_func_v<Drive, T>> deSerializeImpl(T &&arg) {
-    access::DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(*self, std::forward<T>(arg));
+  inline std::enable_if_t<has_member_deserialize_func_v<Drive, T>> DeSerializeImpl(T &&arg) {
+    access::DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(*m_self_, std::forward<T>(arg));
   }
 
   template <typename T>
-  inline std::enable_if_t<has_no_member_load_and_construct_func_v<Drive, T>> deSerializeImpl(T &&arg) {
-    DEFTRPC_DESERIALIZE_LOAD_AND_CONSTRUCT_FUNCNANE(*self, std::forward<T>(arg));
+  inline std::enable_if_t<has_no_member_load_and_construct_func_v<Drive, T>> DeSerializeImpl(T &&arg) {
+    DEFTRPC_DESERIALIZE_LOAD_AND_CONSTRUCT_FUNCNANE(*m_self_, std::forward<T>(arg));
   }
 
   template <typename T>
-  inline std::enable_if_t<has_member_load_and_construct_func_v<Drive, T>> deSerializeImpl(T &&arg) {
-    access::DEFTRPC_DESERIALIZE_LOAD_AND_CONSTRUCT_FUNCNANE(*self, std::forward<T>(arg));
+  inline std::enable_if_t<has_member_load_and_construct_func_v<Drive, T>> DeSerializeImpl(T &&arg) {
+    access::DEFTRPC_DESERIALIZE_LOAD_AND_CONSTRUCT_FUNCNANE(*m_self_, std::forward<T>(arg));
   }
 
  private:
-  Drive *self;
+  Drive *m_self_;
 };
 }  // namespace clsn
 

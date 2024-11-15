@@ -17,16 +17,16 @@ class StringSerialize : public Serializer<StringSerialize> {
   using Base = Serializer<StringSerialize>;
 
  public:
-  explicit StringSerialize(std::string &str) noexcept : Base(this), str(str) {}
+  explicit StringSerialize(std::string &str) noexcept : Base(this), m_str_(str) {}
 
   ~StringSerialize() override = default;
 
   void OutPut(const void *data, size_t size) noexcept {
-    str.append(static_cast<const char *>(data), static_cast<std::streamsize>(size));
+    m_str_.append(static_cast<const char *>(data), static_cast<std::streamsize>(size));
   }
 
  private:
-  std::string &str;
+  std::string &m_str_;
 };
 
 template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<std::remove_reference_t<T>>, void>>

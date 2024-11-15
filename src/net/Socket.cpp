@@ -13,7 +13,7 @@
 
 namespace clsn {
 
-int MAX_LISTEN_COUNT = 100;
+int max_listen_count = 100;
 
 int CreateNoBlockSocket() noexcept {
   int fd = socket(AF_INET, SOCK_CLOEXEC | SOCK_NONBLOCK | SOCK_STREAM, IPPROTO_TCP);
@@ -33,22 +33,22 @@ int CreateBlockSocket() noexcept {
   return fd;
 }
 
-int Socket::Listen() const noexcept { return ::listen(m_fd_, MAX_LISTEN_COUNT); }
+int Socket::Listen() const noexcept { return ::listen(m_fd_, max_listen_count); }
 
 int Socket::Connect(const Addr *addr) const noexcept {
   int res;
-  res = ::connect(m_fd_, addr->getSockAddr(), addr->getSockAddrSize());
+  res = ::connect(m_fd_, addr->GetSockAddr(), addr->GetSockAddrSize());
   return res;
 }
 
 int Socket::Accept(Addr *addr) const noexcept {
   socklen_t len = sizeof(sockaddr_in6);
-  int newFd;
-  newFd = ::accept4(m_fd_, addr->getSockAddr(), &len, SOCK_NONBLOCK | SOCK_CLOEXEC);
-  return newFd;
+  int new_fd;
+  new_fd = ::accept4(m_fd_, addr->GetSockAddr(), &len, SOCK_NONBLOCK | SOCK_CLOEXEC);
+  return new_fd;
 }
 
-int Socket::Bind(const Addr *addr) const noexcept { return ::bind(m_fd_, addr->getSockAddr(), addr->getSockAddrSize()); }
+int Socket::Bind(const Addr *addr) const noexcept { return ::bind(m_fd_, addr->GetSockAddr(), addr->GetSockAddrSize()); }
 
 int Socket::SetTcpKeepAlive(bool val) const noexcept {
   int flag = val ? 1 : 0;
@@ -94,14 +94,14 @@ int Socket::SetReuseAddr(bool val) const noexcept {
 }
 
 int Socket::SetNoBlock(bool val) const noexcept {
-  int oldSocketFlag = fcntl(m_fd_, F_GETFL, 0);
-  int newSocketFlag = oldSocketFlag;
+  int old_flag = fcntl(m_fd_, F_GETFL, 0);
+  int new_flag = old_flag;
   if (val) {
-    newSocketFlag |= O_NONBLOCK;
+    new_flag |= O_NONBLOCK;
   } else {
-    newSocketFlag |= (~O_NONBLOCK);
+    new_flag |= (~O_NONBLOCK);
   }
-  if (fcntl(m_fd_, F_SETFL, newSocketFlag) == -1) {
+  if (fcntl(m_fd_, F_SETFL, new_flag) == -1) {
     ::close(m_fd_);
     CLSN_LOG_WARNING << "set socket to nonblock error.";
     return -1;

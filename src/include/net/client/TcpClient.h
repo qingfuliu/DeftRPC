@@ -64,7 +64,7 @@ class TcpClient {
     int res = 0;
     int temp;
     do {
-      temp = outputBuffer->WriteToFd(sock.getFd());
+      temp = outputBuffer->WriteToFd(sock.GetFd());
       res += temp;
     } while (temp >= 0 && !outputBuffer->IsEmpty());
     if (temp < 0) {
@@ -77,7 +77,7 @@ class TcpClient {
     if (len <= 0) {
       return 0;
     }
-    int res = inputBuffer->ReadFromFd(sock.getFd());
+    int res = inputBuffer->ReadFromFd(sock.GetFd());
     if (res > 0) {
       len = res > len ? len : res;
       inputBuffer->Read(data, static_cast<int>(len));
@@ -88,7 +88,7 @@ class TcpClient {
   std::string_view Receive() {
     std::string_view view;
     do {
-      int res = inputBuffer->ReadFromFd(sock.getFd());
+      int res = inputBuffer->ReadFromFd(sock.GetFd());
       if (res < 0) {
         break;
       }

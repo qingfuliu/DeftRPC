@@ -8,7 +8,7 @@
 namespace clsn {
 
 RPCSever::RPCSever(const std::string &ipPort, size_t sharedStackSize) noexcept
-    : TcpSever(ipPort, sharedStackSize), router(nullptr) {
+    : TcpSever(ipPort, sharedStackSize), m_router_(nullptr) {
   TcpSever::SetMagCallback([this](auto &&PH1, auto &&PH2, auto &&PH3) {
     return MessageCallBack(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2),
                            std::forward<decltype(PH3)>(PH3));
@@ -18,7 +18,7 @@ RPCSever::RPCSever(const std::string &ipPort, size_t sharedStackSize) noexcept
 
 void RPCSever::Start(int timeout) noexcept {
 #ifdef DEBUG
-  auto it = router->GetIterator();
+  auto it = m_router_->GetIterator();
   CLSN_LOG_DEBUG
       << "============================================rpc functions============================================";
   while (it->IsValid()) {
@@ -35,20 +35,20 @@ std::string RPCSever::MessageCallBack(clsn::TcpConnection *connection, std::stri
   RPCResponse response;
 
   RPCRequest request;
-  clsn::StringDeSerialize deCode(arg);
+  clsn::StringDeSerialize de_code(arg);
   try {
-    deCode(request);
-    if (request.async == static_cast<short>(kRpcType::Sync)) {
-      response.res = router->CallFuncSync(request.funcName, request.args);
-      response.succeed = true;
+    de_code(request);
+    if (request.m_async_ == static_cast<short>(kRpcType::Sync)) {
+      response.m_res_ = m_router_->CallFuncSync(request.m_func_name_, request.m_args_);
+      response.m_succeed_ = true;
     }
   } catch (std::exception &e) {
-    response.succeed = false;
-    response.res = e.what();
+    response.m_succeed_ = false;
+    response.m_res_ = e.what();
   }
   std::string res;
-  clsn::StringSerialize enCode(res);
-  enCode(response);
+  clsn::StringSerialize en_code(res);
+  en_code(response);
   return res;
 }
 

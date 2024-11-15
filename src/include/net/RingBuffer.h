@@ -11,9 +11,15 @@
 #include <vector>
 
 namespace clsn {
+
+static inline constexpr int32_t max_package_len = 1024;
+static inline constexpr int32_t single_expansion = 1024;
+static inline constexpr int32_t multiply_expansion_limit = 1024;
+static inline constexpr int32_t default_buffer_len = 1024;
+
 class RingBuffer {
  public:
-  RingBuffer() noexcept;
+  RingBuffer() = default;
 
   ~RingBuffer() = default;
 
@@ -57,12 +63,12 @@ class RingBuffer {
   void EnableWritableSpace(int targetSize) noexcept;
 
  private:
-  int m_begin_;
-  int m_end_;
-  int m_size_;
-  std::vector<char> m_buffer_;
-  int m_temp_capacity_;
-  std::unique_ptr<char[]> m_temp_;
+  int m_begin_{0};
+  int m_end_{0};
+  int m_size_{0};
+  std::vector<char> m_buffer_{std::vector<char>(default_buffer_len)};
+  int m_temp_capacity_{0};
+  std::unique_ptr<char[]> m_temp_{nullptr};
 };
 
 }  // namespace clsn

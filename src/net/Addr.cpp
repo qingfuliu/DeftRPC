@@ -43,30 +43,30 @@ Addr::Addr(const std::string &ipPort, bool ipv4) noexcept {
     auto temp = std::string_view(ipPort.c_str() + pos + 1);
     uint16_t port = static_cast<uint16_t>(atoi(temp.data()));
     if (ipv4) {
-      address = sockaddr_in{};
-      FromString(std::string(ipPort.begin(), ipPort.begin() + pos), port, &std::get<1>(address));
+      m_address_ = sockaddr_in{};
+      FromString(std::string(ipPort.begin(), ipPort.begin() + pos), port, &std::get<1>(m_address_));
     } else {
-      address = sockaddr_in6{};
-      FromString(std::string(ipPort.begin(), ipPort.begin() + pos), port, &std::get<0>(address));
+      m_address_ = sockaddr_in6{};
+      FromString(std::string(ipPort.begin(), ipPort.begin() + pos), port, &std::get<0>(m_address_));
     }
   } while (0);
 }
 
 Addr::Addr(const std::string &ip, uint16_t port, bool ipv4) noexcept {
   if (ipv4) {
-    FromString(ip, port, &std::get<1>(address));
+    FromString(ip, port, &std::get<1>(m_address_));
   } else {
-    FromString(ip, port, &std::get<0>(address));
+    FromString(ip, port, &std::get<0>(m_address_));
   }
 }
 
-std::string Addr::toString() const noexcept {
+std::string Addr::ToString() const noexcept {
   char *buf;
   uint16_t port = 0;
   std::ostringstream oss;
   do {
-    if (1 == address.index()) {
-      auto &addr = std::get<1>(address);
+    if (1 == m_address_.index()) {
+      auto &addr = std::get<1>(m_address_);
       buf = static_cast<char *>(malloc(INET_ADDRSTRLEN));
       if (inet_ntop(AF_INET, &addr.sin_addr, buf, INET_ADDRSTRLEN) == NULL) {
         // log
@@ -75,7 +75,7 @@ std::string Addr::toString() const noexcept {
       }
       oss << buf << ":" << ntohs(addr.sin_port);
     } else {
-      auto &addr6 = std::get<0>(address);
+      auto &addr6 = std::get<0>(m_address_);
       buf = static_cast<char *>(malloc(INET6_ADDRSTRLEN));
       if (inet_ntop(AF_INET6, &addr6.sin6_addr, buf, INET6_ADDRSTRLEN) == NULL) {
         // log

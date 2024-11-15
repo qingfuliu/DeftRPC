@@ -23,23 +23,23 @@ class Addr {
 
   Addr(const std::string &ip, uint16_t port, bool ipv4 = true) noexcept;
 
-  explicit Addr(const sockaddr_in *addr) noexcept { this->address = *addr; }
+  explicit Addr(const sockaddr_in *addr) noexcept { this->m_address_ = *addr; }
 
-  explicit Addr(const sockaddr_in6 *addr6) { this->address = *addr6; }
+  explicit Addr(const sockaddr_in6 *addr6) { this->m_address_ = *addr6; }
 
-  Addr(const Addr &addr) noexcept { this->address = addr.address; }
+  Addr(const Addr &addr) noexcept { this->m_address_ = addr.m_address_; }
 
-  [[nodiscard]] sa_family_t getFamily() const noexcept {
-    switch (address.index()) {
+  [[nodiscard]] sa_family_t GetFamily() const noexcept {
+    switch (m_address_.index()) {
       case 0:
-        return std::get<0>(address).sin6_family;
+        return std::get<0>(m_address_).sin6_family;
       default:
-        return std::get<1>(address).sin_family;
+        return std::get<1>(m_address_).sin_family;
     }
   }
 
-  [[nodiscard]] size_t getSockAddrSize() const noexcept {
-    switch (address.index()) {
+  [[nodiscard]] size_t GetSockAddrSize() const noexcept {
+    switch (m_address_.index()) {
       case 0:
         return sizeof(sockaddr_in6);
       default:
@@ -47,14 +47,14 @@ class Addr {
     }
   }
 
-  sockaddr *getSockAddr() noexcept { return reinterpret_cast<sockaddr *>(&address); }
+  sockaddr *GetSockAddr() noexcept { return reinterpret_cast<sockaddr *>(&m_address_); }
 
-  [[nodiscard]] const sockaddr *getSockAddr() const noexcept { return reinterpret_cast<const sockaddr *>(&address); }
+  [[nodiscard]] const sockaddr *GetSockAddr() const noexcept { return reinterpret_cast<const sockaddr *>(&m_address_); }
 
-  [[nodiscard]] std::string toString() const noexcept;
+  [[nodiscard]] std::string ToString() const noexcept;
 
  private:
-  std::variant<sockaddr_in6, sockaddr_in> address{};
+  std::variant<sockaddr_in6, sockaddr_in> m_address_{};
 };
 }  // namespace clsn
 

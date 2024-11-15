@@ -6,15 +6,9 @@
 
 namespace clsn {
 
-static inline int createTimerFd() noexcept {
-  int timerFd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
-  if (-1 == timerFd) {
-    CLSN_LOG_FATAL << "timer m_socket_ create failed,error is " << errno;
-  }
-  return timerFd;
-}
 
-static inline void readFromTimerFd(int timerFd) {
+
+static inline void ReadFromTimerFd(int timerFd) {
   uint64_t res;
   size_t size = read(timerFd, &res, sizeof res);
   if (size != sizeof res) {
@@ -23,7 +17,7 @@ static inline void readFromTimerFd(int timerFd) {
 }
 
 TimerQueue::TimerQueue()
-    : Task([this]() { this->HandleExpireEvent(); }), m_timer_fd_(createTimerFd()), m_handling_event_(false) {
+    : Task([this]() { this->HandleExpireEvent(); }) {
   Timer timer;
   m_timers_.insert(std::make_pair(timer.GetId(), timer));
 }
@@ -32,7 +26,7 @@ void TimerQueue::CancelTimer(TimerIdType Id) noexcept {
   if (m_handling_event_) {
     m_cancel_timer_.insert(Id);
   } else {
-    TimeStamp curHeader = GetEarliestTime();
+    TimeStamp cur_header = GetEarliestTime();
 
     auto it = m_timers_.find(Id);
     if (it != m_timers_.end()) {
@@ -40,9 +34,9 @@ void TimerQueue::CancelTimer(TimerIdType Id) noexcept {
       m_timers_.erase(it);
     }
 
-    TimeStamp afterHeader = GetEarliestTime();
-    if (curHeader < afterHeader) {
-      ResetTimerFd(m_timer_fd_, afterHeader);
+    TimeStamp after_header = GetEarliestTime();
+    if (cur_header < after_header) {
+      ResetTimerFd(m_timer_fd_, after_header);
     }
   }
   assert(m_active_timers_.size() + 1 == m_timers_.size());
@@ -58,7 +52,7 @@ void TimerQueue::CancelTimer(TimerIdType Id) noexcept {
 void TimerQueue::HandleExpireEvent() {
   m_handling_event_ = true;
   assert(m_active_timers_.size() + 1 == m_timers_.size());
-  readFromTimerFd(m_timer_fd_);
+  ReadFromTimerFd(m_timer_fd_);
   m_timers_[0].Reset();
   auto p = std::upper_bound(m_active_timers_.begin(), m_active_timers_.end(), &m_timers_[0], TimerComparer);
 
@@ -66,8 +60,8 @@ void TimerQueue::HandleExpireEvent() {
    * 处理活跃的
    */
   if (p != m_active_timers_.begin()) {
-    std::vector<Timer *> activeTemp(m_active_timers_.begin(), p);
-    for (auto it : activeTemp) {
+    std::vector<Timer *> active_temp(m_active_timers_.begin(), p);
+    for (auto it : active_temp) {
       auto &timer = *it;
       timer();
       m_active_timers_.erase(it);
@@ -76,7 +70,7 @@ void TimerQueue::HandleExpireEvent() {
     /**
      * 处理重复的
      */
-    for (auto it : activeTemp) {
+    for (auto it : active_temp) {
       auto &timer = *it;
       if (timer.GetRepeated() && m_cancel_timer_.end() == m_cancel_timer_.find(timer.GetId())) {
         timer.Reset();
@@ -99,8 +93,8 @@ void TimerQueue::HandleExpireEvent() {
      * 重置定时器时间
      */
     if (!m_active_timers_.empty()) {
-      TimeStamp afterHeader = (*m_active_timers_.begin())->GetTimeStamp();
-      ResetTimerFd(m_timer_fd_, afterHeader);
+      TimeStamp after_header = (*m_active_timers_.begin())->GetTimeStamp();
+      ResetTimerFd(m_timer_fd_, after_header);
     }
     m_cancel_timer_.clear();
   }

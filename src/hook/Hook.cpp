@@ -39,7 +39,7 @@ HOOK_RECOVER_SUMMERY(RECOVER_FUNC_DEFINE)
 
 namespace clsn {
 
-static thread_local bool enableHook = false;
+static thread_local bool enable_hook = false;
 
 namespace detail {
 struct HookInitializer : public Singleton<HookInitializer> {
@@ -48,7 +48,7 @@ struct HookInitializer : public Singleton<HookInitializer> {
   SINGLETON_DEFINE(HookInitializer)
 
  public:
-  void initHook() noexcept {
+  void InitHook() noexcept {
     clsn::Init<0>({clsn::CreateConsoleLogAppender("[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s", clsn::LogLevel::Debug)});
 
     CLSN_LOG_DEBUG << "===============Initialize hook====================";
@@ -59,7 +59,7 @@ struct HookInitializer : public Singleton<HookInitializer> {
 
 }  // namespace detail
 
-static bool is_socket(int fd) noexcept {
+static bool IsSocket(int fd) noexcept {
   struct stat st {};
   int err = fstat(fd, &st);  // 获得文件的状态
   if (err < 0) {
@@ -74,14 +74,14 @@ static bool is_socket(int fd) noexcept {
 }  // namespace clsn
 
 int socket(int domain, int type, int protocol) {
-  if (!clsn::enableHook) {
+  if (!clsn::enable_hook) {
     return socket_t(domain, type, protocol);
   }
   return socket_t(domain, type | SOCK_NONBLOCK | SOCK_CLOEXEC, protocol);
 }
 
 int connect(int fd, const struct sockaddr *address, socklen_t addressLen) {
-  if (!clsn::enableHook || !clsn::is_socket(fd)) {
+  if (!clsn::enable_hook || !clsn::IsSocket(fd)) {
     return connect_t(fd, address, addressLen);
   }
   int res = -1;
@@ -107,7 +107,7 @@ int connect(int fd, const struct sockaddr *address, socklen_t addressLen) {
 }
 
 int accept4(int sockFd, struct sockaddr *address, socklen_t *addressLen, int flags) {
-  if (!clsn::enableHook) {
+  if (!clsn::enable_hook) {
     return accept4_t(sockFd, address, addressLen, flags);
   }
 
@@ -134,7 +134,7 @@ int accept(int sockFd, struct sockaddr *address, socklen_t *addressLen) {
 
 template <typename OriginFunc, typename... Args>
 auto IOBase(OriginFunc originFunc, clsn::kEvent event, int fd, Args... args) {
-  if (!clsn::enableHook || !clsn::is_socket(fd)) {
+  if (!clsn::enable_hook || !clsn::IsSocket(fd)) {
     return originFunc(fd, args...);
   }
   ssize_t n = 0;
@@ -161,7 +161,7 @@ ssize_t read(int fd, void *buf, size_t count) { return IOBase(read_t, clsn::kEve
 ssize_t write(int fd, const void *buf, size_t count) { return IOBase(write_t, clsn::kEvent::Write, fd, buf, count); }
 
 int close(int fd) {
-  if (clsn::enableHook) {
+  if (clsn::enable_hook) {
     clsn::this_thread::CancelRegister(fd);
   }
   return close_t(fd);
@@ -176,7 +176,7 @@ ssize_t writev(int fd, const struct iovec *iov, int iovcnt) {
 }
 
 unsigned int sleep(unsigned int seconds) {
-  if (!clsn::enableHook) {
+  if (!clsn::enable_hook) {
     return sleep_t(seconds);
   }
   clsn::Scheduler::GetThreadScheduler()->DoAfter(std::chrono::seconds{seconds}, clsn::Scheduler::GetCurCoroutine());
@@ -185,7 +185,7 @@ unsigned int sleep(unsigned int seconds) {
 }
 
 int usleep(useconds_t microsecond) {
-  if (!clsn::enableHook) {
+  if (!clsn::enable_hook) {
     return usleep_t(microsecond);
   }
   clsn::Scheduler::GetThreadScheduler()->DoAfter(std::chrono::microseconds{microsecond},
@@ -195,7 +195,7 @@ int usleep(useconds_t microsecond) {
 }
 
 int nanosleep(const struct timespec *req, struct timespec *rem) {
-  if (!clsn::enableHook) {
+  if (!clsn::enable_hook) {
     return nanosleep_t(req, rem);
   }
   clsn::Scheduler::GetThreadScheduler()->DoAfter(std::chrono::nanoseconds{req->tv_sec * std::nano::den + req->tv_nsec},
@@ -206,7 +206,7 @@ int nanosleep(const struct timespec *req, struct timespec *rem) {
 
 namespace clsn {}
 
-bool IsEnableHook() noexcept { return clsn::enableHook; }
+bool IsEnableHook() noexcept { return clsn::enable_hook; }
 
 void EnableHook() noexcept {
   static clsn::detail::HookInitializer *p = nullptr;
@@ -215,11 +215,11 @@ void EnableHook() noexcept {
     mutex.lock();
     if (nullptr == p) {
       p = &clsn::detail::HookInitializer::GetInstance();
-      p->initHook();
+      p->InitHook();
     }
   }
-  clsn::enableHook = true;
-  assert(clsn::enableHook);
+  clsn::enable_hook = true;
+  assert(clsn::enable_hook);
 }
 
-bool DisableEnableHook() noexcept { clsn::enableHook = false; }
+bool DisableEnableHook() noexcept { clsn::enable_hook = false; }

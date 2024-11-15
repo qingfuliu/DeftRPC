@@ -12,7 +12,7 @@ TEST(test_tcpClient, test_tcpClient) {
   DisableEnableHook();
 
   clsn::TcpClient client("0.0.0.0:5201");
-  CLSN_LOG_DEBUG << "remote:" << client.GetRemote().toString();
+  CLSN_LOG_DEBUG << "remote:" << client.GetRemote().ToString();
   if (!client.Connect()) {
     CLSN_LOG_ERROR << "connect failed,error is " << strerror(errno);
   }

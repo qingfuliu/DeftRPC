@@ -15,19 +15,19 @@ class BinarySerialize : public Serializer<BinarySerialize> {
   using Base = Serializer<BinarySerialize>;
 
  public:
-  explicit BinarySerialize(std::ostream &outPutStream) noexcept : Base(this), os(outPutStream) {}
+  explicit BinarySerialize(std::ostream &outPutStream) noexcept : Base(this), m_os_(outPutStream) {}
 
   ~BinarySerialize() override = default;
 
   void OutPut(const void *data, size_t size) {
-    std::streamsize n = os.rdbuf()->sputn(static_cast<const char *>(data), static_cast<std::streamsize>(size));
+    std::streamsize n = m_os_.rdbuf()->sputn(static_cast<const char *>(data), static_cast<std::streamsize>(size));
     if (size != n) {
       throw "";
     }
   }
 
  private:
-  std::ostream &os;
+  std::ostream &m_os_;
 };
 
 class FileBinarySerialize : public BinarySerialize {
@@ -53,19 +53,19 @@ class BinaryDeSerialize : public DeSerializer<BinaryDeSerialize> {
   using Base = DeSerializer<BinaryDeSerialize>;
 
  public:
-  explicit BinaryDeSerialize(std::istream &inPutStream) noexcept : Base(this), is(inPutStream) {}
+  explicit BinaryDeSerialize(std::istream &inPutStream) noexcept : Base(this), m_is_(inPutStream) {}
 
   ~BinaryDeSerialize() override = default;
 
   void Input(void *data, size_t size) {
-    std::streamsize n = is.rdbuf()->sgetn(static_cast<char *>(data), static_cast<std::streamsize>(size));
+    std::streamsize n = m_is_.rdbuf()->sgetn(static_cast<char *>(data), static_cast<std::streamsize>(size));
     if (size != n) {
       throw "";
     }
   }
 
  private:
-  std::istream &is;
+  std::istream &m_is_;
 };
 
 template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<std::remove_reference_t<T>>, void>>
