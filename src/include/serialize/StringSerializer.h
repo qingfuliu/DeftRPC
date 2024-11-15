@@ -38,20 +38,20 @@ class StringDeSerialize : public DeSerializer<StringDeSerialize> {
   using Base = DeSerializer<StringDeSerialize>;
 
  public:
-  explicit StringDeSerialize(std::string_view inPutStr) noexcept : Base(this), str(inPutStr) {}
+  explicit StringDeSerialize(std::string_view inPutStr) noexcept : Base(this), m_str_(inPutStr) {}
 
   ~StringDeSerialize() override = default;
 
   void Input(void *data, size_t size) {
-    if (str.size() < size) {
-      throw std::logic_error(ArgsLengthError);
+    if (m_str_.size() < size) {
+      throw std::logic_error(args_length_error);
     }
-    str.copy(static_cast<char *>(data), size);
-    str = str.substr(size);
+    m_str_.copy(static_cast<char *>(data), size);
+      m_str_ = m_str_.substr(size);
   }
 
  private:
-  std::string_view str;
+  std::string_view m_str_;
 };
 
 template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<std::remove_reference_t<T>>, void>>

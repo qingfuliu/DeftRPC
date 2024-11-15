@@ -31,9 +31,9 @@ class BinarySerialize : public Serializer<BinarySerialize> {
 };
 
 class FileBinarySerialize : public BinarySerialize {
-  explicit FileBinarySerialize(const std::string &fileName) : BinarySerialize(of) {
-    of.open(fileName, std::ios_base::trunc | std::ios_base::binary);
-    if (!of.is_open()) {
+  explicit FileBinarySerialize(const std::string &fileName) : BinarySerialize(m_of_) {
+    m_of_.open(fileName, std::ios_base::trunc | std::ios_base::binary);
+    if (!m_of_.is_open()) {
       throw "";
     }
   }
@@ -41,7 +41,7 @@ class FileBinarySerialize : public BinarySerialize {
   ~FileBinarySerialize() override = default;
 
  private:
-  std::ofstream of;
+  std::ofstream m_of_;
 };
 
 template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<std::remove_reference_t<T>>, void>>

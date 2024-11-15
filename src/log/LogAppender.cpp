@@ -29,12 +29,12 @@ void LogAppender::SetLogFormatter(LogFormatter *IFormatter) noexcept { m_formatt
 
 void ConsoleLogAppender::Append(const LogRecord &record) noexcept {
   clsn::MutexGuard lock(&m_mutex_);
-  if (RecordValid(record)) m_formatter_->format(std::cout, record);
+  if (RecordValid(record)) m_formatter_->Format(std::cout, record);
 }
 
 void FileLogAppender::Append(const LogRecord &record) noexcept {
   clsn::MutexGuard lock(&m_mutex_);
-  if (RecordValid(record)) m_formatter_->format(m_of_stream_, record);
+  if (RecordValid(record)) m_formatter_->Format(m_of_stream_, record);
 }
 
 //    ConsoleLogAppender::

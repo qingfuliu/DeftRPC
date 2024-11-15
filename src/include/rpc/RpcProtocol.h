@@ -14,7 +14,7 @@ namespace clsn {
 struct RPCRequest {
   std::string m_func_name_;
   std::string m_args_;
-  short m_async_;
+  std::int16_t m_async_;
 
   template <class Sr>
   void DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(Sr &sr) {

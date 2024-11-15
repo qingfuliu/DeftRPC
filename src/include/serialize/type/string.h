@@ -11,7 +11,7 @@
 
 namespace clsn {
 template <typename Sr>
-inline std::enable_if_t<is_binary_serialize<Sr>::value || is_string_serialize<Sr>::value, void>
+inline std::enable_if_t<IsBinarySerialize<Sr>::value || IsStringSerialize<Sr>::value, void>
 DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(Sr &sr, const std::string &vec) noexcept {
   sr(MakeSizeTag(static_cast<size_t>(vec.size())));
   if (!vec.empty()) {
@@ -20,7 +20,7 @@ DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(Sr &sr, const std::string &vec) noexcept {
 }
 
 template <typename Sr>
-inline std::enable_if_t<is_binary_deserialize<Sr>::value || is_string_deserialize<Sr>::value, void>
+inline std::enable_if_t<IsBinaryDeserialize<Sr>::value || IsStringDeserialize<Sr>::value, void>
 DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr, std::string &vec) {
   size_t size = 0;
   sr(MakeSizeTag(size));
@@ -32,7 +32,7 @@ DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr, std::string &vec) {
 }
 
 template <typename Sr>
-inline std::enable_if_t<is_binary_serialize<Sr>::value || is_string_serialize<Sr>::value, void>
+inline std::enable_if_t<IsBinarySerialize<Sr>::value || IsStringSerialize<Sr>::value, void>
 DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(Sr &sr, const std::string_view vec) noexcept {
   sr(MakeSizeTag(static_cast<size_t>(vec.size())));
   if (!vec.empty()) {
@@ -41,7 +41,7 @@ DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(Sr &sr, const std::string_view vec) noexcept {
 }
 
 //    template<typename Sr>
-//    inline std::enable_if_t<is_binary_deserialize<Sr>::value,
+//    inline std::enable_if_t<IsBinaryDeserialize<Sr>::value,
 //            void>
 //    DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr, std::string_view vec) noexcept {
 ////        size_t size = 0;

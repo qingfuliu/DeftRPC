@@ -12,10 +12,10 @@
 
 namespace clsn {
 
-static inline constexpr int32_t max_package_len = 1024;
-static inline constexpr int32_t single_expansion = 1024;
-static inline constexpr int32_t multiply_expansion_limit = 1024;
-static inline constexpr int32_t default_buffer_len = 1024;
+static inline constexpr std::int32_t MAX_PACKAGE_LEN = 1024;
+static inline constexpr std::int32_t SINGLE_EXPANSION = 1024;
+static inline constexpr std::int32_t MULTIPLY_EXPANSION_LIMIT = 1024;
+static inline constexpr std::int32_t DEFAULT_BUFFER_LEN = 1024;
 
 class RingBuffer {
  public:
@@ -66,7 +66,7 @@ class RingBuffer {
   int m_begin_{0};
   int m_end_{0};
   int m_size_{0};
-  std::vector<char> m_buffer_{std::vector<char>(default_buffer_len)};
+  std::vector<char> m_buffer_{std::vector<char>(DEFAULT_BUFFER_LEN)};
   int m_temp_capacity_{0};
   std::unique_ptr<char[]> m_temp_{nullptr};
 };

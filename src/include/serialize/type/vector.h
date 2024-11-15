@@ -12,7 +12,7 @@
 namespace clsn {
 
 template <typename Sr, typename T, typename A>
-inline std::enable_if_t<ConditionalAnd_v<std::is_arithmetic<T>, is_binary_serialize<Sr> >, void>
+inline std::enable_if_t<CONDITIONAL_AND_V<std::is_arithmetic<T>, IsBinarySerialize<Sr> >, void>
 DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(Sr &sr, const std::vector<T, A> &vec) noexcept {
   sr(MakeSizeTag(static_cast<size_t>(vec.size())));
   if (!vec.empty()) {
@@ -21,7 +21,7 @@ DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(Sr &sr, const std::vector<T, A> &vec) noexcept
 }
 
 template <typename Sr, typename T, typename A>
-inline std::enable_if_t<ConditionalAnd_v<std::is_arithmetic<T>, is_binary_deserialize<Sr> >, void>
+inline std::enable_if_t<CONDITIONAL_AND_V<std::is_arithmetic<T>, IsBinaryDeserialize<Sr> >, void>
 DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr, std::vector<T, A> &vec) noexcept {
   size_t size = 0;
   sr(MakeSizeTag(size));
@@ -33,7 +33,7 @@ DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr, std::vector<T, A> &vec) noexcept {
 }
 
 template <typename Sr, typename T, typename A>
-inline std::enable_if_t<!ConditionalOr_v<is_binary_serialize<Sr>, std::is_same<bool, T> >, void>
+inline std::enable_if_t<!CONDITIONAL_OR_V<IsBinarySerialize<Sr>, std::is_same<bool, T> >, void>
 DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(Sr &sr, const std::vector<T, A> &vec) noexcept {
   sr(MakeSizeTag(vec.size()));
   for (const auto &val : vec) {
@@ -42,7 +42,7 @@ DEFTRPC_SERIALIZE_OUTPUT_FUNCNAME(Sr &sr, const std::vector<T, A> &vec) noexcept
 }
 
 template <typename Sr, typename T, typename A>
-inline std::enable_if_t<!ConditionalOr_v<is_binary_deserialize<Sr>, std::is_same<bool, T> >, void>
+inline std::enable_if_t<!CONDITIONAL_OR_V<IsBinaryDeserialize<Sr>, std::is_same<bool, T> >, void>
 DEFTRPC_DESERIALIZE_INPUT_FUNCNAME(Sr &sr, std::vector<T, A> &vec) noexcept {
   size_t size = 0;
   sr(MakeSizeTag(size));

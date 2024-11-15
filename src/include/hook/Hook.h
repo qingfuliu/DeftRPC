@@ -43,7 +43,7 @@ bool IsEnableHook() noexcept;
 
 void EnableHook() noexcept;
 
-bool DisableEnableHook() noexcept;
+void DisableEnableHook() noexcept;
 //}
 
 #endif  // DEFTRPC_HOOK_H

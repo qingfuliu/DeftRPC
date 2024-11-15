@@ -14,7 +14,7 @@ namespace clsn {
 
 using address_type = uint64_t;
 using id_type = uint64_t;
-constexpr id_type ptr_id_mask = 0x8000000000000000;
+constexpr id_type PTR_ID_MASK = 0x8000000000000000;
 }  // namespace clsn
 
 #endif  // DEFTRPC_CONFIG_H

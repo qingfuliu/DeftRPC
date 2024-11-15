@@ -4,3 +4,6 @@
 [submodule "third_part/benchmark"]
 	path = third_part/benchmark
 	url = https://github.com/google/benchmark.git
+[submodule "third_part/highwayhash"]
+	path = third_part/highwayhash
+	url = https://github.com/google/highwayhash.git

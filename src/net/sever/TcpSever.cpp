@@ -112,7 +112,6 @@ void TcpSever::CloseAllConnection() noexcept {
   std::vector<int> temp(m_connections_.size());
   std::for_each(m_connections_.begin(), m_connections_.end(), [&temp](auto &x) { temp.push_back(x.first); });
   for (auto &fd : temp) {
-    CloseConnection(fd, true);
   }
 }
 

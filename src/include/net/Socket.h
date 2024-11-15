@@ -51,7 +51,7 @@ class Socket {
 
   [[maybe_unused]] int Readv(const struct iovec *buf, size_t len) const noexcept;
 
-  int Write(char *buf, size_t) const noexcept;
+  int Write(char *buf, size_t len) const noexcept;
 
   int Close() const noexcept;
 

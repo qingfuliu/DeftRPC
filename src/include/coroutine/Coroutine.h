@@ -67,7 +67,7 @@ class Coroutine : protected Noncopyable {
         m_ctx_(std::make_unique<CoroutineContext>(&Coroutine::CoroutineFunc, this, sharedStack)){};
 
  private:
-  static void CoroutineFunc(void *);
+  static void CoroutineFunc(void *arg);
 
   void SwapOut();
 

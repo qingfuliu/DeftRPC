@@ -19,7 +19,7 @@ template <class Header>
 struct ConditionalAnd<Header> : public std::conditional_t<Header::value, std::true_type, std::false_type> {};
 
 template <typename... Args>
-inline constexpr bool ConditionalAnd_v = ConditionalAnd<Args...>::value;
+inline constexpr bool CONDITIONAL_AND_V = ConditionalAnd<Args...>::value;
 
 template <class Header, class... Args>
 struct ConditionalOr : public std::conditional_t<Header::value, std::true_type, ConditionalAnd<Args...>> {};
@@ -28,17 +28,17 @@ template <class Header>
 struct ConditionalOr<Header> : public std::conditional_t<Header::value, std::true_type, std::false_type> {};
 
 template <typename... Args>
-inline constexpr bool ConditionalOr_v = ConditionalOr<Args...>::value;
+inline constexpr bool CONDITIONAL_OR_V = ConditionalOr<Args...>::value;
 
 class BinarySerialize;
 
 class BinaryDeSerialize;
 
 template <class T>
-struct is_binary_serialize : ConditionalOr<std::is_base_of<T, BinarySerialize>, std::is_same<T, BinarySerialize>> {};
+struct IsBinarySerialize : ConditionalOr<std::is_base_of<T, BinarySerialize>, std::is_same<T, BinarySerialize>> {};
 
 template <class T>
-struct is_binary_deserialize
+struct IsBinaryDeserialize
     : ConditionalOr<std::is_base_of<T, BinaryDeSerialize>, std::is_same<T, BinaryDeSerialize>> {};
 
 class StringSerialize;
@@ -46,23 +46,23 @@ class StringSerialize;
 class StringDeSerialize;
 
 template <class T>
-struct is_string_serialize : ConditionalOr<std::is_base_of<T, StringSerialize>, std::is_same<T, StringSerialize>> {};
+struct IsStringSerialize : ConditionalOr<std::is_base_of<T, StringSerialize>, std::is_same<T, StringSerialize>> {};
 
 template <class T>
-struct is_string_deserialize
+struct IsStringDeserialize
     : ConditionalOr<std::is_base_of<T, StringDeSerialize>, std::is_same<T, StringDeSerialize>> {};
 
 template <class T>
 class Serializer;
 
 template <class T>
-struct is_Serializer : std::is_base_of<Serializer<T>, T> {};
+struct IsSerializer : std::is_base_of<Serializer<T>, T> {};
 
 template <class T>
 class DeSerializer;
 
 template <class T>
-struct is_DeSerializer : std::is_base_of<DeSerializer<T>, T> {};
+struct IsDeSerializer : std::is_base_of<DeSerializer<T>, T> {};
 
 template <typename T>
 class Construct;

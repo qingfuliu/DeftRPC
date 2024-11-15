@@ -222,4 +222,4 @@ void EnableHook() noexcept {
   assert(clsn::enable_hook);
 }
 
-bool DisableEnableHook() noexcept { clsn::enable_hook = false; }
+void DisableEnableHook() noexcept { clsn::enable_hook = false; }

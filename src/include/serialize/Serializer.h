@@ -34,7 +34,7 @@ class SerializeBase {
       ++m_cur_idx_;
       m_address_to_id_.emplace(reinterpret_cast<address_type>(address), m_cur_idx_);
       m_id_to_ptr_.emplace(m_cur_idx_, ptr);
-      return m_cur_idx_ | ptr_id_mask;
+      return m_cur_idx_ | PTR_ID_MASK;
     }
     return it->second;
   }

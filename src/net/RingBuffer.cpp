@@ -161,11 +161,11 @@ void RingBuffer::EnableWritableSpace(int targetSize) noexcept {
   int new_capacity = static_cast<int>(this->m_buffer_.capacity());
 
   do {
-    if (this->m_buffer_.capacity() <= multiply_expansion_limit) {
+    if (this->m_buffer_.capacity() <= MULTIPLY_EXPANSION_LIMIT) {
       new_capacity <<= 1;
       continue;
     }
-    new_capacity += single_expansion;
+    new_capacity += SINGLE_EXPANSION;
   } while (new_capacity < needle);
 
   std::vector<char> temp_buffer;
@@ -184,7 +184,7 @@ void RingBuffer::EnableWritableSpace(int targetSize) noexcept {
 }
 
 int RingBuffer::ReadFromFd(int fd) noexcept {
-  char expansion_space[max_package_len];
+  char expansion_space[MAX_PACKAGE_LEN];
   struct iovec iov[3];
   int iovLen;
   int writable = GetWritableCapacity();
@@ -194,16 +194,16 @@ int RingBuffer::ReadFromFd(int fd) noexcept {
     iov[1].iov_base = &(*m_buffer_.begin());
     iov[1].iov_len = m_begin_;
     iov[2].iov_base = expansion_space;
-    iov[2].iov_len = max_package_len;
+    iov[2].iov_len = MAX_PACKAGE_LEN;
     iovLen = 3;
   } else {
     iov[0].iov_base = &(*m_buffer_.begin()) + m_end_;
     iov[0].iov_len = writable;
     iov[1].iov_base = expansion_space;
-    iov[1].iov_len = max_package_len;
+    iov[1].iov_len = MAX_PACKAGE_LEN;
     iovLen = 2;
   }
-  if (writable >= max_package_len) {
+  if (writable >= MAX_PACKAGE_LEN) {
     --iovLen;
   }
 
