@@ -49,9 +49,9 @@ Checks: '
             -readability-redundant-access-specifiers,
             -bugprone-exception-escape,
             -google-explicit-constructor,
-            -bugprone-branch-clone
-            -modernize-use-trailing-return-type
-            -bugprone-macro-parentheses,-warnings-as-errors
+            -bugprone-branch-clone,
+            -modernize-use-trailing-return-type,
+            -bugprone-macro-parentheses,-warnings-as-errors,
             -readability-inconsistent-declaration-parameter-name
             '
 CheckOptions:
