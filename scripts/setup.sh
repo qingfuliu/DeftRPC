@@ -30,7 +30,9 @@ main() {
 		*) ;;
 		esac
 	fi
-
+  git submodule init
+  git submodule update
+  cd third_part/benchmark && cmake -E make_directory "build" && cmake -E chdir "build" cmake -DBENCHMARK_DOWNLOAD_DEPENDENCIES=on -DCMAKE_BUILD_TYPE=Release ../ && cmake --build "build" --config Release --target install
 	echo "Script complete."
 }
 
