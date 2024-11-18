@@ -7,7 +7,7 @@
 #include "log/Log.h"
 
 extern "C" {
-extern void CoctxSwap(Coctx *, Coctx *) asm("coctx_swap");
+extern void CoctxSwap(Coctx *, Coctx *) asm("CoctxSwap");
 };
 
 namespace clsn {
@@ -69,7 +69,7 @@ void CoroutineContext::MakeCtx() noexcept {
 #if defined(__i386__)
   char *bp = m_mem_.m_stack_bp_ - sizeof(void *);
 
-  bp = (char *)((unsigned long)bp & -16L);
+  reinterpret_cast<std::uint64_t &>(bp) &= -16L;
 
   void **ret = reinterpret_cast<void **>(bp - (sizeof(void *) << 1));
 
@@ -81,7 +81,7 @@ void CoroutineContext::MakeCtx() noexcept {
 #elif defined(__x86_64__)
   char *sp = m_mem_.m_stack_bp_ - sizeof(void *);
 
-  sp = reinterpret_cast<char *>(reinterpret_cast<std::uint64_t>(sp) & -16LL);
+  reinterpret_cast<std::uint64_t &>(sp) &= -16LL;
 
   void **ret_addr = reinterpret_cast<void **>(sp);
   *ret_addr = reinterpret_cast<void *>(m_func_);

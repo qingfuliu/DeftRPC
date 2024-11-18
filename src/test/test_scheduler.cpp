@@ -27,7 +27,7 @@ static void scheduler_test() noexcept {
       std::chrono::seconds{30}, [&s]() { s.Stop(); }, false);
 
   s.AddDefer([=]() { CLSN_LOG_DEBUG << "do defer"; });
-  s.Start();
+  s.Start(10000);
 }
 
 TEST(test_scheduler, test_scheduler) { scheduler_test(); }

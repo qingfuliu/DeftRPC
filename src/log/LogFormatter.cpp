@@ -11,7 +11,7 @@ namespace clsn {
 
 class TempFormatterItem : public FormatterItem {
  public:
-  TempFormatterItem() noexcept : FormatterItem(){};
+  TempFormatterItem() noexcept : FormatterItem() {}
 
   void Format(std::ostream &os, const LogRecord &record) noexcept override { (void)record; }
 };
@@ -156,8 +156,9 @@ LogFormatter::LogFormatter(const std::string &format) : m_first_(new TempFormatt
         prev = timeBegin;                                                                                     \
         m_first_->AddItem(new TimeFormatterItem(std::string(format.begin() + prev, format.begin() + index))); \
         timeBegin = -1;                                                                                       \
-      } else                                                                                                  \
+      } else {                                                                                                \
         m_first_->AddItem(new StrFormatterItem(std::string(format.begin() + prev, format.begin() + index)));  \
+      }                                                                                                       \
     }                                                                                                         \
     m_first_->AddItem(new CLASSNAME(ARG));                                                                    \
     break;

@@ -12,7 +12,6 @@
 
 TEST(test_net_sever, test_net_sever) {
   EnableHook();
-  DisableEnableHook();
   int acceptFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   sockaddr_in addr{};
   addr.sin_port = htons(5201);

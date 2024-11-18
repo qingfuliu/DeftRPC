@@ -7,7 +7,9 @@
 
 #include <functional>
 #include <type_traits>
+#include <utility>
 #include <variant>
+
 #include "Coroutine.h"
 #include "common/common.h"
 
@@ -103,7 +105,6 @@ class FileDescriptor {
     m_cur_event_ = 0;
     m_task_ = nullptr;
     return *this;
-    ;
   }
 
   void operator()() noexcept {

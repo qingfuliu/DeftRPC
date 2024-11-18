@@ -8,7 +8,7 @@
 #include <atomic>
 #include <cassert>
 #include <type_traits>
-#include "thread.h"
+#include "common/thread.h"
 
 namespace clsn {
 

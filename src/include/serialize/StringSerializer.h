@@ -7,6 +7,7 @@
 
 #include <exception>
 #include <iostream>
+#include <string>
 #include "SerializeException.h"
 #include "Serializer.h"
 #include "detail/helper.h"

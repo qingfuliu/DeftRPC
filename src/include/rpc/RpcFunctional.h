@@ -6,7 +6,9 @@
 #define DEFTRPC_RPCFUNCTIONAL_H
 
 #include <sstream>
+#include <string>
 #include <tuple>
+#include <utility>
 #include "common/Exception.h"
 #include "rpc/RpcFunctional.h"
 #include "serialize/StringSerializer.h"

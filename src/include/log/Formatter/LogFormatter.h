@@ -38,7 +38,7 @@ class FormatterItem : public Noncopyable {
 
 class LogFormatter : public Noncopyable {
  public:
-  LogFormatter(const std::string &format);
+  explicit LogFormatter(const std::string &format);
 
   ~LogFormatter() override {
     FormatterItem *temp;

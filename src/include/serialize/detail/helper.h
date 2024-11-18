@@ -7,8 +7,9 @@
 
 #include <unistd.h>
 #include <type_traits>
-#include "access.h"
-#include "config.h"
+#include <utility>
+#include "serialize/detail/access.h"
+#include "serialize/detail/config.h"
 
 namespace clsn {
 
@@ -157,7 +158,7 @@ class SizeTag {
   using type = std::conditional_t<std::is_lvalue_reference_v<T>, T, std::decay_t<T>>;
 
  public:
-  SizeTag(T &&s) noexcept : m_size_(std::forward<T>(s)) {}
+  explicit SizeTag(T &&s) noexcept : m_size_(std::forward<T>(s)) {}
 
   ~SizeTag() = default;
 
@@ -170,7 +171,7 @@ class SizeTag {
 
 template <typename T>
 SizeTag<T> MakeSizeTag(T &&size) noexcept {
-  return {std::forward<T>(size)};
+  return SizeTag<T>(std::forward<T>(size));
 }
 
 /**

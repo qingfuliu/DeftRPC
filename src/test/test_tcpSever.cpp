@@ -8,7 +8,6 @@
 TEST(test_tcpSever, test_tcpSever) {
   EnableHook();
   clsn::TcpSever sever("0.0.0.0:5201", 1);
-  //    sever.DoAfter(std::chrono::seconds{10}, [&sever]() { sever.Stop(); }
-  //    );
-  sever.Start(10000);
+  sever.DoAfter(std::chrono::seconds{10}, [&sever]() { sever.Stop(); });
+  sever.Start(1000);
 };

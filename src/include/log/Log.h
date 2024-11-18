@@ -13,11 +13,11 @@
 
 #define CLSN_LOGGER_DEFAULT_ID 0
 
-#define CLSN_LEVEL_CHECK(Id, Level)                                    \
-  if (static_cast<unsigned short>(clsn::LogLevel::Level) <=            \
-      static_cast<unsigned short>(clsn::GetLogger<Id>().GetLevel())) { \
-    ;                                                                  \
-  } else                                                               \
+#define CLSN_LEVEL_CHECK(Id, Level)                                 \
+  if (static_cast<std::uint16_t>(clsn::LogLevel::Level) <=          \
+      static_cast<std::uint16_t>(clsn::GetLogger<Id>().GetLevel())) \
+    ;                                                               \
+  else                                                              \
     clsn::GetLogger<Id>() +=
 
 #define CLSN_DEFAULT_LEVEL_CHECK(Level) CLSN_LEVEL_CHECK(CLSN_LOGGER_DEFAULT_ID, Level)

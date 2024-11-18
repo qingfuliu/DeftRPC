@@ -7,7 +7,8 @@
 
 #include <bits/move.h>
 #include <type_traits>
-#include "config.h"
+#include <utility>
+#include "serialize/detail/config.h"
 
 namespace clsn::access {
 

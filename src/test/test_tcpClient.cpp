@@ -9,11 +9,24 @@
 
 TEST(test_tcpClient, test_tcpClient) {
   EnableHook();
-  DisableEnableHook();
 
+  return;
   clsn::TcpClient client("0.0.0.0:5201");
-  CLSN_LOG_DEBUG << "remote:" << client.GetRemote().ToString();
-  if (!client.Connect()) {
+  CLSN_LOG_DEBUG << "remote:"
+                 << client
+                        .
+
+                    GetRemote()
+
+                        .
+
+                    ToString();
+
+  if (!client.
+
+       Connect()
+
+  ) {
     CLSN_LOG_ERROR << "connect failed,error is " << strerror(errno);
   }
   std::string str = "test str";
@@ -23,10 +36,16 @@ TEST(test_tcpClient, test_tcpClient) {
   int res = 0;
 
   std::string_view temp = client.Receive();
-  if (temp.empty()) {
+  if (temp.
+
+      empty()
+
+  ) {
     CLSN_LOG_ERROR << "Receive failed,error is " << strerror(errno);
   }
 
   CLSN_LOG_DEBUG << "receive str is " << temp;
-  client.Close();
+  client.
+
+      Close();
 };

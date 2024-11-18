@@ -6,6 +6,7 @@
 #define DEFTRPC_LOCKFREEQUEUE_H
 
 #include <atomic>
+#include <utility>
 
 namespace clsn {
 template <typename Element>

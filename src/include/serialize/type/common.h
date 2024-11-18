@@ -5,11 +5,11 @@
 #ifndef DEFTRPC_TYPE_COMMON_H
 #define DEFTRPC_TYPE_COMMON_H
 
-#include "memory.h"
-#include "size_tag.h"
-#include "string.h"
-#include "tuple.h"
-#include "vector.h"
+#include "serialize/type/memory.h"
+#include "serialize/type/size_tag.h"
+#include "serialize/type/string.h"
+#include "serialize/type/tuple.h"
+#include "serialize/type/vector.h"
 
 namespace clsn {
 using address_type = uint64_t;

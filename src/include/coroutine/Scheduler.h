@@ -11,6 +11,8 @@
 #include <functional>
 #include <list>
 #include <memory>
+#include <utility>
+#include <vector>
 #include "common/LockFreeQueue.h"
 #include "common/common.h"
 #include "common/mutex.h"

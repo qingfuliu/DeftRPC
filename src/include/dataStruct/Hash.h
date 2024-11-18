@@ -5,6 +5,7 @@
 #ifndef DEFTRPC_HASH_H
 #define DEFTRPC_HASH_H
 
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <functional>
@@ -12,11 +13,15 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
+#include <utility>
 #include "common/Iterator.h"
 #include "highwayhash/sip_hash.h"
 
 namespace clsn {
 class HashEntryBase {
+ protected:
+  using ValPointer = void *;
+
  public:
   HashEntryBase() noexcept = default;
 
@@ -28,7 +33,7 @@ class HashEntryBase {
 
   virtual void *GetVal() noexcept = 0;
 
-  virtual void SetVal(void *) noexcept = 0;
+  virtual void SetVal(ValPointer) noexcept = 0;
 
   HashEntryBase *GetNext() noexcept { return m_next_; }
 
@@ -73,7 +78,7 @@ class HashEntry : public HashEntryBase {
 
   void *GetVal() noexcept override { return static_cast<void *>(&m_val_); }
 
-  void SetVal(void *v) noexcept override {
+  void SetVal(ValPointer v) noexcept override {
     if constexpr (std::is_trivial_v<T>) {
       std::copy(reinterpret_cast<char *>(v), reinterpret_cast<char *>(v) + sizeof(T),
                 reinterpret_cast<char *>(&m_val_));
@@ -204,7 +209,7 @@ class HashTable {
       auto next = entry->GetNext();
       func(entry);
       entry = next;
-    };
+    }
   }
 
  private:

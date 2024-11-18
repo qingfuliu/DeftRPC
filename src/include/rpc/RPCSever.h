@@ -6,6 +6,8 @@
 #define DEFTRPC_RPCSEVER_H
 
 #include <memory>
+#include <string>
+#include <utility>
 #include "exception"
 #include "net/sever/TcpConnection.h"
 #include "net/sever/TcpSever.h"

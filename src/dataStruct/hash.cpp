@@ -1,9 +1,9 @@
 //
 // Created by lqf on 23-5-14.
 //
-#include "dataStruct/Hash.h"
 #include <cassert>
-#include <utility>
+
+#include "dataStruct/Hash.h"
 #include "dataStructConfig.h"
 
 namespace clsn {
@@ -212,7 +212,6 @@ void HashTable::HashIterator::Prev() noexcept {
       continue;
     }
     break;
-
   } while (m_cur_element_ == nullptr);
 
   if (m_cur_element_ != nullptr) {

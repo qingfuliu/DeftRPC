@@ -5,6 +5,9 @@
 #ifndef DEFTRPC_LOGGERBASE_H
 #define DEFTRPC_LOGGERBASE_H
 
+#include <memory>
+#include <string>
+#include <utility>
 #include <vector>
 #include "Appender/LogAppender.h"
 #include "LogCommon.h"

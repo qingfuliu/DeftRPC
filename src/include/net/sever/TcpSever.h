@@ -8,7 +8,10 @@
 #include <sys/socket.h>
 #include <cerrno>
 #include <cstring>
+#include <memory>
+#include <string>
 #include <unordered_map>
+#include <utility>
 #include "coroutine/Scheduler.h"
 #include "net/Addr.h"
 #include "net/Socket.h"

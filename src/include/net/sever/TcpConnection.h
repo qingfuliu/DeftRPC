@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <cerrno>
 #include <memory>
+#include <string>
 #include "common/common.h"
 #include "coroutine/Coroutine.h"
 #include "coroutine/Scheduler.h"

@@ -49,5 +49,5 @@ TEST(test_hook, test_hook) {
   s.DoAfter(std::chrono::seconds{1}, cotoutine.get());
 
   s.DoAfter(std::chrono::seconds{2}, [&s]() -> void { s.Stop(); });
-  s.Start();
+  s.Start(2000);
 }

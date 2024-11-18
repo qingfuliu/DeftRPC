@@ -6,9 +6,11 @@
 #define DEFTRPC_EVBUFFER_H
 
 #include <sys/uio.h>
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <string_view>
+#include <utility>
 
 namespace clsn {
 /**

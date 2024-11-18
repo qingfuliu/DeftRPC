@@ -6,7 +6,7 @@
 #define DEFTRPC_SPANMUTEX_H
 
 #include <atomic>
-#include "mutex.h"
+#include "common/mutex.h"
 
 namespace clsn {
 

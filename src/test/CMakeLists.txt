@@ -21,7 +21,7 @@ foreach (filename IN LISTS TEST_SOURCE)
     target_link_libraries(${target}
             CLSN_HOOK CLSN_COROUTINE LOG benchmark::benchmark
             pthread CLSN_NET CLSN_SEVER CLSN_CLIENT
-            CLSN_DATASTRUCT CLSN_HASH CLSN_RPC CLSN_COMMON gtest_main)
+            CLSN_DATASTRUCT CLSN_RPC CLSN_COMMON gtest_main)
 
     gtest_discover_tests(${target})
 endforeach ()

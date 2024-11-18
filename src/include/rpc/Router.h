@@ -7,9 +7,11 @@
 
 #include <exception>
 #include <map>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <utility>
 #include "RpcException.h"
 #include "RpcFunctional.h"
 #include "common/Exception.h"

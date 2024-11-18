@@ -39,7 +39,7 @@ TEST(test_net_helper, test_net_helper) {
     std::cout << "connect socket error!!" << strerror(errno) << std::endl;
   }
 
-  sleep(1000);
+  sleep(10);
 
   //    close(m_socket_);
 }

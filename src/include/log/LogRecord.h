@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <ctime>
 #include <sstream>
+#include <string>
+#include <utility>
 #include "Convert/LogConvert.h"
 #include "LogCommon.h"
 

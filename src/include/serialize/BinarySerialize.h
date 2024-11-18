@@ -6,6 +6,7 @@
 #define DEFTRPC_BINARYSERIALIZE_H
 
 #include <iostream>
+#include <string>
 #include "Serializer.h"
 #include "detail/helper.h"
 

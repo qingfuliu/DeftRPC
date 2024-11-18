@@ -6,7 +6,7 @@
 #define DEFTRPC_EXCEPTION_H
 
 #include <stdexcept>
-
+#include <string>
 namespace clsn {
 
 class SchedulingException : public std::logic_error {

@@ -5,6 +5,8 @@
 #ifndef DEFTRPC_RPCCODEC_H
 #define DEFTRPC_RPCCODEC_H
 
+#include <algorithm>
+#include <memory>
 #include <string>
 #include "common/common.h"
 #include "net/Codec.h"

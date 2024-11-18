@@ -1,8 +1,8 @@
 //
 // Created by lqf on 23-3-30.
 //
-
 #include "log/Appender/LogAppender.h"
+#include <string>
 #include "common/mutex.h"
 #include "log/Formatter/LogFormatter.h"
 
@@ -40,7 +40,4 @@ void FileLogAppender::Append(const LogRecord &record) noexcept {
     m_formatter_->Format(m_of_stream_, record);
   }
 }
-
-//    ConsoleLogAppender::
-
 }  // namespace clsn

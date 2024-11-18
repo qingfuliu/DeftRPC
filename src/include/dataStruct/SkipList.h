@@ -10,6 +10,8 @@
 #include <limits>
 #include <memory>
 #include <random>
+#include <string>
+#include <utility>
 #include <vector>
 
 namespace clsn {
@@ -88,7 +90,7 @@ class SkipListNode {
 
 class SkipList {
  public:
-  SkipList() noexcept = default;
+  SkipList() = default;
 
   ~SkipList() = default;
 

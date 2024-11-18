@@ -10,7 +10,11 @@
 #include <cerrno>
 #include <chrono>
 #include <functional>
+#include <memory>
 #include <set>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
 
 #include "Task.h"
 

@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <memory>
+#include <utility>
 #include "CoroutineContext.h"
 #include "common/common.h"
 
@@ -64,7 +65,7 @@ class Coroutine : protected Noncopyable {
  protected:
   explicit Coroutine(Task t = nullptr, SharedStack *sharedStack = nullptr) noexcept
       : m_task_(std::move(t)),
-        m_ctx_(std::make_unique<CoroutineContext>(&Coroutine::CoroutineFunc, this, sharedStack)){};
+        m_ctx_(std::make_unique<CoroutineContext>(&Coroutine::CoroutineFunc, this, sharedStack)) {}
 
  private:
   static void CoroutineFunc(void *arg);

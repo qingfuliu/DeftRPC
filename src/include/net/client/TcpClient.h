@@ -8,6 +8,8 @@
 #include <cerrno>
 #include <cstdint>
 #include <cstring>
+#include <memory>
+#include <string>
 #include <string_view>
 #include "log/Log.h"
 #include "net/Addr.h"

@@ -91,13 +91,13 @@ class Noncopyable {
   X(const X &) = delete;         \
   X &operator=(const X &) = delete;
 
-#define SINGLETON_DEFINE(X)        \
-  friend class Singleton<X>;       \
-                                   \
- private:                          \
-  X() = default;                   \
-  virtual ~X() override = default; \
-  X(const X &) = delete;           \
+#define SINGLETON_DEFINE(X)  \
+  friend class Singleton<X>; \
+                             \
+ private:                    \
+  X() = default;             \
+  ~X() override = default;   \
+  X(const X &) = delete;     \
   X &operator=(const X &) = delete;
 
 template <typename T>
@@ -126,10 +126,10 @@ class Singleton {
   inline static T *instance = nullptr;
 };
 
-//********************m_buffer_***************************//
+// ********************m_buffer_*************************** //
 using PackageLengthType = std::uint32_t;
 using Crc32Type = std::uint32_t;
-//********************RPC***************************//
+// ********************RPC*************************** //
 
 enum class kRpcType : std::int16_t { Async = 1, Sync = 2 };
 

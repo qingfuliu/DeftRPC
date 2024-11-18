@@ -5,6 +5,9 @@
 #ifndef DEFTRPC_CODEC_H
 #define DEFTRPC_CODEC_H
 
+#include <algorithm>
+#include <memory>
+#include <string>
 #include <string_view>
 #include "common/common.h"
 #include "net/EVBuffer.h"
