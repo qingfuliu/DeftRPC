@@ -36,7 +36,7 @@ class RingBuffer {
 
   int ReadFromFd(int fd) noexcept;
 
-  int WriteToFd(int fd) noexcept;
+//  int WriteToFd(int fd) noexcept;
 
   int Write(const char *buf, int len) noexcept;
 

@@ -218,30 +218,30 @@ int RingBuffer::ReadFromFd(int fd) noexcept {
   return res_size;
 }
 
-int RingBuffer::WriteToFd(int fd) noexcept {
-  struct iovec iov[2];
-  int iov_len;
-  int tail_content_len = GetTailContentLen();
-
-  if (tail_content_len > 0) {
-    iov[0].iov_base = &(*m_buffer_.begin()) + m_begin_;
-    iov[0].iov_len = tail_content_len;
-    iov[1].iov_base = &(*m_buffer_.begin());
-    iov[1].iov_len = m_size_ - tail_content_len;
-    iov_len = 2;
-  } else {
-    iov[0].iov_base = &(*m_buffer_.begin()) + m_begin_;
-    iov[0].iov_len = m_size_;
-    iov_len = 1;
-  }
-
-  auto write_size = static_cast<int>(writev(fd, iov, iov_len));
-
-  if (write_size < 0) {
-    return -1;
-  }
-  UpdateAfterRead(write_size);
-  return write_size;
-}
+//int RingBuffer::WriteToFd(int fd) noexcept {
+//  struct iovec iov[2];
+//  int iov_len;
+//  int tail_content_len = GetTailContentLen();
+//
+//  if (tail_content_len > 0) {
+//    iov[0].iov_base = &(*m_buffer_.begin()) + m_begin_;
+//    iov[0].iov_len = tail_content_len;
+//    iov[1].iov_base = &(*m_buffer_.begin());
+//    iov[1].iov_len = m_size_ - tail_content_len;
+//    iov_len = 2;
+//  } else {
+//    iov[0].iov_base = &(*m_buffer_.begin()) + m_begin_;
+//    iov[0].iov_len = m_size_;
+//    iov_len = 1;
+//  }
+//
+//  auto write_size = static_cast<int>(writev(fd, iov, iov_len));
+//
+//  if (write_size < 0) {
+//    return -1;
+//  }
+//  UpdateAfterRead(write_size);
+//  return write_size;
+//}
 
 }  // namespace clsn

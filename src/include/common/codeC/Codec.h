@@ -9,9 +9,9 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include "common/buffer/EVBuffer.h"
+#include "common/buffer/RingBuffer.h"
 #include "common/common.h"
-#include "net/EVBuffer.h"
-#include "net/RingBuffer.h"
 
 // std::string m_func_(std::shared_ptr<conn>, std::string_view, TimeStamp);
 
