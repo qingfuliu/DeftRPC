@@ -9,8 +9,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include "common/buffer/EVBuffer.h"
-#include "common/buffer/RingBuffer.h"
+#include "common/buffer/Buffer.h"
 #include "common/common.h"
 
 // std::string m_func_(std::shared_ptr<conn>, std::string_view, TimeStamp);
@@ -24,11 +23,11 @@ class CodeC {
 
   virtual ~CodeC() = default;
 
-  virtual std::string_view Decode(RingBuffer &buffer) const = 0;
+  virtual std::string Decode(Buffer *buffer) const = 0;
 
-  virtual void Encode(EVBuffer &buffer, const char *data, size_t len) = 0;
+  virtual void Encode(Buffer *buffer, const char *data, std::uint32_t len) = 0;
 
-  void Encode(EVBuffer &buffer, std::string &str) { Encode(buffer, str.data(), str.size()); }
+  void Encode(Buffer *buffer, std::string &str) { Encode(buffer, str.data(), str.size()); }
 };
 
 class CodeCFactory {
@@ -42,34 +41,29 @@ class DefaultCodeC : public CodeC {
 
   ~DefaultCodeC() override = default;
 
-  std::string_view Decode(RingBuffer &buffer) const override {
-    if (DecodeCondition(buffer)) {
-      PackageLengthType size = buffer.GetPackageLength();
-      if (size <= buffer.GetReadableCapacity()) {
-        return {buffer.ReadAll() + sizeof(PackageLengthType), size - sizeof(PackageLengthType)};
-      }
+  std::string Decode(Buffer *buffer) const override {
+    if (buffer->Size() < sizeof(PackageLengthType)) {
+      return {};
     }
-    return {};
+
+    std::string peek = buffer->Peek(sizeof(PackageLengthType));
+    PackageLengthType packageSize = 0;
+    std::copy(peek.begin(), peek.end(), reinterpret_cast<char *>(&packageSize));
+    packageSize = ntohl(packageSize);
+
+    std::uint32_t size = buffer->Size();
+    if (size <= sizeof(PackageLengthType) + packageSize) {
+      return {};
+    }
+    buffer->Read(sizeof(PackageLengthType));
+    return buffer->Read(packageSize);
   }
 
-  void Encode(EVBuffer &buffer, const char *data, size_t len) override {
-    WriteSizeToPackage(len + sizeof(PackageLengthType));
-    buffer.Write(m_cache_.get(), sizeof(PackageLengthType));
-    buffer.Write(data, len);
+  void Encode(Buffer *buffer, const char *data, std::uint32_t len) override {
+    PackageLengthType packageLength = htonl(len);
+    buffer->Write(reinterpret_cast<char *>(&packageLength), sizeof(PackageLengthType));
+    buffer->Write(data, len);
   }
-
- protected:
-  virtual bool DecodeCondition(RingBuffer &buffer) const noexcept {
-    return buffer.GetReadableCapacity() >= sizeof(PackageLengthType);
-  }
-
-  virtual void WriteSizeToPackage(size_t size) noexcept {
-    PackageLengthType be = htonl(size);
-    std::copy(reinterpret_cast<char *>(&be), reinterpret_cast<char *>(&be) + sizeof(PackageLengthType), m_cache_.get());
-  }
-
- private:
-  std::unique_ptr<char[]> m_cache_{new char[sizeof(PackageLengthType)]};
 };
 
 class DefaultCodeCFactory : public CodeCFactory {

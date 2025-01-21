@@ -9,14 +9,14 @@
 #include <cerrno>
 #include <memory>
 #include <string>
+#include "common/buffer/EVBuffer.h"
+#include "common/buffer/RingBuffer.h"
 #include "common/common.h"
 #include "coroutine/Coroutine.h"
 #include "coroutine/Scheduler.h"
 #include "coroutine/Timer.h"
 #include "log/Log.h"
 #include "net/Addr.h"
-#include "net/EVBuffer.h"
-#include "net/RingBuffer.h"
 #include "net/Socket.h"
 
 namespace clsn {
@@ -52,8 +52,8 @@ class TcpConnection : public Noncopyable {
  private:
   const Socket m_socket_;
   const Addr m_remote_addr_;
-  std::unique_ptr<RingBuffer> m_input_buffer_;
-  std::unique_ptr<EVBuffer> m_output_buffer_;
+  std::unique_ptr<Buffer> m_input_buffer_;
+  std::unique_ptr<Buffer> m_output_buffer_;
   Scheduler *const m_scheduler_ = Scheduler::GetThreadScheduler();
 };
 }  // namespace clsn

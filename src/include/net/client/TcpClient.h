@@ -11,11 +11,11 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include "common/buffer//EVBuffer.h"
+#include "common/buffer//RingBuffer.h"
+#include "common/codeC/Codec.h"
 #include "log/Log.h"
 #include "net/Addr.h"
-#include "net/Codec.h"
-#include "net/EVBuffer.h"
-#include "net/RingBuffer.h"
 #include "net/Socket.h"
 
 namespace clsn {
@@ -63,13 +63,13 @@ class TcpClient {
     if (len == 0) {
       return 0;
     }
-    m_codec_->Encode(*m_output_buffer_, msg, len);
+    m_codec_->Encode(m_output_buffer_.get(), msg, len);
     int res = 0;
     int temp;
     do {
-      temp = m_output_buffer_->WriteToFd(m_sock_.GetFd());
+      temp = m_output_buffer_->FlushDataToFd(m_sock_.GetFd());
       res += temp;
-    } while (temp >= 0 && !m_output_buffer_->IsEmpty());
+    } while (temp >= 0 && !m_output_buffer_->Empty());
     if (temp < 0) {
       return -1;
     }
@@ -80,22 +80,22 @@ class TcpClient {
     if (len <= 0) {
       return 0;
     }
-    int res = m_input_buffer_->ReadFromFd(m_sock_.GetFd());
-    if (res > 0) {
-      len = res > len ? len : res;
-      m_input_buffer_->Read(data, static_cast<int>(len));
-    }
+    int res = m_input_buffer_->FetchDataFromFd(m_sock_.GetFd());
+    //    if (res > 0) {
+    //      len = res > len ? len : res;
+    //      m_input_buffer_->Read(data);
+    //    }
     return res;
   }
 
   std::string_view Receive() {
     std::string_view view;
     do {
-      int res = m_input_buffer_->ReadFromFd(m_sock_.GetFd());
+      int res = m_input_buffer_->FetchDataFromFd(m_sock_.GetFd());
       if (res < 0) {
         break;
       }
-      view = m_codec_->Decode(*m_input_buffer_);
+      view = m_codec_->Decode(m_input_buffer_.get());
     } while (view.empty());
     return view;
   }
@@ -142,8 +142,8 @@ class TcpClient {
   int m_read_timeout_{0};
   int m_write_timeout_{0};
   std::unique_ptr<CodeC> m_codec_{DefaultCodeCFactory::CreateCodeC()};
-  std::unique_ptr<RingBuffer> m_input_buffer_{std::make_unique<RingBuffer>()};
-  std::unique_ptr<EVBuffer> m_output_buffer_{std::make_unique<EVBuffer>()};
+  std::unique_ptr<Buffer> m_input_buffer_{std::make_unique<RingBuffer>()};
+  std::unique_ptr<Buffer> m_output_buffer_{std::make_unique<EVBuffer>()};
 };
 
 }  // namespace clsn

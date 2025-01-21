@@ -3,8 +3,8 @@
 //
 
 #include "net/sever/TcpSever.h"
+#include "common/codeC/Codec.h"
 #include "hook/Hook.h"
-#include "net/Codec.h"
 #include "net/sever/TcpConnection.h"
 
 namespace clsn {

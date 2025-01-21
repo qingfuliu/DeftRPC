@@ -13,7 +13,7 @@ RPCSever::RPCSever(const std::string &ipPort, size_t sharedStackSize) noexcept
     return MessageCallBack(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2),
                            std::forward<decltype(PH3)>(PH3));
   });
-  TcpSever::SetCodeC(new RpcCodeC);
+//  TcpSever::SetCodeC(new RpcCodeC);
 }
 
 void RPCSever::Start(int timeout) noexcept {

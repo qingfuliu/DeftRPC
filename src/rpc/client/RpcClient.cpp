@@ -6,6 +6,8 @@
 
 namespace clsn {
 
-RpcClient::RpcClient(const std::string &ipPort) noexcept : TcpClient(ipPort) { TcpClient::SetCodeC(new RpcCodeC); }
+RpcClient::RpcClient(const std::string &ipPort) noexcept : TcpClient(ipPort) {
+//  TcpClient::SetCodeC(new RpcCodeC);
+}
 
 }  // namespace clsn
