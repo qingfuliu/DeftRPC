@@ -12,8 +12,6 @@
 static void test_codeC() {
   clsn::Init<0>({clsn::CreateConsoleLogAppender("[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s", clsn::LogLevel::Debug)});
   std::vector<std::string> messages(1024);
-
-
 }
 
 TEST(test_codeC, test_codeC) {}

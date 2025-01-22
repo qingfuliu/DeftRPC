@@ -6,10 +6,9 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/lib)
 
 include(GoogleTest)
 
-aux_source_directory(./ TEST_SOURCE)
+file(GLOB_RECURSE TEST_SOURCE LIST_DIRECTORIES false ./*.cpp)
 
 foreach (filename IN LISTS TEST_SOURCE)
-    #foreach (filename ${TEST_SOURCE})
     get_filename_component(target ${filename} NAME_WLE)
 
     message(${target})
@@ -21,7 +20,7 @@ foreach (filename IN LISTS TEST_SOURCE)
     target_link_libraries(${target}
             CLSN_HOOK CLSN_COROUTINE LOG benchmark
             pthread CLSN_NET CLSN_SEVER CLSN_CLIENT
-            CLSN_DATASTRUCT CLSN_RPC CLSN_COMMON gtest_main)
+            CLSN_DATASTRUCT CLSN_COMMON gtest_main)
 
     gtest_discover_tests(${target})
 endforeach ()

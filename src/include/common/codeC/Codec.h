@@ -5,6 +5,7 @@
 #ifndef DEFTRPC_CODEC_H
 #define DEFTRPC_CODEC_H
 
+#include <arpa/inet.h>
 #include <algorithm>
 #include <memory>
 #include <string>

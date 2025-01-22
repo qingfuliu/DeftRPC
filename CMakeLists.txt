@@ -208,6 +208,6 @@ include_directories(${CMAKE_SOURCE_DIR}/third_part)
 
 add_executable(DeftRPC main.cpp)
 add_subdirectory(./src)
-add_subdirectory(./example)
+#add_subdirectory(./example)
 add_subdirectory(./third_part)
 

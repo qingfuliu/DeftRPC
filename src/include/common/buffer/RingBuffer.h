@@ -35,6 +35,12 @@ class RingBuffer : public Buffer {
 
   [[nodiscard]] std::uint32_t Capacity() const noexcept override { return m_buffer_.capacity(); }
 
+  void Clear() noexcept override {
+    m_begin_ = 0;
+    m_end_ = 0;
+    m_size_ = 0;
+  }
+
   std::uint32_t Write(const char *data, std::uint32_t len) override;
 
   int FetchDataFromFd(int fd) override;

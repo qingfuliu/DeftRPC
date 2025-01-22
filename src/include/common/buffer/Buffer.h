@@ -15,11 +15,21 @@ class Buffer {
 
   virtual std::string Peek(std::uint32_t len) = 0;
 
+  std::string CPeek(std::uint32_t len) {
+    std::string peek = Peek(Size());
+    if (peek.size() > len) {
+      peek = peek.substr(peek.size() - len);
+    }
+    return peek;
+  }
+
   [[nodiscard]] virtual std::uint32_t Size() const noexcept = 0;
 
   [[nodiscard]] virtual bool Empty() const noexcept = 0;
 
   [[nodiscard]] virtual std::uint32_t Capacity() const noexcept = 0;
+
+  virtual void Clear() noexcept = 0;
 
   virtual std::uint32_t Write(const char *data, std::uint32_t len) = 0;
 

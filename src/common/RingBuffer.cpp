@@ -95,7 +95,7 @@ std::uint32_t RingBuffer::Write(const char *data, std::uint32_t len) {
 
 void RingBuffer::UpdateAfterRead(std::uint32_t len) noexcept {
   if (this->m_size_ == len) {
-    this->m_size_ = 0;
+    m_size_ = 0;
     m_begin_ = 0;
     m_end_ = 0;
   } else {
@@ -133,15 +133,15 @@ void RingBuffer::EnableWritableSpace(std::uint32_t requiredFreeCapacity) noexcep
   } while (new_capacity < needle);
 
   std::vector<char> temp_buffer(new_capacity);
-  temp_buffer.swap(m_buffer_);
   do {
     if (this->m_begin_ <= this->m_end_) {
-      std::copy(temp_buffer.begin() + m_begin_, temp_buffer.begin() + m_end_, m_buffer_.begin());
+      std::copy(m_buffer_.begin() + m_begin_, m_buffer_.begin() + m_end_, temp_buffer.begin());
       break;
     }
-    std::copy(temp_buffer.begin() + m_begin_, temp_buffer.end(), m_buffer_.begin());
-    std::copy(temp_buffer.begin(), temp_buffer.begin() + m_end_, m_buffer_.begin() + GetTailContentLen());
+    std::copy(m_buffer_.begin() + m_begin_, m_buffer_.end(), temp_buffer.begin());
+    std::copy(m_buffer_.begin(), m_buffer_.begin() + m_end_, temp_buffer.begin() + GetTailContentLen());
   } while (false);
+  temp_buffer.swap(m_buffer_);
   this->m_begin_ = 0;
   this->m_end_ = this->m_size_;
 }
