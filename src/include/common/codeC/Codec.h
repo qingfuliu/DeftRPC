@@ -28,7 +28,7 @@ class CodeC {
 
   virtual void Encode(Buffer *buffer, const char *data, std::uint32_t len) = 0;
 
-  void Encode(Buffer *buffer, std::string &str) { Encode(buffer, str.data(), str.size()); }
+  void Encode(Buffer *buffer, const std::string &str) { Encode(buffer, str.data(), str.size()); }
 };
 
 class CodeCFactory {
@@ -53,7 +53,7 @@ class DefaultCodeC : public CodeC {
     packageSize = ntohl(packageSize);
 
     std::uint32_t size = buffer->Size();
-    if (size <= sizeof(PackageLengthType) + packageSize) {
+    if (size < sizeof(PackageLengthType) + packageSize) {
       return {};
     }
     buffer->Read(sizeof(PackageLengthType));

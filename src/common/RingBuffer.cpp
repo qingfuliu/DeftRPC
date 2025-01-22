@@ -5,6 +5,7 @@
 #include "common/buffer/RingBuffer.h"
 #include <sys/uio.h>
 #include <algorithm>
+#include <iostream>
 #include <string>
 #include "common/common.h"
 
@@ -35,6 +36,7 @@ std::string RingBuffer::Read(std::uint32_t len) {
 }
 
 std::string RingBuffer::Peek(std::uint32_t len) {
+  //  std::cout << "len:" << len << std::endl;
   if (len == 0) {
     return {};
   }
@@ -54,6 +56,7 @@ std::string RingBuffer::Peek(std::uint32_t len) {
       std::copy(m_buffer_.begin(), m_buffer_.begin() + len - tail_len, data.begin() + tail_len);
     }
   } while (false);
+  //  std::cout << "data:" << data << std::endl;
   return data;
 }
 
@@ -134,7 +137,7 @@ void RingBuffer::EnableWritableSpace(std::uint32_t requiredFreeCapacity) noexcep
 
   std::vector<char> temp_buffer(new_capacity);
   do {
-    if (this->m_begin_ <= this->m_end_) {
+    if (this->m_begin_ < this->m_end_) {
       std::copy(m_buffer_.begin() + m_begin_, m_buffer_.begin() + m_end_, temp_buffer.begin());
       break;
     }
