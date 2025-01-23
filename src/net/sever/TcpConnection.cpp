@@ -43,7 +43,6 @@ void TcpConnection::ProcessMag() {
         exception = e.what();
         m_output_buffer_->Write(exception);
       }
-      
     } while (true);
 
     if (res == 0) {

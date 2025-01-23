@@ -10,7 +10,7 @@
 namespace clsn {
 
 TcpSever::TcpSever(const std::string &ipPort, size_t sharedStackSize, bool UserCall) noexcept
-    : Scheduler(sharedStackSize, UserCall),
+    : MultiThreadScheduler(8, sharedStackSize, UserCall),
       m_accept_socket_(CreateNoBlockSocket()),
       m_local_addr_(ipPort),
       m_codec_(DefaultCodeCFactory::CreateCodeC()),
@@ -104,7 +104,7 @@ void TcpSever::NewConnectionArrives(int fd, const Addr &remote) noexcept {
       fd,
       CreateCoroutine([fd, remote]() { TcpConnection::NewTcpConnectionArrive(fd, remote); }, GetThreadSharedStack()));
   auto coroutine = it.first->second.get();
-  AddDefer([coroutine]() { coroutine->SwapIn(); });
+  GetNextScheduler()->AddDefer([coroutine]() { coroutine->SwapIn(); });
 }
 
 void TcpSever::CloseAllConnection() noexcept {

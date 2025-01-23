@@ -22,7 +22,7 @@ class TcpConnection;
 
 class CodeC;
 
-class TcpSever : public Scheduler {
+class TcpSever : public MultiThreadScheduler {
  public:
   using MagCallback = std::function<std::string(TcpConnection *, std::string, clsn::TimeStamp)>;
 

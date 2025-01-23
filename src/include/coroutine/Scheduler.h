@@ -47,7 +47,7 @@ class Scheduler : protected Noncopyable {
    * @param sharedStackSize
    * @param UserCall : 该Scheduler是否由用户创建，如果是，需要将其挂载到thread loacl 变量上
    */
-  explicit Scheduler(size_t sharedStackSize, bool UserCall = true);
+  explicit Scheduler(size_t sharedStackSize, bool userCall = true);
 
   Scheduler() noexcept : Scheduler(0) {}
 
@@ -134,6 +134,8 @@ class Scheduler : protected Noncopyable {
 
   [[nodiscard]] bool IsInLoopThread() const noexcept { return thread::ThisThreadId() == m_pid_; }
 
+  void SetStopCallback(const std::function<void(void)> &f) { m_stop_callback_ = f; }
+
  private:
   void Notify() noexcept { WriteEventFd(); }
 
@@ -164,9 +166,11 @@ class Scheduler : protected Noncopyable {
   int m_event_fd_;
   // timer queue
   std::unique_ptr<TimerQueue> m_timer_queue_;
+  // close callback
+  std::function<void(void)> m_stop_callback_{nullptr};
 };
 
-class MultiThreadScheduler : protected Scheduler {
+class MultiThreadScheduler : public Scheduler {
   class SchedulerThread {
    public:
     SchedulerThread() = default;
@@ -174,21 +178,31 @@ class MultiThreadScheduler : protected Scheduler {
 
     Scheduler *GetScheduler() { return m_scheduler_; }
 
-    void Start() {
-      m_thread_ = std::thread([&] { this->ThreadFunction(); });
+    void Start(int timeout) {
+      m_thread_ = std::thread([&, timeout] { this->ThreadFunction(timeout); });
       std::unique_lock<std::mutex> guard(m_mutex_);
       m_condition_variable_.wait(guard, [&] { return nullptr != m_scheduler_; });
     }
 
+    void Stop() {
+      std::unique_lock<std::mutex> guard(m_mutex_);
+      if (m_scheduler_ == nullptr) {
+        return;
+      }
+      m_scheduler_->Stop();
+      m_condition_variable_.wait(guard, [&] { return nullptr == m_scheduler_; });
+    }
+
    private:
-    void ThreadFunction() {
+    void ThreadFunction(int timeout) {
       Scheduler scheduler;
+      scheduler.SetStopCallback([&] { m_scheduler_ = nullptr; });
       {
         std::unique_lock<std::mutex> guard(m_mutex_);
         m_scheduler_ = &scheduler;
         m_condition_variable_.notify_one();
       }
-      scheduler.Start(0);
+      scheduler.Start(timeout);
     }
 
    private:
@@ -199,29 +213,21 @@ class MultiThreadScheduler : protected Scheduler {
   };
 
  public:
-  MultiThreadScheduler(size_t sharedStackSize, bool UserCall = true) : Scheduler(sharedStackSize, UserCall) {}
+  MultiThreadScheduler(std::uint32_t threadNumber, size_t sharedStackSize, bool UserCall = true)
+      : Scheduler(sharedStackSize, UserCall), m_schedulers_(threadNumber) {}
 
   MultiThreadScheduler() noexcept : Scheduler(0) {}
 
-  ~MultiThreadScheduler() override;
+  ~MultiThreadScheduler() override = default;
 
-  Scheduler *GetNextScheduler() noexcept;
+  Scheduler *GetNextScheduler() noexcept { return m_schedulers_[0]->GetScheduler(); }
 
   void Start(int timeout) noexcept override;
 
   void Stop() noexcept override;
 
  private:
-  void SchedulerThreadFunc(int index) {
-    this->m_schedulers_[index] = std::make_unique<Scheduler>();
-
-    // start
-    scheduler.Start(0);
-  }
-
- private:
-  std::vector<std::unique_ptr<Scheduler>> m_schedulers_;
-  std::vector<std::thread> m_threads_;
+  std::vector<std::unique_ptr<SchedulerThread>> m_schedulers_;
 };
 
 }  // namespace clsn

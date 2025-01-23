@@ -15,8 +15,8 @@ namespace clsn {
 
 static thread_local std::unique_ptr<Scheduler> thread_scheduler{nullptr};
 
-Scheduler::Scheduler(size_t sharedStackSize, bool UserCall)
-    : m_user_call_(UserCall),
+Scheduler::Scheduler(size_t sharedStackSize, bool userCall)
+    : m_user_call_(userCall),
       m_pid_(thread::ThisThreadId()),
       m_stop_(true),
       m_state_(kSchedulerState::DoNothing),
@@ -102,6 +102,10 @@ void Scheduler::Start(int timeout) noexcept {
 }
 
 void Scheduler::Stop() noexcept {
+  if (nullptr != m_stop_callback_) {
+    m_stop_callback_();
+  }
+
   if (!m_stop_.load(std::memory_order_release)) {
     m_stop_.store(true, std::memory_order_release);
     if (m_state_.load(std::memory_order_acquire) == kSchedulerState::EpollWait) {
@@ -122,6 +126,23 @@ void Scheduler::WriteEventFd() const noexcept {
   if (sizeof v != write(m_event_fd_, &v, sizeof v)) {
     CLSN_LOG_ERROR << "WriteEventFd error!";
   }
+}
+
+void MultiThreadScheduler::Start(int timeout) noexcept {
+  for (auto &scheduler : m_schedulers_) {
+    scheduler = std::make_unique<SchedulerThread>();
+    scheduler->Start(timeout);
+  }
+  Scheduler::Start(timeout);
+}
+
+void MultiThreadScheduler::Stop() noexcept {
+  for (auto &scheduler : m_schedulers_) {
+    if (scheduler != nullptr) {
+      scheduler->Stop();
+    }
+  }
+  Scheduler::Stop();
 }
 
 }  // namespace clsn

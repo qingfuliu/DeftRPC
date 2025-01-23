@@ -102,7 +102,7 @@ class EVBuffer : public Buffer {
 
   [[nodiscard]] std::uint32_t Size() const noexcept override { return 0; }
 
-  virtual std::uint32_t Capacity() const noexcept override { return 0; }
+  std::uint32_t Capacity() const noexcept override { return 0; }
 
   void Clear() noexcept {
     m_begin_ = 0;
