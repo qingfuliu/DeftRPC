@@ -26,7 +26,7 @@ class TcpSever : public MultiThreadScheduler {
  public:
   using MagCallback = std::function<std::string(TcpConnection *, std::string, clsn::TimeStamp)>;
 
-  explicit TcpSever(const std::string &ipPort, size_t sharedStackSize = 0, bool UserCall = true) noexcept;
+  explicit TcpSever(const std::string &ipPort, size_t sharedStackSize = 0) noexcept;
 
   ~TcpSever() override;
 

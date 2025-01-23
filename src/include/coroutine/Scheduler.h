@@ -144,7 +144,6 @@ class Scheduler : protected Noncopyable {
   void WriteEventFd() const noexcept;
 
  private:
-  const bool m_user_call_;
   const pid_t m_pid_;
 
  protected:
@@ -213,8 +212,8 @@ class MultiThreadScheduler : public Scheduler {
   };
 
  public:
-  MultiThreadScheduler(std::uint32_t threadNumber, size_t sharedStackSize, bool UserCall = true)
-      : Scheduler(sharedStackSize, UserCall), m_schedulers_(threadNumber) {}
+  MultiThreadScheduler(std::uint32_t threadNumber, size_t sharedStackSize)
+      : Scheduler(sharedStackSize), m_schedulers_(threadNumber) {}
 
   MultiThreadScheduler() noexcept : Scheduler(0) {}
 

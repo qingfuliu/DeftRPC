@@ -35,17 +35,19 @@ class LockFreeQueue {
     delete m_head_.load(std::memory_order_acquire);
   }
 
-  size_t Size() const noexcept { return this->m_size_.load(std::memory_order_acquire); }
+  [[nodiscard]] std::uint32_t Size() const noexcept { return this->m_size_.load(std::memory_order_acquire); }
 
+  [[nodiscard]] bool Empty() const noexcept { return 0 == this->m_size_.load(std::memory_order_acquire); }
   template <class T>
   int EnQueue(T &&element) noexcept {
     auto new_node = new ElementNodeType{};
     new_node->m_next_.store(nullptr, std::memory_order_release);
     new (&new_node->m_element_) Element(std::forward<T>(element));
-
-    ElementNodeType *cur_tail = m_tail_.load(std::memory_order_acquire);
-    ElementNodeType *cur_tail_next = cur_tail->m_next_.load();
+    ElementNodeType *cur_tail;
+    ElementNodeType *cur_tail_next;
     do {
+      cur_tail = m_tail_.load(std::memory_order_acquire);
+      cur_tail_next = cur_tail->m_next_.load();
       if (m_tail_.load(std::memory_order_acquire) == cur_tail) {
         if (nullptr == cur_tail_next) {
           ElementNodeType *temp = nullptr;
@@ -88,7 +90,7 @@ class LockFreeQueue {
  private:
   std::atomic<ElementNodeType *> m_head_;
   std::atomic<ElementNodeType *> m_tail_;
-  std::atomic_uint m_size_{0};
+  std::atomic_uint32_t m_size_{0};
 };
 
 }  // namespace clsn

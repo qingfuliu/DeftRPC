@@ -13,11 +13,10 @@
 
 namespace clsn {
 
-static thread_local std::unique_ptr<Scheduler> thread_scheduler{nullptr};
+static thread_local Scheduler *thread_scheduler{nullptr};
 
 Scheduler::Scheduler(size_t sharedStackSize, bool userCall)
-    : m_user_call_(userCall),
-      m_pid_(thread::ThisThreadId()),
+    : m_pid_(thread::ThisThreadId()),
       m_stop_(true),
       m_state_(kSchedulerState::DoNothing),
       m_main_coroutine_(clsn::CreateCoroutine()),
@@ -27,35 +26,25 @@ Scheduler::Scheduler(size_t sharedStackSize, bool userCall)
       m_timer_queue_(CreateNewTimerQueue()) {
   m_coroutines_.push_back(m_main_coroutine_.get());
   m_main_coroutine_->SetIsMain(true);
-  if (m_user_call_) {
-    if (thread_scheduler != nullptr) {
-      throw SchedulingException("this thread already has a scheduler");
-    }
-    thread_scheduler.reset(this);
 
-    /******************************event m_socket_******************************/
-    m_poller_->RegisterRead(m_event_fd_, std::function<void(void)>([this] { ReadEventFd(); }));
-    /******************************timer  ******************************/
-    m_poller_->RegisterRead(m_timer_queue_->GetTimerFd(), *m_timer_queue_);
+  if (thread_scheduler != nullptr) {
+    throw SchedulingException("this thread already has a scheduler");
   }
+  thread_scheduler = this;
+
+  /******************************event m_socket_******************************/
+  m_poller_->RegisterRead(m_event_fd_, std::function<void(void)>([this] { ReadEventFd(); }));
+  /******************************timer  ******************************/
+  m_poller_->RegisterRead(m_timer_queue_->GetTimerFd(), *m_timer_queue_);
 
   if (0 != sharedStackSize) {
     m_shared_stack_ = clsn::MakeSharedStack(sharedStackSize);
   }
 }
 
-Scheduler::~Scheduler() {
-  if (m_user_call_) {
-    (void)thread_scheduler.release();
-  }
-}
+Scheduler::~Scheduler() = default;
 
-Scheduler *Scheduler::GetThreadScheduler() noexcept {
-  if (!static_cast<bool>(thread_scheduler)) {
-    thread_scheduler = std::make_unique<Scheduler>(-1, false);
-  }
-  return thread_scheduler.get();
-}
+Scheduler *Scheduler::GetThreadScheduler() noexcept { return thread_scheduler; }
 
 Coroutine *Scheduler::GetCurCoroutine() {
   Scheduler *scheduler = GetThreadScheduler();

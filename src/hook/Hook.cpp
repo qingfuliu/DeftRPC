@@ -79,8 +79,18 @@ int socket(int domain, int type, int protocol) {
   }
   return socket_t(domain, type | SOCK_NONBLOCK | SOCK_CLOEXEC, protocol);
 }
+//int pipe (int fd[2]){
+//  if (!clsn::enable_hook) {
+//    return pipe2()
+//  }
+//}
+//int fd[2];
+//char *p = "test for pipe\n";
+//
+//if (pipe(fd) == -1)
 
-int connect(int fd, const struct sockaddr *address, socklen_t addressLen) {
+
+  int connect(int fd, const struct sockaddr *address, socklen_t addressLen) {
   if (!clsn::enable_hook || !clsn::IsSocket(fd)) {
     return connect_t(fd, address, addressLen);
   }

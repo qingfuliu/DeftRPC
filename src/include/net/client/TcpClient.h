@@ -76,20 +76,8 @@ class TcpClient {
     return res;
   }
 
-  size_t Receive(char *data, size_t len) noexcept {
-    if (len <= 0) {
-      return 0;
-    }
-    int res = m_input_buffer_->FetchDataFromFd(m_sock_.GetFd());
-    //    if (res > 0) {
-    //      len = res > len ? len : res;
-    //      m_input_buffer_->Read(data);
-    //    }
-    return res;
-  }
-
-  std::string_view Receive() {
-    std::string_view view;
+  std::string Receive() {
+    std::string view;
     do {
       int res = m_input_buffer_->FetchDataFromFd(m_sock_.GetFd());
       if (res < 0) {
@@ -99,8 +87,6 @@ class TcpClient {
     } while (view.empty());
     return view;
   }
-
-  [[nodiscard]] int MakeSelfNonblock(bool val) const noexcept { return m_sock_.SetNoBlock(val); }
 
   [[nodiscard]] int Close() noexcept {
     m_state_ = kState::Closed;
@@ -143,7 +129,7 @@ class TcpClient {
   int m_write_timeout_{0};
   std::unique_ptr<CodeC> m_codec_{DefaultCodeCFactory::CreateCodeC()};
   std::unique_ptr<Buffer> m_input_buffer_{std::make_unique<RingBuffer>()};
-  std::unique_ptr<Buffer> m_output_buffer_{std::make_unique<EVBuffer>()};
+  std::unique_ptr<Buffer> m_output_buffer_{std::make_unique<RingBuffer>()};
 };
 
 }  // namespace clsn

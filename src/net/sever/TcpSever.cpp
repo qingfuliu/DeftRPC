@@ -9,15 +9,17 @@
 
 namespace clsn {
 
-TcpSever::TcpSever(const std::string &ipPort, size_t sharedStackSize, bool UserCall) noexcept
-    : MultiThreadScheduler(8, sharedStackSize, UserCall),
+TcpSever::TcpSever(const std::string &ipPort, size_t sharedStackSize) noexcept
+    : MultiThreadScheduler(8, sharedStackSize),
       m_accept_socket_(CreateNoBlockSocket()),
       m_local_addr_(ipPort),
       m_codec_(DefaultCodeCFactory::CreateCodeC()),
-      m_accept_coroutine_(CreateCoroutine([this]() -> void { this->AcceptTask(); })) {
+      m_accept_coroutine_(CreateCoroutine([this]() -> void {
+        this->AcceptTask();
+        GetCurCoroutine()->SwapOutWithTerminal();
+      })) {
   m_accept_socket_.SetReusePort(true);
   m_accept_socket_.SetReuseAddr(true);
-
   if (m_codec_ == nullptr) {
     m_codec_.reset(DefaultCodeCFactory::CreateCodeC());
   }
@@ -100,11 +102,14 @@ void TcpSever::AcceptTask() noexcept {
 }
 
 void TcpSever::NewConnectionArrives(int fd, const Addr &remote) noexcept {
-  auto it = m_connections_.emplace(
-      fd,
-      CreateCoroutine([fd, remote]() { TcpConnection::NewTcpConnectionArrive(fd, remote); }, GetThreadSharedStack()));
+  auto it = m_connections_.emplace(fd, CreateCoroutine(
+                                           [fd, remote]() {
+                                             TcpConnection::NewTcpConnectionArrive(fd, remote);
+                                             GetCurCoroutine()->SwapOutWithTerminal();
+                                           },
+                                           GetThreadSharedStack()));
   auto coroutine = it.first->second.get();
-  GetNextScheduler()->AddDefer([coroutine]() { coroutine->SwapIn(); });
+  AddDefer([coroutine]() { coroutine->SwapIn(); });
 }
 
 void TcpSever::CloseAllConnection() noexcept {
@@ -114,9 +119,6 @@ void TcpSever::CloseAllConnection() noexcept {
   }
 }
 
-void TcpSever::CloseAcceptor() const noexcept {
-  close(m_accept_socket_.GetFd());
-  m_accept_coroutine_->SwapIn();
-}
+void TcpSever::CloseAcceptor() const noexcept { close(m_accept_socket_.GetFd()); }
 
 }  // namespace clsn
