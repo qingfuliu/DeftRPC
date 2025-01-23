@@ -24,7 +24,7 @@ class CodeC;
 
 class TcpSever : public Scheduler {
  public:
-  using MagCallback = std::function<std::string(TcpConnection *, std::string_view, clsn::TimeStamp)>;
+  using MagCallback = std::function<std::string(TcpConnection *, std::string, clsn::TimeStamp)>;
 
   explicit TcpSever(const std::string &ipPort, size_t sharedStackSize = 0, bool UserCall = true) noexcept;
 

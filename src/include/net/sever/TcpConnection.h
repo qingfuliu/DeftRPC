@@ -44,7 +44,7 @@ class TcpConnection : public Noncopyable {
 
   void WriteInThread(const char *msg, size_t len) noexcept {
     assert(m_scheduler_->IsInLoopThread());
-    //            m_output_buffer_->Write(msg, len);
+    m_output_buffer_->Write(msg, len);
   }
 
   void ProcessMag();

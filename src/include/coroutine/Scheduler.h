@@ -8,9 +8,12 @@
 #include <unistd.h>
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <functional>
 #include <list>
 #include <memory>
+#include <mutex>
+#include <thread>
 #include <utility>
 #include <vector>
 #include "common/LockFreeQueue.h"
@@ -33,21 +36,6 @@ class FileDescriptor;
 
 class Coroutine;
 
-/**
- * Read  Accept
- * 加入到当前线程的 m_poller_ 设置读事件
- * 阻塞 with yield
- *
- * epollWait
- *
- * 解包
- *
- *执行回调
- *
- *
- * Write
- *
- */
 class Scheduler : protected Noncopyable {
  public:
   using ExtraTask = Task;
@@ -179,7 +167,61 @@ class Scheduler : protected Noncopyable {
 };
 
 class MultiThreadScheduler : protected Scheduler {
+  class SchedulerThread {
+   public:
+    SchedulerThread() = default;
+    ~SchedulerThread() = default;
+
+    Scheduler *GetScheduler() { return m_scheduler_; }
+
+    void Start() {
+      m_thread_ = std::thread([&] { this->ThreadFunction(); });
+      std::unique_lock<std::mutex> guard(m_mutex_);
+      m_condition_variable_.wait(guard, [&] { return nullptr != m_scheduler_; });
+    }
+
+   private:
+    void ThreadFunction() {
+      Scheduler scheduler;
+      {
+        std::unique_lock<std::mutex> guard(m_mutex_);
+        m_scheduler_ = &scheduler;
+        m_condition_variable_.notify_one();
+      }
+      scheduler.Start(0);
+    }
+
+   private:
+    std::mutex m_mutex_{};
+    std::condition_variable m_condition_variable_;
+    std::thread m_thread_{};
+    Scheduler *m_scheduler_{nullptr};
+  };
+
+ public:
+  MultiThreadScheduler(size_t sharedStackSize, bool UserCall = true) : Scheduler(sharedStackSize, UserCall) {}
+
+  MultiThreadScheduler() noexcept : Scheduler(0) {}
+
+  ~MultiThreadScheduler() override;
+
+  Scheduler *GetNextScheduler() noexcept;
+
+  void Start(int timeout) noexcept override;
+
+  void Stop() noexcept override;
+
  private:
+  void SchedulerThreadFunc(int index) {
+    this->m_schedulers_[index] = std::make_unique<Scheduler>();
+
+    // start
+    scheduler.Start(0);
+  }
+
+ private:
+  std::vector<std::unique_ptr<Scheduler>> m_schedulers_;
+  std::vector<std::thread> m_threads_;
 };
 
 }  // namespace clsn

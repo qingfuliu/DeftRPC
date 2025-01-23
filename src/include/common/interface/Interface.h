@@ -7,7 +7,7 @@ namespace clsn {
 class Interface {
  public:
   virtual bool ParseFromString(const std::string &data) = 0;
-  virtual bool SerializeToString(std::string *output) const = 0;
+  virtual bool SerializeToString(std::string &output) const = 0;
 };
 }  // namespace clsn
 

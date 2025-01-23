@@ -57,7 +57,6 @@ void TcpSever::CloseConnection(int fd, bool activelyClose) noexcept {
 }
 
 void TcpSever::Start(int timeout) noexcept {
-  int a = 0;
   Scheduler::AddDefer([this]() { m_accept_coroutine_->SwapIn(); });
   Scheduler::Start(timeout);
 }

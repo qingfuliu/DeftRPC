@@ -43,11 +43,7 @@ void TcpConnection::ProcessMag() {
         exception = e.what();
         m_output_buffer_->Write(exception);
       }
-
-      do {
-        res = m_output_buffer_->FlushDataToFd(m_socket_.GetFd());
-      } while (!m_output_buffer_->Empty() && res >= 0);
-
+      
     } while (true);
 
     if (res == 0) {
