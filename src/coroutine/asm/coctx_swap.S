@@ -2,8 +2,8 @@
 * Tencent is pleased to support the open source community by making Libco available.
 
 * Copyright (C) 2014 THL A29 Limited, a Tencent company. All rights reserved.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
+                                        *
+                                            * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 *
@@ -23,7 +23,7 @@
         CoctxSwap:
 
 #if defined(__i386__)
-movl 4(%esp), %eax
+    movl 4(%esp), %eax
     movl %esp,  28(%eax)
     movl %ebp, 24(%eax)
     movl %esi, 20(%eax)
@@ -45,7 +45,7 @@ movl 4(%esp), %eax
 	ret
 
 #elif defined(__x86_64__)
-leaq (%rsp),%rax
+	leaq (%rsp),%rax
     movq %rax, 104(%rdi)
     movq %rbx, 96(%rdi)
     movq %rcx, 88(%rdi)
@@ -75,7 +75,8 @@ leaq (%rsp),%rax
     movq 80(%rsi), %rdx
     movq 88(%rsi), %rcx
     movq 96(%rsi), %rbx
-
+		leaq 8(%rsp), %rsp
+		pushq 72(%rsi)
 
     movq 64(%rsi), %rsi
 	ret

@@ -41,13 +41,13 @@ DeftRPC是一个rpc框架。拥有日志模块、协程模块、序列化与反�
 在使用日志前，需要调用初始化函数来初始化日志器。其中N是日志器的编号，Appender是vector形式的LogAppend数组。
 
 ```cpp
-clsn::Init<N>(Appenders);
+clsn::MakeMem<N>(Appenders);
 ```
 
 形如：
 
 ```cpp
-clsn::Init<0>({
+clsn::MakeMem<0>({
     clsn::CreateConsoleLogAppender(
         "[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s",
                         clsn::LogLevel::Debug)});
@@ -84,7 +84,7 @@ clsn::Init<0>({
 例如采用“[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s”，调用如下代码：
 
 ```cpp
-clsn::Init<0>({
+clsn::MakeMem<0>({
     clsn::CreateConsoleLogAppender(
         "[%t] %Y-%m-%d %H:%M:%S:<%f:%n> [%l] %s",
                         clsn::LogLevel::Debug)});
