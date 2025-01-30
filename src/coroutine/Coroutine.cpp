@@ -5,21 +5,11 @@
 
 namespace clsn {
 
-// Coroutine *Coroutine::GetCurCoroutine() { return Scheduler::GetCurCoroutine(); }
-
-// void Coroutine::Yield() {
-//   auto cur_coroutine = Scheduler::GetCurCoroutine();
-//   assert(!cur_coroutine->GetIsMain());
-//   cur_coroutine->SwapOutWithYield();
-// }
-
-// void Coroutine::SwapIn() noexcept {
-//   Coroutine *cur = Scheduler::GetCurCoroutine();
-//   Scheduler::InsertToTail(this);
-//
-//   m_ctx_->SwapCtx(cur->m_ctx_.get());
-// }
 void Coroutine::SwapIn(Coroutine &cur) noexcept { m_ctx_->SwapCtx(cur.m_ctx_.get()); }
+
+Coroutine::Coroutine(Task t, SharedStack *sharedStack, bool main_coroutine) noexcept
+    : m_task_(std::move(t)),
+      m_ctx_(std::make_unique<CoroutineContext>(&Coroutine::CoroutineFunc, this, sharedStack, main_coroutine)) {}
 
 void Coroutine::CoroutineFunc(void *arg) {
   auto cur = static_cast<Coroutine *>(arg);
@@ -48,19 +38,6 @@ void Coroutine::Reset(Task f) noexcept {
   }
 }
 
-/** 1. save the context to this
- *      1.1 if has none context,create it
- *      1.2 save the register variables
- *  2. get the scheduler coroutine
- *  3. swap to the scheduler coroutine
- */
 void Coroutine::SwapOut(Coroutine &next) { next.m_ctx_->SwapCtx(m_ctx_.get()); }
-
-//    void Coroutine::makeCtxInit() noexcept {
-//        if (kCoroutineState::construct == state) {
-//            m_ctx_.MakeMem();
-//            state = kCoroutineState::MakeMem;
-//        }
-//    }
 
 }  // namespace clsn

@@ -79,20 +79,20 @@ class SharedStack {
 
   ~SharedStack();
 
-  CoroutineContext *GetOwner() noexcept { return m_owner_; }
+  [[nodiscard]] CoroutineContext *GetOwner() const noexcept { return m_owner_; }
 
   void SetOwner(CoroutineContext *c) noexcept { m_owner_ = c; }
 
   [[nodiscard]] size_t GetStackSize() const noexcept { return m_stack_size_; }
 
-  char *GetStack() noexcept { return m_stack_; }
+  [[nodiscard]] char *GetStack() const noexcept { return m_stack_; }
 
   void SaveStack(void *stack, size_t size) const noexcept {
     std::copy(static_cast<const char *>(m_stack_), static_cast<const char *>(m_stack_) + size,
               static_cast<char *>(stack));
   }
 
-  void LoadStack(const void *stack, size_t size) noexcept {
+  inline void LoadStack(const void *stack, size_t size) const noexcept {
     std::copy(static_cast<const char *>(stack), static_cast<const char *>(stack) + size, m_stack_);
   }
 
@@ -115,138 +115,31 @@ inline std::unique_ptr<SharedStack> MakeSharedStack(size_t size) {
 class CoroutineContext : protected Noncopyable {
  public:
   explicit CoroutineContext(CoroutineFunc func, CoroutineArg arg, SharedStack *share_stack = nullptr,
-                            bool main_coroutine = false) noexcept
-      : m_main_ctx_(main_coroutine),
-        m_func_(func),
-        m_arg_(arg),
-        m_ctx_(),
-        m_mem_(),
-        m_shared_mem_(share_stack),
-        m_valgrind_stack_id_(-1) {}
+                            bool main_coroutine = false) noexcept;
 
   explicit CoroutineContext(SharedStack *sharedStack = nullptr) noexcept
       : CoroutineContext(nullptr, nullptr, sharedStack) {}
 
-  ~CoroutineContext() noexcept override {
-    if (-1 != m_valgrind_stack_id_) {
-      VALGRIND_STACK_DEREGISTER(m_valgrind_stack_id_);
-      m_valgrind_stack_id_ = -1;
-    }
-  }
+  ~CoroutineContext() noexcept override;
 
-  void Reset() noexcept { m_ctx_.Clear(); }
+  inline void Reset() noexcept { m_ctx_.Clear(); }
 
-  void MakeMem() noexcept {
-    if (nullptr == m_shared_mem_) {
-      if (m_mem_.Empty()) {
-        // clear
-        m_mem_.Clear();
-        // malloc
-        m_mem_.m_stack_buffer_.reset(new char[DEFAULT_STACK_SIZE]);
-        m_mem_.m_stack_size_ = DEFAULT_STACK_SIZE;
-        m_mem_.m_stack_bp_ = m_mem_.m_stack_buffer_.get() + m_mem_.m_stack_size_;
-        std::fill(m_mem_.m_stack_buffer_.get(), m_mem_.m_stack_buffer_.get() + m_mem_.m_stack_size_, 0);
-        // register stack for valgrind
-        if (-1 == m_valgrind_stack_id_) {
-          m_valgrind_stack_id_ = VALGRIND_STACK_REGISTER(m_mem_.m_stack_buffer_.get(),
-                                                         m_mem_.m_stack_buffer_.get() + m_mem_.m_stack_size_);
-        } else {
-          VALGRIND_STACK_CHANGE(m_valgrind_stack_id_, m_mem_.m_stack_buffer_.get(),
-                                m_mem_.m_stack_buffer_.get() + m_mem_.m_stack_size_);
-        }
-      }
-    } else {
-      m_mem_.m_stack_buffer_.reset(m_shared_mem_->GetStack());
-      m_mem_.m_stack_size_ = m_shared_mem_->GetStackSize();
-      m_mem_.m_stack_bp_ = m_mem_.m_stack_buffer_.get() + m_mem_.m_stack_size_;
-      m_mem_.m_share_stack_ = true;
-    }
-  }
+  void MakeMem();
 
-  void MakeCtx() noexcept {
-    if (m_shared_mem_ != nullptr) {
-      SaveOwnerStack();
-      m_shared_mem_->SetOwner(this);
-    }
-    char *s = reinterpret_cast<char *>(&m_ctx_);
-    std::fill(s, s + sizeof(Coctx), 0);
+  void MakeCtx() noexcept;
 
-#if defined(__i386__)
-    char *bp = m_mem_.m_stack_bp_ - sizeof(void *);
-
-    reinterpret_cast<std::uint64_t &>(bp) &= -16L;
-
-    void **ret = reinterpret_cast<void **>(bp - (sizeof(void *) << 1));
-
-    *ret = reinterpret_cast<void *>(m_func_);
-
-    *reinterpret_cast<void **>(bp + sizeof(void *)) = reinterpret_cast<void *>(m_func_);
-
-    m_ctx_.m_regs_[ESP] = bp - (sizeof(void *) << 1);
-#elif defined(__x86_64__)
-    char *sp = m_mem_.m_stack_bp_ - sizeof(void *);
-
-    reinterpret_cast<std::uint64_t &>(sp) &= -16LL;
-
-    void **ret_addr = reinterpret_cast<void **>(sp);
-    *ret_addr = reinterpret_cast<void *>(m_func_);
-
-    m_ctx_.m_regs_[kRSP] = sp;
-
-    m_ctx_.m_regs_[kRETAddr] = reinterpret_cast<char *>(m_func_);
-
-    m_ctx_.m_regs_[kRDI] = static_cast<void *>(m_arg_);
-#endif
-  }
-
-  void SaveOwnerStack() {
+  inline void SaveOwnerStack() {
     CoroutineContext *owner = m_shared_mem_->GetOwner();
     if (nullptr != owner && this != owner) {
       owner->SaveSharedStack();
     }
   }
 
-  void SaveSharedStack() {
-    assert(m_shared_mem_->GetOwner() == this);
-    m_mem_.m_valid_size_ = static_cast<size_t>(m_mem_.m_stack_bp_ - static_cast<char *>(m_ctx_.m_regs_[kRSP]));
-    if (m_mem_.m_valid_size_ >= m_mem_.m_save_stack_size_) {
-      if (0 == m_mem_.m_save_stack_size_) {
-        m_mem_.m_save_stack_size_ = 2;
-      }
-      do {
-        m_mem_.m_save_stack_size_ = m_mem_.m_save_stack_size_ << 1;
-      } while (m_mem_.m_valid_size_ >= m_mem_.m_save_stack_size_);
+  void SaveSharedStack();
 
-      m_mem_.m_saved_stack_.reset(new char[m_mem_.m_save_stack_size_]);
-      std::fill(m_mem_.m_saved_stack_.get(), m_mem_.m_saved_stack_.get() + m_mem_.m_save_stack_size_, 0);
-      VALGRIND_STACK_REGISTER(0, 100);
-    }
-    m_shared_mem_->SaveStack(m_mem_.m_saved_stack_.get(), m_mem_.m_valid_size_);
-    m_shared_mem_->SetOwner(nullptr);
-  }
+  inline void LoadSharedStack() { m_shared_mem_->LoadStack(m_mem_.m_saved_stack_.get(), m_mem_.m_valid_size_); }
 
-  void LoadSharedStack() { m_shared_mem_->LoadStack(m_mem_.m_saved_stack_.get(), m_mem_.m_valid_size_); }
-
-  void SwapCtx(CoroutineContext *cur) noexcept {
-    if (m_shared_mem_ != nullptr) {
-      SaveOwnerStack();
-    }
-    // 如果不是主协程，需要创建mem和ctx
-    if (!m_main_ctx_) {
-      if (m_mem_.Empty()) {
-        MakeMem();
-      }
-
-      if (m_ctx_.Empty()) {
-        MakeCtx();
-      }
-
-      if (nullptr != m_shared_mem_ && m_mem_.m_valid_size_ != 0 && this != m_shared_mem_->GetOwner()) {
-        LoadSharedStack();
-      }
-    }
-    CoctxSwap(&cur->m_ctx_, &m_ctx_);
-  }
+  void SwapCtx(CoroutineContext *cur) noexcept;
 
  private:
   bool m_main_ctx_{false};

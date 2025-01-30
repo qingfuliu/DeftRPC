@@ -9,7 +9,7 @@
 
 TEST(test_coroutine, testSwapInOneLayer) {
   std::random_device randomDevice;
-  unsigned int seed = randomDevice();  // 生成一个随机的种子值
+  unsigned int seed = randomDevice();
   std::uniform_int_distribution<int> uniform(2, 2 << 16);
   std::uniform_int_distribution<char> uniformChar;
   std::mt19937 r(seed);
@@ -20,7 +20,7 @@ TEST(test_coroutine, testSwapInOneLayer) {
   std::vector<int> v_inner;
   std::vector<int> v_outer;
 
-  int loop_times = 1024;//uniform(r);
+  int loop_times = uniform(r);
   v_inner.reserve(loop_times);
   v_outer.reserve(loop_times);
 
@@ -37,14 +37,14 @@ TEST(test_coroutine, testSwapInOneLayer) {
     next->SwapIn(*cur);
     ++flag;
   }
-//  ASSERT_EQ(v_inner, v_outer);
+  ASSERT_EQ(v_inner, v_outer);
 }
 
 TEST(test_coroutine, testSwapMultiLayer) {
   auto cur = clsn::CreateCoroutine(nullptr, nullptr, true);
 
   std::random_device randomDevice;
-  unsigned int seed = randomDevice();  // 生成一个随机的种子值
+  unsigned int seed = randomDevice();
   std::uniform_int_distribution<int> uniform(2, 2 << 16);
   std::uniform_int_distribution<char> uniformChar;
   std::mt19937 r(seed);
@@ -74,15 +74,11 @@ TEST(test_coroutine, testSwapMultiLayer) {
     coroutines[i]->Reset(func);
   }
   coroutines[0]->SwapIn(*cur);
-  //
-  //  v_outer.reserve(loop_times);
-  //  for (int i = 0; i < loop_times; ++i) {
-  //    v_outer.push_back(i);
-  //  }
-  //  ASSERT_EQ(flag, loop_times);
-  //  ASSERT_EQ(v_inner, v_outer);
-}
 
-// BENCHMARK(test_SwapIn)->Iterations(1);
-// BENCHMARK(test_sharedPtr_SwapIn)->Iterations(10)->Threads(10);
-// BENCHMARK_MAIN();
+  v_outer.reserve(loop_times);
+  for (int i = 0; i < loop_times; ++i) {
+    v_outer.push_back(i);
+  }
+  ASSERT_EQ(flag, loop_times);
+  ASSERT_EQ(v_inner, v_outer);
+}

@@ -18,37 +18,9 @@ class Coroutine : protected Noncopyable {
 
   friend std::unique_ptr<Coroutine> CreateCoroutine(Task t, SharedStack *sharedStack, bool main_coroutine);
 
-  //  void SetIsMain(bool v) noexcept {
-  //    if (v) {
-  //      m_main_ = v;
-  //      m_ctx_->MakeSelfMainCtx();
-  //    }
-  //  }
-  //
-  //  [[nodiscard]] bool GetIsMain() const noexcept { return m_main_; }
-
-  void SetTask(Task t) noexcept { m_task_ = std::move(t); }
-
-  //  static Coroutine *GetCurCoroutine();
-
   //  static void Yield();
 
   void SwapIn(Coroutine &cur) noexcept;
-
-  //  void SwapOutWithExecuting() {
-  //    m_state_ = kCoroutineState::executing;
-  //    SwapOut();
-  //  }
-  //
-  //  void SwapOutWithYield() {
-  //    m_state_ = kCoroutineState::yield;
-  //    SwapOut();
-  //  }
-
-  void SwapOutWithFinished(Coroutine &next) {
-    m_state_ = kCoroutineState::finished;
-    SwapOut(next);
-  }
 
   void SwapOutWithTerminal(Coroutine &next) {
     m_state_ = kCoroutineState::terminal;
@@ -57,14 +29,10 @@ class Coroutine : protected Noncopyable {
 
   void Reset(Task f) noexcept;
 
-  //  void operator()() noexcept { SwapIn(); }
-
   bool operator==(std::nullptr_t) noexcept { return nullptr == m_task_; }
 
  protected:
-  explicit Coroutine(Task t = nullptr, SharedStack *sharedStack = nullptr, bool main_coroutine = false) noexcept
-      : m_task_(std::move(t)),
-        m_ctx_(std::make_unique<CoroutineContext>(&Coroutine::CoroutineFunc, this, sharedStack, main_coroutine)) {}
+  explicit Coroutine(Task t = nullptr, SharedStack *sharedStack = nullptr, bool main_coroutine = false) noexcept;
 
  private:
   static void CoroutineFunc(void *arg);
