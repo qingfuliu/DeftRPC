@@ -1,4 +1,4 @@
-aux_source_directory(. COMMON_SRC)
+file(GLOB_RECURSE COMMON_SRC LIST_DIRECTORIES false ./*.cpp)
 
 add_library(CLSN_COMMON SHARED ${COMMON_SRC})
 

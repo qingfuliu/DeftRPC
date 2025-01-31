@@ -159,9 +159,12 @@ void Scheduler::WriteEventFd() const noexcept {
 }
 
 void MultiThreadScheduler::Start(int timeout) noexcept {
-  for (auto &scheduler : m_schedulers_) {
-    scheduler = std::make_unique<SchedulerThread>();
-    scheduler->Start(timeout);
+  {
+    std::unique_lock<std::mutex> guard(m_mutex_);
+    for (auto &scheduler : m_schedulers_) {
+      scheduler = std::make_unique<SchedulerThread>();
+      scheduler->Start(timeout);
+    }
   }
   Scheduler::Start(timeout);
 }

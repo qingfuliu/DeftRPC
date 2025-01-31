@@ -32,6 +32,7 @@ TEST(test_coroutine, testSwapInOneLayer) {
     cur->SwapIn(*next);
   };
   next->Reset(func);
+
   for (int i = 0; i < loop_times; ++i) {
     v_outer.push_back(i);
     next->SwapIn(*cur);

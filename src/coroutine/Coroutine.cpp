@@ -13,21 +13,11 @@ Coroutine::Coroutine(Task t, SharedStack *sharedStack, bool main_coroutine) noex
 
 void Coroutine::CoroutineFunc(void *arg) {
   auto cur = static_cast<Coroutine *>(arg);
-  //  assert(kCoroutineState::construct == cur->m_state_);
-  cur->m_state_ = kCoroutineState::executing;
-  if (cur->m_task_ != nullptr) {
-    cur->m_task_();
-    //                cur->m_task_ = nullptr;
-  }
-  //  try {
-  //
-  //  } catch (std::exception &e) {
-  //    cur->SwapOutWithTerminal();
-  //  } catch (...) {
-  //    cur->SwapOutWithTerminal();
+  cur->operator()();
+  //  cur->m_state_ = kCoroutineState::executing;
+  //  if (cur->m_task_ != nullptr) {
+  //    cur->m_task_();
   //  }
-  //  cur->m_task_ = nullptr;
-  //  cur->SwapOutWithFinished();
 }
 
 void Coroutine::Reset(Task f) noexcept {

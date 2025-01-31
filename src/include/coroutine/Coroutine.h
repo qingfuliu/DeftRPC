@@ -9,12 +9,13 @@
 #include <memory>
 #include <utility>
 #include "CoroutineContext.h"
-#include "common/task/Task.h"
+// #include "common/task/Task.h"
 
 namespace clsn {
 
 class Coroutine : protected Noncopyable {
  public:
+  using Task = std::function<void(void)>;
   friend std::unique_ptr<Coroutine> CreateCoroutine(Task t, SharedStack *sharedStack, bool main_coroutine);
 
   //  static void Yield();
@@ -45,13 +46,13 @@ class Coroutine : protected Noncopyable {
 
   void SwapOut(Coroutine &c);
 
- private:
+ public:
   kCoroutineState m_state_{kCoroutineState::construct};
   std::unique_ptr<CoroutineContext> m_ctx_;
   Task m_task_;
 };
 
-inline std::unique_ptr<Coroutine> CreateCoroutine(Task t = nullptr, SharedStack *sharedStack = nullptr,
+inline std::unique_ptr<Coroutine> CreateCoroutine(Coroutine::Task t = nullptr, SharedStack *sharedStack = nullptr,
                                                   bool main_coroutine = false) {
   return std::unique_ptr<Coroutine>(new Coroutine(std::move(t), sharedStack, main_coroutine));
 }

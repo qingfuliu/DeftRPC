@@ -94,6 +94,8 @@ class Scheduler : protected Noncopyable {
 
   virtual void Start(int timeout) noexcept;
 
+  virtual bool IsRunning() noexcept { return !m_stop_.load(std::memory_order_acquire); }
+
   virtual void Stop() noexcept;
 
   [[nodiscard]] bool IsStop() const noexcept { return m_stop_.load(std::memory_order_acquire); }
@@ -190,6 +192,11 @@ class MultiThreadScheduler : public Scheduler {
       m_condition_variable_.wait(guard, [&] { return nullptr == m_scheduler_; });
     }
 
+    [[nodiscard]] bool IsRunning() noexcept {
+      std::unique_lock<std::mutex> guard(m_mutex_);
+      return nullptr != m_scheduler_ && m_scheduler_->IsRunning();
+    }
+
    private:
     void ThreadFunction(int timeout) {
       Scheduler scheduler;
@@ -217,13 +224,31 @@ class MultiThreadScheduler : public Scheduler {
 
   ~MultiThreadScheduler() override = default;
 
-  Scheduler *GetNextScheduler() noexcept { return m_schedulers_[0]->GetScheduler(); }
+  Scheduler *GetNextScheduler() noexcept {
+    static size_t index = 0;
+    index = (index + 1) % m_schedulers_.size();
+    return m_schedulers_[index]->GetScheduler();
+  }
 
   void Start(int timeout) noexcept override;
+
+  bool IsRunning() noexcept override {
+    if (!Scheduler::IsRunning()) {
+      return false;
+    }
+    std::unique_lock<std::mutex> guard(m_mutex_);
+    for (auto &ptr : m_schedulers_) {
+      if (!ptr->IsRunning()) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   void Stop() noexcept override;
 
  private:
+  std::mutex m_mutex_;
   std::vector<std::unique_ptr<SchedulerThread>> m_schedulers_;
 };
 

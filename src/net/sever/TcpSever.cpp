@@ -89,7 +89,7 @@ void TcpSever::AcceptTask() noexcept {
     Addr remote;
     int fd = m_accept_socket_.Accept(&remote);
     if (fd > 0) {
-      this->NewConnectionArrives(fd, remote);
+      GetNextScheduler()->AddDefer([this, fd, remote] { this->NewConnectionArrives(fd, remote); });
     } else if (fd == -1 && errno == EBADF) {
       CLSN_LOG_ERROR << "please make sure this message only appears when the server is shut down!";
       assert(m_stop_.load(std::memory_order_acquire));

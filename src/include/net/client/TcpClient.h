@@ -73,7 +73,7 @@ class TcpClient {
     if (temp < 0) {
       return -1;
     }
-    return res;
+    return res - sizeof(PackageLengthType);
   }
 
   std::string Receive() {

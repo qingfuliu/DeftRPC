@@ -23,9 +23,9 @@ class Task {
  public:
   Task() = default;
 
-  Task(const Task &task) = default;
+  Task(const Task &task) noexcept : m_task_(task.m_task_) {}
 
-  Task(Task &&task) noexcept = default;
+  Task(Task &&task) noexcept : m_task_(std::move(task.m_task_)) {}
 
   Task(std::function<void(void)> task) : m_task_(std::move(task)) {}
 
@@ -38,7 +38,10 @@ class Task {
 
   Task &operator=(const Task &) = default;
 
-  Task &operator=(Task &&) = default;
+  Task &operator=(Task &&task) noexcept {
+    m_task_ = std::move(task.m_task_);
+    return *this;
+  }
 
   Task &operator=(std::nullptr_t) noexcept {
     m_task_ = nullptr;
