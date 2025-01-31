@@ -10,7 +10,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include "Task.h"
+#include "common/task/Task.h"
 
 namespace clsn {
 class Poller {
@@ -28,69 +28,16 @@ class Poller {
 
   int EpollWait(std::vector<FileDescriptor *> &tasks, int timeout = -1) noexcept;
 
-  void RegisterRead(int fd, Task task) noexcept {
-    if (fd < 0) {
-      CLSN_LOG_ERROR << "m_socket_ should not less then zero!";
-      return;
-    }
-    if (m_fds_.size() <= fd || m_fds_[fd].IsNoneEvent()) {
-      FileDescriptor file_descriptor(fd);
-      file_descriptor.SetRead(std::move(task));
-      RegisterFd(std::move(file_descriptor));
-      return;
-    }
+  void RegisterRead(int fd, Task task) noexcept;
 
-    if (m_fds_[fd].IsReading()) {
-      m_fds_[fd].SetRead(std::move(task));
-      return;
-    }
+  void RegisterWrite(int fd, Task task) noexcept;
 
-    CLSN_LOG_ERROR << "m_socket_: m_socket_ ,already have event :" << m_fds_[fd].GetEvent()
-                   << ",but register read event";
-  }
-
-  void RegisterWrite(int fd, Task task) noexcept {
-    if (fd < 0) {
-      CLSN_LOG_ERROR << "m_socket_ should not less then zero!";
-      return;
-    }
-    if (m_fds_.size() <= fd || m_fds_[fd].IsNoneEvent()) {
-      FileDescriptor file_descriptor(fd);
-      file_descriptor.SetWrite(std::move(task));
-      RegisterFd(std::move(file_descriptor));
-      return;
-    }
-
-    if (m_fds_[fd].IsWrite()) {
-      m_fds_[fd].SetWrite(std::move(task));
-      return;
-    }
-
-    CLSN_LOG_ERROR << "m_socket_: m_socket_ ,already have event :" << m_fds_[fd].GetEvent()
-                   << ",but register write event";
-  }
-
-  void CancelRegister(int fd) noexcept {
-    if (fd < 0) {
-      CLSN_LOG_ERROR << "m_socket_ should not less then zero!";
-      return;
-    }
-    if (m_fds_.size() >= fd && !m_fds_[fd].IsNoneEvent()) {
-      m_fds_[fd] = nullptr;
-      EpollCtl(fd, EPOLL_CTL_DEL, 0);
-    }
-  }
+  void CancelRegister(int fd) noexcept;
 
  private:
   void RegisterFd(FileDescriptor fdDescriptor) noexcept;
 
-  int EpollCtl(int fd, int op, uint32_t event) {
-    epoll_event ev{};
-    ev.data.fd = fd;
-    ev.data.ptr = static_cast<void *>(&(*m_fds_.begin()) + fd);
-    ev.events = event;
-    return epoll_ctl(m_epoll_fd_, op, fd, &ev);
-  }
+  int EpollCtl(int fd, int op, uint32_t event);
 
  private:
   int m_epoll_fd_;

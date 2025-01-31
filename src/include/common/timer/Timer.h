@@ -15,8 +15,8 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
-
-#include "Task.h"
+#include "common/task/Task.h"
+#include "log/Log.h"
 
 namespace clsn {
 
@@ -46,23 +46,15 @@ class TimeStamp {
   explicit TimeStamp(TimePoint<Clock, Duration> time_) noexcept
       : m_time_(std::chrono::time_point_cast<DurationType>(time_)) {}
 
-  void AddSecond(std::chrono::seconds seconds) noexcept { m_time_ += seconds; }
-
-  template <typename Rep, typename Period>
-  void AddDuration(const std::chrono::duration<Rep, Period> &duration) noexcept {
-    m_time_ += duration;
-  }
   template <typename Rep, typename Period>
   void ResetWithDuration(const std::chrono::duration<Rep, Period> &duration) noexcept {
     m_time_ = std::chrono::time_point_cast<DurationType>(ClockType::now()) + duration;
   }
 
-  [[nodiscard]] time_t ToLinuxTime() const noexcept { return m_time_.time_since_epoch().count(); }
-
   bool operator<(const TimeStamp &other) const noexcept { return m_time_ < other.m_time_; }
 
   [[nodiscard]] timespec HowMuchFromNow() const noexcept {
-    struct timespec res {};
+    struct timespec res{};
     auto duration = m_time_ - std::chrono::time_point_cast<DurationType>(ClockType::now());
     res.tv_sec = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
     res.tv_nsec = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count() % std::nano::den;
@@ -86,22 +78,22 @@ static inline int CreateTimerFd() noexcept {
 }
 
 static inline void ResetTimerFd(int timerFd, const TimeStamp &time) {
-  struct itimerspec new_time {};
-  struct itimerspec old_time {};
+  struct itimerspec new_time{};
+  struct itimerspec old_time{};
   new_time.it_value = time.HowMuchFromNow();
   int res = timerfd_settime(timerFd, 0, &new_time, &old_time);
   if (-1 == res) {
-    CLSN_LOG_FATAL << "timerfd_settime failed,error is " << errno;
+    CLSN_LOG_FATAL << "timer fd set time failed,error is " << errno;
   }
 }
 
 using TimerIdType = int64_t;
 
-class Timer : public Task {
+class Timer {
  public:
   template <typename Rep, typename Period>
   explicit Timer(const std::chrono::duration<Rep, Period> &interval_, Task task_, bool repeated_ = false) noexcept
-      : Task(std::move(task_)),
+      : m_task_(std::move(task_)),
         m_repeat_(repeated_),
         m_interval_(std::chrono::duration_cast<TimeStamp::DurationType>(interval_)),
         m_expire_(m_interval_),
@@ -111,7 +103,7 @@ class Timer : public Task {
 
   Timer(const Timer &timer) = default;
 
-  ~Timer() override = default;
+  ~Timer() = default;
 
   Timer &operator=(const Timer &) = default;
 
@@ -127,23 +119,24 @@ class Timer : public Task {
 
   bool operator==(const Timer &other) const noexcept { return other.m_id_ == m_id_; }
 
+  void operator()() { m_task_(); }
+
  private:
+  Task m_task_;
   bool m_repeat_;
   TimeStamp::DurationType m_interval_;
-
   TimeStamp m_expire_;
-
   TimerIdType m_id_;
   static inline std::atomic<TimerIdType> id{1};
 };
 
 inline bool TimerComparer(const Timer *a, const Timer *b) { return *a < *b; }
 
-class TimerQueue : public Task {
+class TimerQueue {
  public:
-  TimerQueue();
+  TimerQueue() = default;
 
-  ~TimerQueue() override {
+  ~TimerQueue() {
     if (-1 != m_timer_fd_) {
       close(m_timer_fd_);
     }
@@ -168,15 +161,15 @@ class TimerQueue : public Task {
 
   [[nodiscard]] int GetTimerFd() const noexcept { return m_timer_fd_; }
 
- private:
   void HandleExpireEvent();
 
+ private:
   [[nodiscard]] TimeStamp GetEarliestTime() const noexcept {
-    TimeStamp cur_header = TimeStamp::Max();
+    TimeStamp earliest = TimeStamp::Max();
     if (!m_active_timers_.empty()) {
-      cur_header = (*m_active_timers_.begin())->GetTimeStamp();
+      earliest = (*m_active_timers_.begin())->GetTimeStamp();
     }
-    return cur_header;
+    return earliest;
   }
 
  private:

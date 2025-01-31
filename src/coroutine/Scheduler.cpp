@@ -6,26 +6,25 @@
 #include "common/Exception.h"
 #include "common/SharedFunc.h"
 #include "common/SpanMutex.h"
+#include "common/timer/Timer.h"
 #include "coroutine/Coroutine.h"
 #include "coroutine/CoroutineContext.h"
 #include "coroutine/Poller.h"
-#include "coroutine/Timer.h"
 
 namespace clsn {
 
 static thread_local Scheduler *thread_scheduler{nullptr};
 
-Scheduler::Scheduler(size_t sharedStackSize, bool userCall)
+Scheduler::Scheduler(size_t sharedStackSize)
     : m_pid_(thread::ThisThreadId()),
       m_stop_(true),
       m_state_(kSchedulerState::DoNothing),
-      m_main_coroutine_(clsn::CreateCoroutine()),
+      m_main_coroutine_(clsn::CreateCoroutine(nullptr, nullptr, true)),
       m_shared_stack_(nullptr),
       m_poller_(CreateNewPoller()),
       m_event_fd_(CreateEventFd()),
       m_timer_queue_(CreateNewTimerQueue()) {
   m_coroutines_.push_back(m_main_coroutine_.get());
-  m_main_coroutine_->SetIsMain(true);
 
   if (thread_scheduler != nullptr) {
     throw SchedulingException("this thread already has a scheduler");
@@ -35,7 +34,8 @@ Scheduler::Scheduler(size_t sharedStackSize, bool userCall)
   /******************************event m_socket_******************************/
   m_poller_->RegisterRead(m_event_fd_, std::function<void(void)>([this] { ReadEventFd(); }));
   /******************************timer  ******************************/
-  m_poller_->RegisterRead(m_timer_queue_->GetTimerFd(), *m_timer_queue_);
+  m_poller_->RegisterRead(m_timer_queue_->GetTimerFd(),
+                          std::function<void(void)>([this] { m_timer_queue_->HandleExpireEvent(); }));
 
   if (0 != sharedStackSize) {
     m_shared_stack_ = clsn::MakeSharedStack(sharedStackSize);
@@ -44,29 +44,70 @@ Scheduler::Scheduler(size_t sharedStackSize, bool userCall)
 
 Scheduler::~Scheduler() = default;
 
-Scheduler *Scheduler::GetThreadScheduler() noexcept { return thread_scheduler; }
+Scheduler *Scheduler::GetThreadScheduler() {
+  if (nullptr == thread_scheduler) {
+    throw SchedulingException("There is no running scheduler");
+  }
+
+  return thread_scheduler;
+}
 
 Coroutine *Scheduler::GetCurCoroutine() {
-  Scheduler *scheduler = GetThreadScheduler();
+  if (nullptr == thread_scheduler) {
+    throw SchedulingException("There is no running scheduler");
+  }
 
-  if (scheduler->m_coroutines_.empty()) {
+  if (thread_scheduler->m_coroutines_.empty()) {
     throw SchedulingException("There is no running coroutine");
   }
 
-  return scheduler->m_coroutines_.back();
+  return thread_scheduler->m_coroutines_.back();
 }
 
-Coroutine *Scheduler::GetFatherAndPopCur() noexcept {
-  auto scheduler = GetThreadScheduler();
-  scheduler->m_coroutines_.pop_back();
-  return scheduler->m_coroutines_.back();
+Coroutine *Scheduler::GetPrevCoroutine() {
+  if (nullptr == thread_scheduler) {
+    throw SchedulingException("There is no running scheduler");
+  }
+
+  if (thread_scheduler->m_coroutines_.size() < 2) {
+    throw SchedulingException("There is no enough coroutine");
+  }
+
+  return *std::prev(thread_scheduler->m_coroutines_.end(), 2);
 }
 
-Poller *Scheduler::GetThreadPoller() noexcept { return GetThreadScheduler()->m_poller_.get(); }
+SharedStack *Scheduler::GetThreadSharedStack() {
+  if (nullptr == thread_scheduler) {
+    throw SchedulingException("There is no running scheduler");
+  }
 
-SharedStack *Scheduler::GetThreadSharedStack() noexcept {
-  auto scheduler = GetThreadScheduler();
-  return scheduler->m_shared_stack_.get();
+  return thread_scheduler->m_shared_stack_.get();
+}
+
+Poller *Scheduler::GetThreadPoller() {
+  if (nullptr == thread_scheduler) {
+    throw SchedulingException("There is no running scheduler");
+  }
+
+  return thread_scheduler->m_poller_.get();
+}
+
+void Scheduler::RegisterWrite(int fd, Task task) { Scheduler::GetThreadPoller()->RegisterWrite(fd, std::move(task)); }
+
+void Scheduler::RegisterRead(int fd, Task task) { Scheduler::GetThreadPoller()->RegisterRead(fd, std::move(task)); }
+
+void Scheduler::CancelRegister(int fd) { Scheduler::GetThreadPoller()->CancelRegister(fd); }
+
+void Scheduler::SwapIn(clsn::Coroutine *coroutine) { coroutine->SwapIn(*Scheduler::GetCurCoroutine()); }
+
+void Scheduler::Yield() {
+  auto cur_coroutine = Scheduler::GetCurCoroutine();
+  cur_coroutine->SwapOutWithYield(*Scheduler::GetPrevCoroutine());
+}
+
+void Scheduler::Terminal() {
+  auto cur_coroutine = Scheduler::GetCurCoroutine();
+  cur_coroutine->SwapOutWithTerminal(*Scheduler::GetPrevCoroutine());
 }
 
 void Scheduler::Start(int timeout) noexcept {

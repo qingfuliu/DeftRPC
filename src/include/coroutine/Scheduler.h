@@ -19,16 +19,14 @@
 #include "common/LockFreeQueue.h"
 #include "common/common.h"
 #include "common/mutex.h"
+#include "common/task/Task.h"
 #include "common/thread.h"
-#include "coroutine/Task.h"
-#include "coroutine/Timer.h"
+#include "common/timer/Timer.h"
 
 namespace clsn {
 class Mutex;
 
 class SharedStack;
-
-class Coroutine;
 
 class Poller;
 
@@ -38,39 +36,41 @@ class Coroutine;
 
 class Scheduler : protected Noncopyable {
  public:
+  // for hook
+ public:
+  static Scheduler *GetThreadScheduler();
+
+  static Coroutine *GetCurCoroutine();
+
+  static Coroutine *GetPrevCoroutine();
+
+  static SharedStack *GetThreadSharedStack();
+
+  static Poller *GetThreadPoller();
+
+  static void RegisterWrite(int fd, Task task);
+
+  static void RegisterRead(int fd, Task task);
+
+  static void CancelRegister(int fd);
+
+  // TODO:Under specific circumstances, thread local variables can be optimized
+  static void SwapIn(Coroutine *coroutine);
+
+  static void Yield();
+
+  static void Terminal();
+
+ public:
   using ExtraTask = Task;
 
   enum class kSchedulerState : std::uint16_t { DoNothing = 0, EpollWait, HandleActiveFd, HandleExtraState };
 
-  /**
-   *
-   * @param sharedStackSize
-   * @param UserCall : 该Scheduler是否由用户创建，如果是，需要将其挂载到thread loacl 变量上
-   */
-  explicit Scheduler(size_t sharedStackSize, bool userCall = true);
+  explicit Scheduler(size_t sharedStackSize);
 
   Scheduler() noexcept : Scheduler(0) {}
 
   ~Scheduler() override;
-
-  static Scheduler *GetThreadScheduler() noexcept;
-
-  static Coroutine *GetCurCoroutine();
-
-  static Coroutine *GetFatherAndPopCur() noexcept;
-
-  static Poller *GetThreadPoller() noexcept;
-
-  static SharedStack *GetThreadSharedStack() noexcept;
-
-  static bool InsertToTail(Coroutine *routine) noexcept {
-    if (nullptr != routine) {
-      Scheduler *scheduler = Scheduler::GetThreadScheduler();
-      scheduler->m_coroutines_.emplace_back(routine);
-      return true;
-    }
-    return false;
-  }
 
   void AddTask(ExtraTask f) noexcept {
     if (IsInLoopThread()) {
@@ -143,13 +143,11 @@ class Scheduler : protected Noncopyable {
 
   void WriteEventFd() const noexcept;
 
- private:
-  const pid_t m_pid_;
-
  protected:
   std::atomic_bool m_stop_;
 
  private:
+  const pid_t m_pid_;
   std::atomic<kSchedulerState> m_state_;
 
   std::unique_ptr<Coroutine> m_main_coroutine_;  // header of m_coroutines_

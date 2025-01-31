@@ -15,7 +15,7 @@ void Coroutine::CoroutineFunc(void *arg) {
   auto cur = static_cast<Coroutine *>(arg);
   //  assert(kCoroutineState::construct == cur->m_state_);
   cur->m_state_ = kCoroutineState::executing;
-  if (static_cast<bool>(cur->m_task_)) {
+  if (cur->m_task_ != nullptr) {
     cur->m_task_();
     //                cur->m_task_ = nullptr;
   }
@@ -35,6 +35,13 @@ void Coroutine::Reset(Task f) noexcept {
   if (kCoroutineState::construct != m_state_) {
     m_ctx_->Reset();
     m_state_ = kCoroutineState::construct;
+  }
+}
+
+void Coroutine::operator()() {
+  this->m_state_ = kCoroutineState::executing;
+  if (this->m_task_ != nullptr) {
+    this->m_task_();
   }
 }
 

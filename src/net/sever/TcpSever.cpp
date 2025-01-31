@@ -16,7 +16,7 @@ TcpSever::TcpSever(const std::string &ipPort, size_t sharedStackSize) noexcept
       m_codec_(DefaultCodeCFactory::CreateCodeC()),
       m_accept_coroutine_(CreateCoroutine([this]() -> void {
         this->AcceptTask();
-        GetCurCoroutine()->SwapOutWithTerminal();
+        Scheduler::Terminal();
       })) {
   m_accept_socket_.SetReusePort(true);
   m_accept_socket_.SetReuseAddr(true);
@@ -30,7 +30,7 @@ TcpSever::~TcpSever() {
     AddTask([this]() { CloseAcceptor(); });
 
     AddTask([this]() { CloseAllConnection(); });
-    Scheduler::Stop();
+    clsn::MultiThreadScheduler::Stop();
   }
 }
 
@@ -50,7 +50,7 @@ void TcpSever::CloseConnection(int fd, bool activelyClose) noexcept {
                           "~connection,error is "
                        << errno;
       }
-      it->second->SwapIn();
+      Scheduler::SwapIn(it->second.get());
     }
     m_connections_.erase(it);
   } else {
@@ -59,13 +59,13 @@ void TcpSever::CloseConnection(int fd, bool activelyClose) noexcept {
 }
 
 void TcpSever::Start(int timeout) noexcept {
-  Scheduler::AddDefer([this]() { m_accept_coroutine_->SwapIn(); });
-  Scheduler::Start(timeout);
+  Scheduler::AddDefer([this]() { Scheduler::SwapIn(m_accept_coroutine_.get()); });
+  clsn::MultiThreadScheduler::Start(timeout);
 }
 
 void TcpSever::Stop() noexcept {
   if (IsInLoopThread()) {
-    Scheduler::Stop();
+    clsn::MultiThreadScheduler::Stop();
     CloseAcceptor();
     CloseAllConnection();
   } else {
@@ -105,11 +105,11 @@ void TcpSever::NewConnectionArrives(int fd, const Addr &remote) noexcept {
   auto it = m_connections_.emplace(fd, CreateCoroutine(
                                            [fd, remote]() {
                                              TcpConnection::NewTcpConnectionArrive(fd, remote);
-                                             GetCurCoroutine()->SwapOutWithTerminal();
+                                             Scheduler::Terminal();
                                            },
                                            GetThreadSharedStack()));
   auto coroutine = it.first->second.get();
-  AddDefer([coroutine]() { coroutine->SwapIn(); });
+  AddDefer([coroutine]() { Scheduler::SwapIn(coroutine); });
 }
 
 void TcpSever::CloseAllConnection() noexcept {

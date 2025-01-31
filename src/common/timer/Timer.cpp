@@ -1,7 +1,7 @@
 //
 // Created by lqf on 23-4-30.
 //
-#include "coroutine/Timer.h"
+#include "common/timer/Timer.h"
 #include "log/Log.h"
 
 namespace clsn {
@@ -12,11 +12,6 @@ static inline void ReadFromTimerFd(int timerFd) {
   if (size != sizeof res) {
     CLSN_LOG_FATAL << "Read From timer m_socket_ failed,error is " << errno;
   }
-}
-
-TimerQueue::TimerQueue() : Task([this]() { this->HandleExpireEvent(); }) {
-  Timer timer;
-  m_timers_.insert(std::make_pair(timer.GetId(), timer));
 }
 
 void TimerQueue::CancelTimer(TimerIdType Id) noexcept {
@@ -44,7 +39,7 @@ void TimerQueue::CancelTimer(TimerIdType Id) noexcept {
  * 执行到期的timer
  * 将执行过的删除 并且保存
  * 如果是repeated、并且不再cancel里面 那么更新不删除 否则删除
- * 清空cacnle里面所包含的timer
+ * 清空cancel里面所包含的timer
  */
 void TimerQueue::HandleExpireEvent() {
   m_handling_event_ = true;

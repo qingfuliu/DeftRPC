@@ -7,8 +7,8 @@
 #include <sys/uio.h>
 #include <cerrno>
 #include "common/common.h"
-#include "common/this_thread.h"
 #include "coroutine/Coroutine.h"
+#include "coroutine/Scheduler.h"
 #include "log/Log.h"
 
 #define RECOVER_UNISTD_FUNC(FuncName)                                                           \
@@ -60,7 +60,7 @@ struct HookInitializer : public Singleton<HookInitializer> {
 }  // namespace detail
 
 static bool IsSocket(int fd) noexcept {
-  struct stat st {};
+  struct stat st{};
   int err = fstat(fd, &st);  // 获得文件的状态
   if (err < 0) {
     return false;
@@ -79,30 +79,29 @@ int socket(int domain, int type, int protocol) {
   }
   return socket_t(domain, type | SOCK_NONBLOCK | SOCK_CLOEXEC, protocol);
 }
-//int pipe (int fd[2]){
-//  if (!clsn::enable_hook) {
-//    return pipe2()
-//  }
-//}
-//int fd[2];
-//char *p = "test for pipe\n";
+// int pipe (int fd[2]){
+//   if (!clsn::enable_hook) {
+//     return pipe2()
+//   }
+// }
+// int fd[2];
+// char *p = "test for pipe\n";
 //
-//if (pipe(fd) == -1)
+// if (pipe(fd) == -1)
 
-
-  int connect(int fd, const struct sockaddr *address, socklen_t addressLen) {
+int connect(int fd, const struct sockaddr *address, socklen_t addressLen) {
   if (!clsn::enable_hook || !clsn::IsSocket(fd)) {
     return connect_t(fd, address, addressLen);
   }
-  int res = -1;
+  int res;
   do {
     res = connect_t(fd, address, addressLen);
   } while (-1 == res && errno == EINTR);
 
   if (res == -1 && errno == EINPROGRESS) {
-    clsn::this_thread::RegisterRead(fd, clsn::Coroutine::GetCurCoroutine());
-    clsn::Coroutine::Yield();
-    clsn::this_thread::CancelRegister(fd);
+    clsn::Scheduler::RegisterRead(fd, clsn::Scheduler::GetCurCoroutine());
+    clsn::Scheduler::Yield();
+    clsn::Scheduler::CancelRegister(fd);
     int error = 0;
     socklen_t len = sizeof(int);
     if (-1 == getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len)) {
@@ -121,15 +120,15 @@ int accept4(int sockFd, struct sockaddr *address, socklen_t *addressLen, int fla
     return accept4_t(sockFd, address, addressLen, flags);
   }
 
-  int fd = -1;
+  int fd;
   do {
     fd = accept4_t(sockFd, address, addressLen, flags);
   } while (-1 == fd && errno == EINTR);
 
   if (fd == -1 && errno == EAGAIN) {
-    clsn::this_thread::RegisterRead(sockFd, clsn::Coroutine::GetCurCoroutine());
-    clsn::Coroutine::Yield();
-    clsn::this_thread::CancelRegister(sockFd);
+    clsn::Scheduler::RegisterRead(sockFd, clsn::Scheduler::GetCurCoroutine());
+    clsn::Scheduler::Yield();
+    clsn::Scheduler::CancelRegister(sockFd);
 
     do {
       fd = accept4_t(sockFd, address, addressLen, flags);
@@ -153,15 +152,15 @@ auto IOBase(OriginFunc originFunc, clsn::kEvent event, int fd, Args... args) {
 
   if (n == -1 && errno == EAGAIN) {
     if (clsn::kEvent::Read == event) {
-      clsn::this_thread::RegisterRead(fd, clsn::Coroutine::GetCurCoroutine());
+      clsn::Scheduler::RegisterRead(fd, clsn::Scheduler::GetCurCoroutine());
     } else {
-      clsn::this_thread::RegisterWrite(fd, clsn::Coroutine::GetCurCoroutine());
+      clsn::Scheduler::RegisterWrite(fd, clsn::Scheduler::GetCurCoroutine());
     }
     do {
-      clsn::Coroutine::Yield();
+      clsn::Scheduler::Yield();
       n = originFunc(fd, args...);
     } while (n == -1 && (errno == EINTR || errno == EAGAIN));
-    clsn::this_thread::CancelRegister(fd);
+    clsn::Scheduler::CancelRegister(fd);
   }
   return n;
 }
@@ -172,7 +171,7 @@ ssize_t write(int fd, const void *buf, size_t count) { return IOBase(write_t, cl
 
 int close(int fd) {
   if (clsn::enable_hook) {
-    clsn::this_thread::CancelRegister(fd);
+    clsn::Scheduler::CancelRegister(fd);
   }
   return close_t(fd);
 }
@@ -190,7 +189,7 @@ unsigned int sleep(unsigned int seconds) {
     return sleep_t(seconds);
   }
   clsn::Scheduler::GetThreadScheduler()->DoAfter(std::chrono::seconds{seconds}, clsn::Scheduler::GetCurCoroutine());
-  clsn::Coroutine::Yield();
+  clsn::Scheduler::Yield();
   return 0;
 }
 
@@ -200,7 +199,7 @@ int usleep(useconds_t microsecond) {
   }
   clsn::Scheduler::GetThreadScheduler()->DoAfter(std::chrono::microseconds{microsecond},
                                                  clsn::Scheduler::GetCurCoroutine());
-  clsn::Coroutine::Yield();
+  clsn::Scheduler::Yield();
   return 0;
 }
 
@@ -210,7 +209,7 @@ int nanosleep(const struct timespec *req, struct timespec *rem) {
   }
   clsn::Scheduler::GetThreadScheduler()->DoAfter(std::chrono::nanoseconds{req->tv_sec * std::nano::den + req->tv_nsec},
                                                  clsn::Scheduler::GetCurCoroutine());
-  clsn::Coroutine::Yield();
+  clsn::Scheduler::Yield();
   return 0;
 }
 
