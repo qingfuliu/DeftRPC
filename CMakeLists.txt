@@ -55,9 +55,9 @@ endif ()
 
 # For compile type.
 if (CMAKE_BUILD_TYPE)
-    if (CMAKE_BUILD_TYPE STREQUAL " Debug")
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         message("======Debug======")
-        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -O0")
+        set(CMAKE_CXX_FLAGS_DEBUG  "${CMAKE_CXX_FLAGS_DEBUG} -Wall -O0")
         add_compile_definitions(DEBUG)
     else ()
         message("======Release======")
