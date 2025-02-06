@@ -163,6 +163,8 @@ class TimerQueue {
 
   void HandleExpireEvent();
 
+  void operator()() { HandleExpireEvent(); }
+
  private:
   [[nodiscard]] TimeStamp GetEarliestTime() const noexcept {
     TimeStamp earliest = TimeStamp::Max();
