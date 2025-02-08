@@ -37,8 +37,10 @@ void TcpConnection::ProcessMag() {
       }
       try {
         std::string view = sever->GetCodeC()->Decode(m_input_buffer_.get());
-        std::string response_msg = sever->GetMagCallback()(this, view, TimeStamp::Now());
-        sever->GetCodeC()->Encode(m_output_buffer_.get(), response_msg);
+        if (!view.empty()) {
+          std::string response_msg = sever->GetMagCallback()(this, view, TimeStamp::Now());
+          sever->GetCodeC()->Encode(m_output_buffer_.get(), response_msg);
+        }
       } catch (std::exception &e) {
         exception = e.what();
         m_output_buffer_->Write(exception);

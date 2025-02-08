@@ -10,7 +10,9 @@
 #include <memory>
 #include <utility>
 #include <vector>
-
+#include "common/event/Event.h"
+#include "common/task/Task.h"
+#include "log/Log.h"
 
 namespace clsn {
 
@@ -22,33 +24,49 @@ class Poller {
   friend std::unique_ptr<Poller> CreateNewPoller() noexcept;
   friend class std::unique_ptr<Poller>;
 
-  struct CoroutineProxy {
-    int m_fd_ = -1;
-    Coroutine *m_coroutine_ = nullptr;
-    uint32_t m_event_ = 0;
-  };
-
  public:
   Poller();
 
   ~Poller();
 
-  int EpollWait(std::vector<Coroutine *> &tasks, int timeout = -1) noexcept;
+  int EpollWait(std::vector<Runnable *> &tasks, int timeout = -1) noexcept;
 
-  void RegisterRead(int fd, Coroutine *coroutine);
+  template <class TaskOrCoroutine>
+  void RegisterRead(int fd, TaskOrCoroutine taskOrCoroutine) {
+    if (fd < 0) {
+      CLSN_LOG_ERROR << fd << " should not less then zero!";
+      throw std::logic_error("fd should not less then zero!");
+    }
 
-  void RegisterWrite(int fd, Coroutine *coroutine);
+    if (m_runnable_.size() <= fd || (0 == m_runnable_[fd].m_runnable_.index() && 0 == m_runnable_[fd].m_event_)) {
+      RegisterFd(Runnable{fd, taskOrCoroutine, static_cast<uint32_t>(kEvent::Read)});
+      return;
+    } else {
+      CLSN_LOG_ERROR << fd << " register read twice!";
+      throw std::logic_error("fd register read twice!");
+    }
+  }
+  template <class TaskOrCoroutine>
+  void RegisterWrite(int fd, TaskOrCoroutine taskOrCoroutine) {
+    if (m_runnable_.size() <= fd || (0 == m_runnable_[fd].m_runnable_.index() && 0 == m_runnable_[fd].m_event_)) {
+      RegisterFd(Runnable{fd, taskOrCoroutine, static_cast<uint32_t>(kEvent::Write)});
+      return;
+    } else {
+      CLSN_LOG_ERROR << fd << " register read twice!";
+      throw std::logic_error("fd register read twice!");
+    }
+  }
 
   void CancelRegister(int fd);
 
  private:
-  void RegisterFd(CoroutineProxy coroutineProxy);
+  void RegisterFd(Runnable runnable);
 
   [[nodiscard]] int EpollCtl(int fd, int op, uint32_t event) const;
 
  private:
   int m_epoll_fd_;
-  std::vector<CoroutineProxy> m_coroutine_{};
+  std::vector<Runnable> m_runnable_{1024};
   epoll_event m_events_[KMAXEPOLLSIZE]{};
 };
 

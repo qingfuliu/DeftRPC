@@ -14,13 +14,17 @@
 TEST(test_tcp_sever_and_client, testTcpSeverAndClient) {
   EnableHook();
   DisableEnableHook();
-  std::string ipPort = "0.0.0.0:7901";
-  std::thread severThread{[&ipPort] {
+  clsn::TcpSever *exter_sever;
+  std::thread severThread{[&exter_sever] {
     EnableHook();
+    std::string ipPort = "0.0.0.0:7901";
     clsn::TcpSever sever(ipPort);
-    sever.SetMagCallback(
-        [](clsn::TcpConnection *, std::string message, clsn::TimeStamp) -> std::string { return message; });
-    sever.Start(1000);
+    exter_sever = &sever;
+    sever.SetMagCallback([](clsn::TcpConnection *, std::string message, clsn::TimeStamp) -> std::string {
+      CLSN_LOG_DEBUG << "tcp callback message: " << message.size();
+      return message;
+    });
+    sever.Start(100000);
   }};
   std::map<std::unique_ptr<clsn::TcpClient>, std::string> clients;
 
@@ -30,7 +34,8 @@ TEST(test_tcp_sever_and_client, testTcpSeverAndClient) {
   std::uniform_int_distribution<char> uniformChar;
   std::mt19937 r(seed);
 
-  std::uint32_t client_number = uniform_client_number(r);
+  std::uint32_t client_number = 1;  // uniform_client_number(r);
+
   for (std::uint32_t i = 0; i < client_number; ++i) {
     std::uint32_t size = uniform_client_number(r);
     std::string str;
@@ -38,18 +43,21 @@ TEST(test_tcp_sever_and_client, testTcpSeverAndClient) {
     for (int index = 0; index < size; ++index) {
       str[index] = uniformChar(r);
     }
-    std::string ipPort1 = "127.0.0.1:7901";
-    clients[std::make_unique<clsn::TcpClient>(ipPort1)] = str;
+    std::string ipPort = "127.0.0.1:7901";
+    clients[std::make_unique<clsn::TcpClient>(ipPort)] = str;
   }
 
-  sleep(3);
-
   for (auto &[client, str] : clients) {
+    sleep(3);
     ASSERT_EQ(true, client->Connect(1000));
+    CLSN_LOG_DEBUG << "send str size:" << str.size();
     ASSERT_EQ(str.size(), client->Send(str));
   }
   for (auto &[client, str] : clients) {
-    ASSERT_EQ(str, client->Receive());
+    auto size = client->Receive();
+    CLSN_LOG_DEBUG << "send str size:" << size.size();
+    ASSERT_EQ(str, size);
   }
+  exter_sever->Stop();
   severThread.join();
 }

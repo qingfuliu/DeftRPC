@@ -13,7 +13,7 @@
 
 namespace clsn {
 
-class Coroutine : protected Noncopyable {
+class Coroutine {
  public:
   friend std::unique_ptr<Coroutine> CreateCoroutine(Task t, SharedStack *sharedStack, bool main_coroutine);
 
@@ -34,6 +34,8 @@ class Coroutine : protected Noncopyable {
   bool operator==(std::nullptr_t) noexcept { return m_task_ == nullptr; }
 
   void operator()();
+
+  ~Coroutine() = default;
 
  protected:
   explicit Coroutine(Task t = nullptr, SharedStack *sharedStack = nullptr, bool main_coroutine = false) noexcept;

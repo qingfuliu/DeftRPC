@@ -168,7 +168,7 @@ class Scheduler {
   std::unique_ptr<SharedStack> m_shared_stack_;
   // m_poller_
   std::unique_ptr<Poller> m_poller_;
-  std::vector<Coroutine *> m_active_coroutines_;
+  std::vector<Runnable *> m_active_coroutines_;
   // event m_socket_
   int m_event_fd_;
   // timer queue

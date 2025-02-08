@@ -4,9 +4,7 @@
 #include "coroutine/Poller.h"
 #include <cerrno>
 #include <cstring>
-#include "common/event/Event.h"
-#include "coroutine/Coroutine.h"
-#include "log/Log.h"
+
 namespace clsn {
 
 Poller::Poller() : m_epoll_fd_(epoll_create(KMAXEPOLLSIZE)) {}
@@ -17,7 +15,7 @@ Poller::~Poller() {
   }
 }
 
-int Poller::EpollWait(std::vector<Coroutine *> &tasks, int timeout) noexcept {
+int Poller::EpollWait(std::vector<Runnable *> &tasks, int timeout) noexcept {
   tasks.clear();
   int res = epoll_wait(m_epoll_fd_, m_events_, KMAXEPOLLSIZE, timeout);
   if (res == -1) {
@@ -30,35 +28,10 @@ int Poller::EpollWait(std::vector<Coroutine *> &tasks, int timeout) noexcept {
       if (m_events_[i].data.ptr == nullptr) {
         continue;
       }
-      tasks.push_back(static_cast<Coroutine *>(m_events_[i].data.ptr));
+      tasks.push_back(&m_runnable_[m_events_[i].data.fd]);
     }
   }
   return res;
-}
-
-void Poller::RegisterRead(int fd, Coroutine *coroutine) {
-  if (fd < 0) {
-    CLSN_LOG_ERROR << fd << " should not less then zero!";
-    throw std::logic_error("fd should not less then zero!");
-  }
-
-  if (m_coroutine_.size() <= fd || (nullptr == m_coroutine_[fd].m_coroutine_ && 0 == m_coroutine_[fd].m_event_)) {
-    RegisterFd(CoroutineProxy{fd, coroutine, static_cast<uint32_t>(kEvent::Read)});
-    return;
-  } else {
-    CLSN_LOG_ERROR << fd << " register read twice!";
-    throw std::logic_error("fd register read twice!");
-  }
-}
-
-void Poller::RegisterWrite(int fd, Coroutine *coroutine) {
-  if (m_coroutine_.size() <= fd || (nullptr == m_coroutine_[fd].m_coroutine_ && 0 == m_coroutine_[fd].m_event_)) {
-    RegisterFd(CoroutineProxy{fd, coroutine, static_cast<uint32_t>(kEvent::Write)});
-    return;
-  } else {
-    CLSN_LOG_ERROR << fd << " register read twice!";
-    throw std::logic_error("fd register read twice!");
-  }
 }
 
 void Poller::CancelRegister(int fd) {
@@ -67,30 +40,30 @@ void Poller::CancelRegister(int fd) {
     throw std::logic_error("fd should not less then zero!");
   }
 
-  if (m_coroutine_.size() >= fd &&
-      (nullptr == m_coroutine_[fd].m_coroutine_ || 0 != m_coroutine_[fd].m_event_ || 0 != m_coroutine_[fd].m_fd_)) {
-    m_coroutine_[fd] = CoroutineProxy{0, nullptr, 0};
+  if (m_runnable_.size() > fd &&
+      (0 != m_runnable_[fd].m_runnable_.index() || 0 != m_runnable_[fd].m_event_ || 0 != m_runnable_[fd].m_fd_)) {
+    m_runnable_[fd] = Runnable{0, {}, 0};
     EpollCtl(fd, EPOLL_CTL_DEL, 0);
   }
 }
 
-void Poller::RegisterFd(CoroutineProxy coroutineProxy) {
-  if (coroutineProxy.m_fd_ < 0) {
-    CLSN_LOG_ERROR << coroutineProxy.m_fd_ << " should not less then zero!";
+void Poller::RegisterFd(Runnable runnable) {
+  if (runnable.m_fd_ < 0) {
+    CLSN_LOG_ERROR << runnable.m_fd_ << " should not less then zero!";
     throw std::logic_error("fd should not less then zero!");
   }
 
-  int fd = coroutineProxy.m_fd_;
-  uint32_t event = coroutineProxy.m_event_;
+  int fd = runnable.m_fd_;
+  uint32_t event = runnable.m_event_;
   int ctl = EPOLL_CTL_ADD;
 
-  if (m_coroutine_.size() <= fd) {
+  if (m_runnable_.size() <= fd) {
     do {
-      m_coroutine_.resize(m_coroutine_.size() << 1);
-    } while (m_coroutine_.size() <= static_cast<size_t>(fd));
+      m_runnable_.resize(m_runnable_.size() << 1);
+    } while (m_runnable_.size() <= static_cast<size_t>(fd));
   }
 
-  m_coroutine_[fd] = coroutineProxy;
+  m_runnable_[fd] = runnable;
 
   if (-1 == EpollCtl(fd, ctl, event)) {
     CLSN_LOG_ERROR << "register m_socket_ failed!,m_socket_ is " << fd << " ,error is " << strerror(errno);
@@ -101,7 +74,6 @@ void Poller::RegisterFd(CoroutineProxy coroutineProxy) {
 int Poller::EpollCtl(int fd, int op, uint32_t event) const {
   epoll_event ev{};
   ev.data.fd = fd;
-  ev.data.ptr = static_cast<void *>(m_coroutine_[fd].m_coroutine_);
   ev.events = event;
   return epoll_ctl(m_epoll_fd_, op, fd, &ev);
 }

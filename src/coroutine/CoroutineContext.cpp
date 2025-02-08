@@ -59,8 +59,12 @@ void CoroutineContext::MakeMem() {
       // clear
       m_mem_.Clear();
       // malloc
-      m_mem_.m_stack_buffer_.reset(new char[DEFAULT_STACK_SIZE]);
       m_mem_.m_stack_size_ = DEFAULT_STACK_SIZE;
+      if (m_mem_.m_stack_size_ & 0xFFF) {
+        m_mem_.m_stack_size_ &= ~0xFFF;
+        m_mem_.m_stack_size_ += 0x1000;
+      }
+      m_mem_.m_stack_buffer_.reset(new char[DEFAULT_STACK_SIZE]);
       m_mem_.m_stack_bp_ = m_mem_.m_stack_buffer_.get() + m_mem_.m_stack_size_;
       std::fill(m_mem_.m_stack_buffer_.get(), m_mem_.m_stack_buffer_.get() + m_mem_.m_stack_size_, 0);
       // register stack for valgrind

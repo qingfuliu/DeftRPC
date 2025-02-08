@@ -33,13 +33,9 @@ Scheduler::Scheduler(size_t sharedStackSize)
   thread_scheduler = this;
 
   /******************************event fd******************************/
-  m_poller_->RegisterRead(m_event_fd_,
-                          CreateCoroutineEvent(m_event_fd_, Task([this] { ReadEventFd(); })));
+  m_poller_->RegisterRead(m_event_fd_, Task([this] { ReadEventFd(); }));
   /******************************timer  fd******************************/
-  m_poller_->RegisterRead(m_timer_queue_->GetTimerFd(),
-                          CreateCoroutineEvent(m_timer_queue_->GetTimerFd(), Task([this] {
-                                                 m_timer_queue_->HandleExpireEvent();
-                                               })));
+  m_poller_->RegisterRead(m_timer_queue_->GetTimerFd(), Task([this] { m_timer_queue_->HandleExpireEvent(); }));
 
   if (0 != sharedStackSize) {
     m_shared_stack_ = clsn::MakeSharedStack(sharedStackSize);
@@ -131,11 +127,22 @@ void Scheduler::Start(int timeout) noexcept {
   m_state_.store(kSchedulerState::EpollWait, std::memory_order_release);
 
   while (!m_stop_.load(std::memory_order_acquire)) {
+    m_active_coroutines_.clear();
     if (0 < m_poller_->EpollWait(m_active_coroutines_, timeout)) {
       m_state_.store(kSchedulerState::HandleActiveFd, std::memory_order_release);
       for (auto coroutine : m_active_coroutines_) {
-        Scheduler::SwapIn(coroutine);
+        switch (coroutine->m_runnable_.index()) {
+          case 1:
+            Scheduler::SwapIn(static_cast<Coroutine *>(std::get<1>(coroutine->m_runnable_)));
+            break;
+          case 2:
+            std::get<2>(coroutine->m_runnable_).operator()();
+            break;
+          default:
+            CLSN_LOG_ERROR << "The file descriptor:" << coroutine->m_fd_ << " is not registered correctly!";
+        }
       }
+
       m_state_.store(kSchedulerState::HandleExtraState, std::memory_order_release);
       while (0 < m_extra_tasks_.Size()) {
         auto task = m_extra_tasks_.Dequeue();

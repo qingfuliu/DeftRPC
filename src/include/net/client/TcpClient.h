@@ -34,12 +34,12 @@ class TcpClient {
       return m_state_ == kState::Connected;
     }
     if ((timeOut > 0 && 0 != SetReadTimeOut(timeOut)) || 0 != m_sock_.Connect(&m_remote_)) {
-      CLSN_LOG_DEBUG << "errno:" << errno;
+      CLSN_LOG_DEBUG << "connect error,errno:" << errno;
       m_state_ = kState::ConnectFailed;
       return false;
     }
     if (timeOut > 0) {
-      return 0 != SetReadTimeOut(m_read_timeout_);
+      return 0 == SetReadTimeOut(m_read_timeout_);
     }
     return true;
   }
