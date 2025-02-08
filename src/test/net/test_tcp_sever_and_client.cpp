@@ -7,12 +7,16 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include "hook/Hook.h"
 #include "net/client/TcpClient.h"
 #include "net/sever/TcpSever.h"
 
 TEST(test_tcp_sever_and_client, testTcpSeverAndClient) {
-  std::string ipPort = "127.0.0.0:7900";
+  EnableHook();
+  DisableEnableHook();
+  std::string ipPort = "0.0.0.0:7901";
   std::thread severThread{[&ipPort] {
+    EnableHook();
     clsn::TcpSever sever(ipPort);
     sever.SetMagCallback(
         [](clsn::TcpConnection *, std::string message, clsn::TimeStamp) -> std::string { return message; });
@@ -34,10 +38,12 @@ TEST(test_tcp_sever_and_client, testTcpSeverAndClient) {
     for (int index = 0; index < size; ++index) {
       str[index] = uniformChar(r);
     }
-    clients[std::make_unique<clsn::TcpClient>(ipPort)] = str;
+    std::string ipPort1 = "127.0.0.1:7901";
+    clients[std::make_unique<clsn::TcpClient>(ipPort1)] = str;
   }
 
   sleep(3);
+
   for (auto &[client, str] : clients) {
     ASSERT_EQ(true, client->Connect(1000));
     ASSERT_EQ(str.size(), client->Send(str));

@@ -39,11 +39,7 @@ enum class kCoroutineState : std::int16_t {
   terminal  // except
 };
 
-extern inline constexpr std::uint32_t DEFAULT_STACK_SIZE = 1024;
-
-enum class kEvent : uint32_t { Read = EPOLLIN, Write = EPOLLOUT, Error = EPOLLERR };
-
-inline constexpr size_t MAXEPOLLSIZE = 1024 << 1;
+extern inline constexpr std::uint32_t DEFAULT_STACK_SIZE = 128 * 1024;
 
 class Noncopyable {
  public:

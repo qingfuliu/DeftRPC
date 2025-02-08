@@ -15,10 +15,10 @@ project(DeftRPC
 # Importantly, this catches the common case of running it from the root directory.
 file(TO_CMAKE_PATH "${PROJECT_BINARY_DIR}/CMakeLists.txt" PATH_TO_CMAKELISTS_TXT)
 
-if(EXISTS "${PATH_TO_CMAKELISTS_TXT}")
+if (EXISTS "${PATH_TO_CMAKELISTS_TXT}")
     message(FATAL_ERROR "Run CMake from a build subdirectory! \"mkdir build ; cd build ; cmake ..\" \
     Some junk files were created in this folder (CMakeCache.txt, CMakeFiles); you should delete those.")
-endif()
+endif ()
 
 
 # For compiler type.
@@ -57,7 +57,7 @@ endif ()
 if (CMAKE_BUILD_TYPE)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         message("======Debug======")
-        set(CMAKE_CXX_FLAGS_DEBUG  "${CMAKE_CXX_FLAGS_DEBUG} -Wall -O0")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -fno-strict-aliasing -O0 -Wall -export-dynamic -Wall -pipe  -D_GNU_SOURCE -D_REENTRANT -fPIC -Wno-deprecated")
         add_compile_definitions(DEBUG)
     else ()
         message("======Release======")
@@ -144,13 +144,13 @@ endif ()
 find_program(CLANG_APPLY_REPLACEMENTS_BIN
         NAMES clang-apply-replacements
         HINTS ${FORMAT_CHECK_TOOLS_SEARCH_PATH})
-if("${CLANG_APPLY_REPLACEMENTS_BIN}" STREQUAL "CLANG_APPLY_REPLACEMENTS_BIN-NOTFOUND")
+if ("${CLANG_APPLY_REPLACEMENTS_BIN}" STREQUAL "CLANG_APPLY_REPLACEMENTS_BIN-NOTFOUND")
     message(WARNING "Couldn't find clang-apply-replacements.")
-else()
+else ()
     # Output compile_commands.json.
     set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
     message(STATUS "Found clang-apply-replacements at ${CLANG_APPLY_REPLACEMENTS_BIN}")
-endif()
+endif ()
 
 # "make check-clang-tidy"
 add_custom_target(check-clang-tidy
@@ -189,11 +189,11 @@ find_program(CPPLINT_BIN
         NAMES cpplint cpplint.py
         HINTS "${FORMAT_CHECK_TOOLS_SCRIPTS_DIR}")
 
-if("${CPPLINT_BIN}" STREQUAL "CPPLINT_BIN-NOTFOUND")
+if ("${CPPLINT_BIN}" STREQUAL "CPPLINT_BIN-NOTFOUND")
     message(WARNING "Couldn't find cpplint.")
-else()
+else ()
     message(STATUS "Found cpplint at ${CPPLINT_BIN}")
-endif()
+endif ()
 # "make check-lint"
 add_custom_target(check-lint echo '${LINT_FILES}' | xargs -n12 -P8
         ${CPPLINT_BIN}

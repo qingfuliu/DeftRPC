@@ -7,7 +7,7 @@
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
-#include <cerrno>
+#include "hook/Hook.h"
 #include "log/Log.h"
 #include "net/Addr.h"
 
@@ -37,7 +37,7 @@ int Socket::Listen() const noexcept { return ::listen(m_fd_, max_listen_count); 
 
 int Socket::Connect(const Addr *addr) const noexcept {
   int res;
-  res = ::connect(m_fd_, addr->GetSockAddr(), addr->GetSockAddrSize());
+  res = connect(m_fd_, addr->GetSockAddr(), addr->GetSockAddrSize());
   return res;
 }
 
@@ -112,16 +112,12 @@ int Socket::SetNoBlock(bool val) const noexcept {
 }
 
 int Socket::SetReadTimeout(int val) const noexcept {
-  struct timeval timeout {
-    val, 0
-  };
+  struct timeval timeout{val, 0};
   return setsockopt(m_fd_, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeval));
 }
 
 int Socket::SetWriteTimeout(int val) const noexcept {
-  struct timeval timeout {
-    val, 0
-  };
+  struct timeval timeout{val, 0};
   return setsockopt(m_fd_, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeval));
 }
 

@@ -30,11 +30,9 @@ class SharedStack;
 
 class Poller;
 
-class FileDescriptor;
-
 class Coroutine;
 
-class Scheduler : protected Noncopyable {
+class Scheduler {
  public:
   // for hook
  public:
@@ -48,9 +46,9 @@ class Scheduler : protected Noncopyable {
 
   static Poller *GetThreadPoller();
 
-  static void RegisterWrite(int fd, Task task);
+  static void RegisterWrite(int fd, Coroutine *coroutine);
 
-  static void RegisterRead(int fd, Task task);
+  static void RegisterRead(int fd, Coroutine *coroutine);
 
   static void CancelRegister(int fd);
 
@@ -70,7 +68,7 @@ class Scheduler : protected Noncopyable {
 
   Scheduler() noexcept : Scheduler(0) {}
 
-  ~Scheduler() override;
+  virtual ~Scheduler();
 
   void AddTask(ExtraTask f) noexcept {
     if (IsInLoopThread()) {
@@ -99,6 +97,11 @@ class Scheduler : protected Noncopyable {
   virtual void Stop() noexcept;
 
   [[nodiscard]] bool IsStop() const noexcept { return m_stop_.load(std::memory_order_acquire); }
+
+  template <typename Rep, typename Period>
+  TimerIdType DoAfter(const std::chrono::duration<Rep, Period> &interval, Coroutine *coroutine) {
+    return DoEvery(interval, [coroutine]() { Scheduler::SwapIn(coroutine); }, false);
+  }
 
   template <typename Rep, typename Period>
   TimerIdType DoAfter(const std::chrono::duration<Rep, Period> &interval, ExtraTask f) {
@@ -136,7 +139,10 @@ class Scheduler : protected Noncopyable {
 
   [[nodiscard]] bool IsInLoopThread() const noexcept { return thread::ThisThreadId() == m_pid_; }
 
-  void SetStopCallback(const std::function<void(void)> &f) { m_stop_callback_ = f; }
+  void SetStopCallback(const Task &f) { m_stop_callback_ = f; }
+
+ protected:
+  Coroutine *CreateCoroutineEvent(int event_fd, Task task);
 
  private:
   void Notify() noexcept { WriteEventFd(); }
@@ -152,21 +158,23 @@ class Scheduler : protected Noncopyable {
   const pid_t m_pid_;
   std::atomic<kSchedulerState> m_state_;
 
-  std::unique_ptr<Coroutine> m_main_coroutine_;  // header of m_coroutines_
-  std::list<Coroutine *> m_coroutines_;
-  // ExtraTask
+  std::unique_ptr<Coroutine> m_main_coroutine_;  // header of m_coroutines_list_
+  std::list<Coroutine *> m_coroutines_list_;
+  // all coroutines
+  std::vector<std::unique_ptr<Coroutine>> m_coroutines_;
+  //  ExtraTask
   LockFreeQueue<ExtraTask> m_extra_tasks_;
   // 共享栈
   std::unique_ptr<SharedStack> m_shared_stack_;
   // m_poller_
   std::unique_ptr<Poller> m_poller_;
-  std::vector<FileDescriptor *> m_active_fds_;
+  std::vector<Coroutine *> m_active_coroutines_;
   // event m_socket_
   int m_event_fd_;
   // timer queue
   std::unique_ptr<TimerQueue> m_timer_queue_;
   // close callback
-  std::function<void(void)> m_stop_callback_{nullptr};
+  Task m_stop_callback_{nullptr};
 };
 
 class MultiThreadScheduler : public Scheduler {

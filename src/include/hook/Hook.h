@@ -7,7 +7,7 @@
 
 #include <sys/socket.h>
 #include <sys/types.h>
-
+#include "common/event/Event.h"
 #define HOOK_FUNC_DEFINE(ResType, FuncName, ...)    \
   using FuncName##_func = ResType (*)(__VA_ARGS__); \
   extern FuncName##_func FuncName##_t;

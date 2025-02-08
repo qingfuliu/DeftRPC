@@ -10,39 +10,46 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include "common/task/Task.h"
+
 
 namespace clsn {
+
+inline constexpr size_t KMAXEPOLLSIZE = 1024 << 1;
+
+class Coroutine;
+
 class Poller {
   friend std::unique_ptr<Poller> CreateNewPoller() noexcept;
   friend class std::unique_ptr<Poller>;
 
+  struct CoroutineProxy {
+    int m_fd_ = -1;
+    Coroutine *m_coroutine_ = nullptr;
+    uint32_t m_event_ = 0;
+  };
+
  public:
-  Poller() : m_epoll_fd_(epoll_create(MAXEPOLLSIZE)) {}
+  Poller();
 
-  ~Poller() {
-    if (m_epoll_fd_ != -1) {
-      close(m_epoll_fd_);
-    }
-  }
+  ~Poller();
 
-  int EpollWait(std::vector<FileDescriptor *> &tasks, int timeout = -1) noexcept;
+  int EpollWait(std::vector<Coroutine *> &tasks, int timeout = -1) noexcept;
 
-  void RegisterRead(int fd, Task task) noexcept;
+  void RegisterRead(int fd, Coroutine *coroutine);
 
-  void RegisterWrite(int fd, Task task) noexcept;
+  void RegisterWrite(int fd, Coroutine *coroutine);
 
-  void CancelRegister(int fd) noexcept;
+  void CancelRegister(int fd);
 
  private:
-  void RegisterFd(FileDescriptor fdDescriptor) noexcept;
+  void RegisterFd(CoroutineProxy coroutineProxy);
 
-  int EpollCtl(int fd, int op, uint32_t event);
+  [[nodiscard]] int EpollCtl(int fd, int op, uint32_t event) const;
 
  private:
   int m_epoll_fd_;
-  std::vector<FileDescriptor> m_fds_{};
-  epoll_event m_events_[MAXEPOLLSIZE]{};
+  std::vector<CoroutineProxy> m_coroutine_{};
+  epoll_event m_events_[KMAXEPOLLSIZE]{};
 };
 
 inline std::unique_ptr<Poller> CreateNewPoller() noexcept { return std::make_unique<Poller>(); }

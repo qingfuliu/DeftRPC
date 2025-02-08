@@ -16,26 +16,30 @@ namespace clsn {
 static thread_local Scheduler *thread_scheduler{nullptr};
 
 Scheduler::Scheduler(size_t sharedStackSize)
-    : m_pid_(thread::ThisThreadId()),
-      m_stop_(true),
+    : m_stop_(true),
+      m_pid_(thread::ThisThreadId()),
       m_state_(kSchedulerState::DoNothing),
       m_main_coroutine_(clsn::CreateCoroutine(nullptr, nullptr, true)),
+      m_coroutines_(1024),
       m_shared_stack_(nullptr),
       m_poller_(CreateNewPoller()),
       m_event_fd_(CreateEventFd()),
       m_timer_queue_(CreateNewTimerQueue()) {
-  m_coroutines_.push_back(m_main_coroutine_.get());
+  m_coroutines_list_.push_back(m_main_coroutine_.get());
 
   if (thread_scheduler != nullptr) {
     throw SchedulingException("this thread already has a scheduler");
   }
   thread_scheduler = this;
 
-  /******************************event m_socket_******************************/
-  m_poller_->RegisterRead(m_event_fd_, std::function<void(void)>([this] { ReadEventFd(); }));
-  /******************************timer  ******************************/
+  /******************************event fd******************************/
+  m_poller_->RegisterRead(m_event_fd_,
+                          CreateCoroutineEvent(m_event_fd_, Task([this] { ReadEventFd(); })));
+  /******************************timer  fd******************************/
   m_poller_->RegisterRead(m_timer_queue_->GetTimerFd(),
-                          std::function<void(void)>([this] { m_timer_queue_->HandleExpireEvent(); }));
+                          CreateCoroutineEvent(m_timer_queue_->GetTimerFd(), Task([this] {
+                                                 m_timer_queue_->HandleExpireEvent();
+                                               })));
 
   if (0 != sharedStackSize) {
     m_shared_stack_ = clsn::MakeSharedStack(sharedStackSize);
@@ -57,11 +61,11 @@ Coroutine *Scheduler::GetCurCoroutine() {
     throw SchedulingException("There is no running scheduler");
   }
 
-  if (thread_scheduler->m_coroutines_.empty()) {
+  if (thread_scheduler->m_coroutines_list_.empty()) {
     throw SchedulingException("There is no running coroutine");
   }
 
-  return thread_scheduler->m_coroutines_.back();
+  return thread_scheduler->m_coroutines_list_.back();
 }
 
 Coroutine *Scheduler::GetPrevCoroutine() {
@@ -69,11 +73,11 @@ Coroutine *Scheduler::GetPrevCoroutine() {
     throw SchedulingException("There is no running scheduler");
   }
 
-  if (thread_scheduler->m_coroutines_.size() < 2) {
+  if (thread_scheduler->m_coroutines_list_.size() < 2) {
     throw SchedulingException("There is no enough coroutine");
   }
 
-  return *std::prev(thread_scheduler->m_coroutines_.end(), 2);
+  return *std::prev(thread_scheduler->m_coroutines_list_.end(), 2);
 }
 
 SharedStack *Scheduler::GetThreadSharedStack() {
@@ -92,17 +96,29 @@ Poller *Scheduler::GetThreadPoller() {
   return thread_scheduler->m_poller_.get();
 }
 
-void Scheduler::RegisterWrite(int fd, Task task) { Scheduler::GetThreadPoller()->RegisterWrite(fd, std::move(task)); }
+void Scheduler::RegisterWrite(int fd, Coroutine *coroutine) {
+  Scheduler::GetThreadPoller()->RegisterWrite(fd, coroutine);
+}
 
-void Scheduler::RegisterRead(int fd, Task task) { Scheduler::GetThreadPoller()->RegisterRead(fd, std::move(task)); }
+void Scheduler::RegisterRead(int fd, Coroutine *coroutine) {
+  Scheduler::GetThreadPoller()->RegisterRead(fd, coroutine);
+}
 
 void Scheduler::CancelRegister(int fd) { Scheduler::GetThreadPoller()->CancelRegister(fd); }
 
-void Scheduler::SwapIn(clsn::Coroutine *coroutine) { coroutine->SwapIn(*Scheduler::GetCurCoroutine()); }
+void Scheduler::SwapIn(clsn::Coroutine *coroutine) {
+  auto scheduler = Scheduler::GetThreadScheduler();
+  auto cur_coroutine = scheduler->m_coroutines_list_.back();
+  scheduler->m_coroutines_list_.push_back(coroutine);
+  coroutine->SwapIn(*cur_coroutine);
+}
 
 void Scheduler::Yield() {
-  auto cur_coroutine = Scheduler::GetCurCoroutine();
-  cur_coroutine->SwapOutWithYield(*Scheduler::GetPrevCoroutine());
+  auto scheduler = Scheduler::GetThreadScheduler();
+  auto cur_coroutine = scheduler->m_coroutines_list_.back();
+  scheduler->m_coroutines_list_.pop_back();
+  auto prev_coroutine = scheduler->m_coroutines_list_.back();
+  cur_coroutine->SwapOutWithYield(*prev_coroutine);
 }
 
 void Scheduler::Terminal() {
@@ -115,10 +131,10 @@ void Scheduler::Start(int timeout) noexcept {
   m_state_.store(kSchedulerState::EpollWait, std::memory_order_release);
 
   while (!m_stop_.load(std::memory_order_acquire)) {
-    if (0 < m_poller_->EpollWait(m_active_fds_, timeout)) {
+    if (0 < m_poller_->EpollWait(m_active_coroutines_, timeout)) {
       m_state_.store(kSchedulerState::HandleActiveFd, std::memory_order_release);
-      for (auto active : m_active_fds_) {
-        (*active)();
+      for (auto coroutine : m_active_coroutines_) {
+        Scheduler::SwapIn(coroutine);
       }
       m_state_.store(kSchedulerState::HandleExtraState, std::memory_order_release);
       while (0 < m_extra_tasks_.Size()) {
@@ -135,13 +151,20 @@ void Scheduler::Stop() noexcept {
   if (nullptr != m_stop_callback_) {
     m_stop_callback_();
   }
-
   if (!m_stop_.load(std::memory_order_release)) {
     m_stop_.store(true, std::memory_order_release);
     if (m_state_.load(std::memory_order_acquire) == kSchedulerState::EpollWait) {
       Notify();
     }
   }
+}
+
+Coroutine *Scheduler::CreateCoroutineEvent(int event_fd, Task task) {
+  while (event_fd >= m_coroutines_.size()) {
+    m_coroutines_.resize(m_coroutines_.size() << 1);
+  }
+  m_coroutines_[event_fd] = CreateCoroutine(std::move(task), m_shared_stack_.get());
+  return m_coroutines_[event_fd].get();
 }
 
 void Scheduler::ReadEventFd() const noexcept {
@@ -166,6 +189,7 @@ void MultiThreadScheduler::Start(int timeout) noexcept {
       scheduler->Start(timeout);
     }
   }
+
   Scheduler::Start(timeout);
 }
 
