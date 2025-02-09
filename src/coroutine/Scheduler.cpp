@@ -130,6 +130,7 @@ void Scheduler::Terminal() {
 }
 
 void Scheduler::Start(int timeout) noexcept {
+  CLSN_LOG_INFO << "Scheduler start!";
   m_stop_.store(false, std::memory_order_release);
   m_state_.store(kSchedulerState::EpollWait, std::memory_order_release);
 

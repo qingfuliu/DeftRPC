@@ -63,7 +63,7 @@ void TcpConnection::ProcessMag() {
       CLSN_LOG_ERROR << "please make sure this message only appears when the server is shut down or local close!";
       break;
     } else {
-      CLSN_LOG_ERROR << "read from m_socket_ error,error is " << strerror(errno);
+      CLSN_LOG_ERROR << "read from m_socket_ error,error is " << strerror(errno) << ", code:" << errno;
       sever->AddDefer([this, sever, fd = m_socket_.GetFd()]() { sever->CleanConnection(fd); });
       break;
     }

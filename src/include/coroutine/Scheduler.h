@@ -22,7 +22,7 @@
 #include "common/task/Task.h"
 #include "common/thread.h"
 #include "common/timer/Timer.h"
-
+#include "hook/Hook.h"
 namespace clsn {
 class Mutex;
 
@@ -211,6 +211,7 @@ class MultiThreadScheduler : public Scheduler {
 
    private:
     void ThreadFunction(int timeout) {
+      EnableHook();
       Scheduler scheduler;
       {
         std::unique_lock<std::mutex> guard(m_mutex_);
