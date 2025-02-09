@@ -70,18 +70,6 @@ class Scheduler {
 
   virtual ~Scheduler();
 
-  void AddTask(ExtraTask f) noexcept {
-    if (IsInLoopThread()) {
-      f();
-      return;
-    }
-    m_extra_tasks_.EnQueue(std::move(f));
-    if (auto cur_state = m_state_.load(std::memory_order_acquire);
-        cur_state == kSchedulerState::EpollWait || kSchedulerState::DoNothing == cur_state) {
-      Notify();
-    }
-  }
-
   void AddDefer(ExtraTask f) noexcept {
     m_extra_tasks_.EnQueue(std::move(f));
     if (auto cur_state = m_state_.load(std::memory_order_acquire);
@@ -145,6 +133,19 @@ class Scheduler {
   Coroutine *CreateCoroutineEvent(int event_fd, Task task);
 
  private:
+  void AddTask(ExtraTask f) noexcept {
+    if (IsInLoopThread()) {
+      f();
+      return;
+    }
+    m_extra_tasks_.EnQueue(std::move(f));
+    if (auto cur_state = m_state_.load(std::memory_order_acquire);
+        cur_state == kSchedulerState::EpollWait || kSchedulerState::DoNothing == cur_state) {
+      Notify();
+    }
+  }
+
+ private:
   void Notify() noexcept { WriteEventFd(); }
 
   void ReadEventFd() const noexcept;
@@ -168,7 +169,7 @@ class Scheduler {
   std::unique_ptr<SharedStack> m_shared_stack_;
   // m_poller_
   std::unique_ptr<Poller> m_poller_;
-  std::vector<Runnable *> m_active_coroutines_;
+  std::vector<Runnable *> m_active_runnable_;
   // event m_socket_
   int m_event_fd_;
   // timer queue
@@ -192,12 +193,15 @@ class MultiThreadScheduler : public Scheduler {
     }
 
     void Stop() {
-      std::unique_lock<std::mutex> guard(m_mutex_);
-      if (m_scheduler_ == nullptr) {
-        return;
+      {
+        std::unique_lock<std::mutex> guard(m_mutex_);
+        if (m_scheduler_ == nullptr) {
+          return;
+        }
+        m_scheduler_->Stop();
+        m_condition_variable_.wait(guard, [&] { return nullptr == m_scheduler_; });
       }
-      m_scheduler_->Stop();
-      m_condition_variable_.wait(guard, [&] { return nullptr == m_scheduler_; });
+      m_thread_.join();
     }
 
     [[nodiscard]] bool IsRunning() noexcept {
@@ -208,13 +212,17 @@ class MultiThreadScheduler : public Scheduler {
    private:
     void ThreadFunction(int timeout) {
       Scheduler scheduler;
-      scheduler.SetStopCallback([&] { m_scheduler_ = nullptr; });
       {
         std::unique_lock<std::mutex> guard(m_mutex_);
         m_scheduler_ = &scheduler;
         m_condition_variable_.notify_one();
       }
       scheduler.Start(timeout);
+      {
+        std::unique_lock<std::mutex> guard(m_mutex_);
+        m_scheduler_ = nullptr;
+        m_condition_variable_.notify_one();
+      }
     }
 
    private:

@@ -18,14 +18,13 @@ TEST(test_tcp_sever_and_client, testTcpSeverAndClient) {
   std::thread severThread{[&exter_sever] {
     EnableHook();
     std::string ipPort = "0.0.0.0:7901";
-    clsn::TcpSever sever(ipPort);
+    clsn::TcpSever sever(ipPort, 8, 0);
     exter_sever = &sever;
-    sever.SetMagCallback([](clsn::TcpConnection *, std::string message, clsn::TimeStamp) -> std::string {
-      CLSN_LOG_DEBUG << "tcp callback message: " << message.size();
-      return message;
-    });
+    sever.SetMagCallback(
+        [](clsn::TcpConnection *, std::string message, clsn::TimeStamp) -> std::string { return message; });
     sever.Start(100000);
   }};
+  sleep(3);
   std::map<std::unique_ptr<clsn::TcpClient>, std::string> clients;
 
   std::random_device randomDevice;
@@ -34,7 +33,7 @@ TEST(test_tcp_sever_and_client, testTcpSeverAndClient) {
   std::uniform_int_distribution<char> uniformChar;
   std::mt19937 r(seed);
 
-  std::uint32_t client_number = 1;  // uniform_client_number(r);
+  std::uint32_t client_number = 10000;  // uniform_client_number(r);
 
   for (std::uint32_t i = 0; i < client_number; ++i) {
     std::uint32_t size = uniform_client_number(r);
@@ -48,16 +47,14 @@ TEST(test_tcp_sever_and_client, testTcpSeverAndClient) {
   }
 
   for (auto &[client, str] : clients) {
-    sleep(3);
     ASSERT_EQ(true, client->Connect(1000));
-    CLSN_LOG_DEBUG << "send str size:" << str.size();
     ASSERT_EQ(str.size(), client->Send(str));
+    auto reveive_str = client->Receive();
+    ASSERT_EQ(str, reveive_str);
+    client->Close();
   }
-  for (auto &[client, str] : clients) {
-    auto size = client->Receive();
-    CLSN_LOG_DEBUG << "send str size:" << size.size();
-    ASSERT_EQ(str, size);
-  }
+  CLSN_LOG_DEBUG << "client size :" << clients.size();
+
   exter_sever->Stop();
   severThread.join();
 }

@@ -10,7 +10,7 @@ namespace clsn {
 
 using LevelType = std::uint16_t;
 
-enum class LogLevel : std::uint16_t { None = 0, Debug = 1, Warning = 2, Error = 3, Fatal = 4 };
+enum class LogLevel : std::uint16_t { None = 0, Debug = 1, INFO = 2, Warning = 3, Error = 4, Fatal = 5 };
 
 inline std::string LogLevelToString(LogLevel level) noexcept {
   switch (level) {
@@ -20,6 +20,7 @@ inline std::string LogLevelToString(LogLevel level) noexcept {
 
     LEVELTOSTRING(None)
     LEVELTOSTRING(Debug)
+    LEVELTOSTRING(INFO)
     LEVELTOSTRING(Warning)
     LEVELTOSTRING(Error)
     LEVELTOSTRING(Fatal)

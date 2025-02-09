@@ -23,12 +23,14 @@ int Poller::EpollWait(std::vector<Runnable *> &tasks, int timeout) noexcept {
   } else if (res == 0) {
     CLSN_LOG_WARNING << "nothing happened!";
   } else {
-    CLSN_LOG_DEBUG << res << " happened!";
     for (int i = 0; i < res; i++) {
-      if (m_events_[i].data.ptr == nullptr) {
-        continue;
+      auto runnable = &m_runnable_context_[m_events_[i].data.fd];
+      if (runnable->IsWriting()) {
+        tasks.push_back(&(runnable->m_write_callback_));
       }
-      tasks.push_back(&m_runnable_[m_events_[i].data.fd]);
+      if (runnable->IsReading()) {
+        tasks.push_back(&(runnable->m_read_callback_));
+      }
     }
   }
   return res;
@@ -40,30 +42,44 @@ void Poller::CancelRegister(int fd) {
     throw std::logic_error("fd should not less then zero!");
   }
 
-  if (m_runnable_.size() > fd &&
-      (0 != m_runnable_[fd].m_runnable_.index() || 0 != m_runnable_[fd].m_event_ || 0 != m_runnable_[fd].m_fd_)) {
-    m_runnable_[fd] = Runnable{0, {}, 0};
+  if (m_runnable_context_.size() > fd &&
+      (0 != m_runnable_context_[fd].m_write_callback_.index() ||
+       0 != m_runnable_context_[fd].m_read_callback_.index() || 0 != m_runnable_context_[fd].m_event_ ||
+       0 != m_runnable_context_[fd].m_fd_)) {
+    m_runnable_context_[fd] = RunnableContext{0, {}, {}, 0};
     EpollCtl(fd, EPOLL_CTL_DEL, 0);
   }
 }
 
-void Poller::RegisterFd(Runnable runnable) {
-  if (runnable.m_fd_ < 0) {
-    CLSN_LOG_ERROR << runnable.m_fd_ << " should not less then zero!";
+void Poller::RegisterFd(RunnableContext runnable) {
+  int fd = runnable.m_fd_;
+  int ctl;
+  uint32_t event;
+
+  if (fd < 0) {
+    CLSN_LOG_ERROR << fd << " should not less then zero!";
     throw std::logic_error("fd should not less then zero!");
   }
 
-  int fd = runnable.m_fd_;
-  uint32_t event = runnable.m_event_;
-  int ctl = EPOLL_CTL_ADD;
-
-  if (m_runnable_.size() <= fd) {
+  if (m_runnable_context_.size() <= fd) {
     do {
-      m_runnable_.resize(m_runnable_.size() << 1);
-    } while (m_runnable_.size() <= static_cast<size_t>(fd));
+      m_runnable_context_.resize(m_runnable_context_.size() << 1);
+    } while (m_runnable_context_.size() <= static_cast<size_t>(fd));
   }
 
-  m_runnable_[fd] = runnable;
+  if (m_runnable_context_[fd].IsNoneEvent()) {
+    ctl = EPOLL_CTL_ADD;
+    m_runnable_context_[fd] = runnable;
+  } else {
+    ctl = EPOLL_CTL_MOD;
+    m_runnable_context_[fd].m_event_ |= runnable.m_event_;
+    if (runnable.IsReading()) {
+      m_runnable_context_[fd].m_read_callback_ = runnable.m_read_callback_;
+    } else if (runnable.IsWriting()) {
+      m_runnable_context_[fd].m_write_callback_ = runnable.m_write_callback_;
+    }
+  }
+  event = runnable.m_event_ = m_runnable_context_[fd].m_event_;
 
   if (-1 == EpollCtl(fd, ctl, event)) {
     CLSN_LOG_ERROR << "register m_socket_ failed!,m_socket_ is " << fd << " ,error is " << strerror(errno);

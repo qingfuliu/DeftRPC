@@ -167,7 +167,17 @@ auto IOBase(OriginFunc originFunc, clsn::kEvent event, int fd, Args... args) {
 
 ssize_t read(int fd, void *buf, size_t count) { return IOBase(read_t, clsn::kEvent::Read, fd, buf, count); }
 
-ssize_t write(int fd, const void *buf, size_t count) { return IOBase(write_t, clsn::kEvent::Write, fd, buf, count); }
+ssize_t write(int fd, const void *buf, size_t count) {
+  ssize_t total_write = 0;
+  do {
+    ssize_t n = IOBase(write_t, clsn::kEvent::Write, fd, buf, count);
+    if (n <= 0) {
+      return n;
+    }
+    total_write += n;
+  } while (count > total_write);
+  return total_write;
+}
 
 int close(int fd) {
   if (clsn::enable_hook) {
@@ -181,7 +191,30 @@ ssize_t readv(int fd, const struct iovec *iov, int iovcnt) {
 }
 
 ssize_t writev(int fd, const struct iovec *iov, int iovcnt) {
-  return IOBase(writev_t, clsn::kEvent::Write, fd, iov, iovcnt);
+  ssize_t total_write = 0;
+  do {
+    ssize_t n = IOBase(writev_t, clsn::kEvent::Write, fd, iov, iovcnt);
+    if (n == -1) {
+      return -1;
+    }
+    total_write += n;
+    int i;
+    for (i = 0; i < iovcnt; ++i) {
+      if (n >= iov[i].iov_len) {
+        n -= static_cast<ssize_t>(iov[i].iov_len);
+      } else {
+        if (iov[i].iov_len - n != write(fd, static_cast<char *>(iov[i].iov_base) + n, iov[i].iov_len - n)) {
+          return -1;
+        }
+        total_write += static_cast<ssize_t>(iov[i].iov_len) - n;
+        ++i;
+        break;
+      }
+    }
+    iovcnt -= i;
+    iov += i;
+  } while (iovcnt != 0);
+  return total_write;
 }
 
 unsigned int sleep(unsigned int seconds) {

@@ -150,10 +150,6 @@ int Socket::Write(char *buf, size_t len) const noexcept {
 
 int Socket::Close() const noexcept {
   int flag = ::close(m_fd_);
-  if (flag < 0) {
-    // log
-    CLSN_LOG_WARNING << "Close failed!! line: " << __LINE__ << " file: " << __FILE__;
-  }
   return flag;
 }
 }  // namespace clsn

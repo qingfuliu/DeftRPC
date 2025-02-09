@@ -20,33 +20,26 @@
 #include "net/Socket.h"
 
 namespace clsn {
+
+class TcpSever;
+
 class TcpConnection;
 
 using MagCallback = std::function<std::string(TcpConnection *, std::string_view, clsn::TimeStamp)>;
 
 class TcpConnection : public Noncopyable {
  public:
-  explicit TcpConnection(int f, const Addr &addr) noexcept;
+  explicit TcpConnection(int f, const Addr &addr, TcpSever *sever) noexcept;
 
   ~TcpConnection() override;
 
-  void Write(const std::string &msg) noexcept { WriteInThread(msg); }
+  void Close() {
+    m_scheduler_->AddDefer([this] { m_socket_.Close(); });
+  }
 
-  void Write(const char *msg, size_t len) noexcept { WriteInThread(msg, len); }
-
-  static void NewTcpConnectionArrive(int fd, const Addr &remote) noexcept;
+  static void NewTcpConnectionArrive(int fd, const Addr &remote, TcpSever *sever) noexcept;
 
  private:
-  void WriteInThread(const std::string &msg) noexcept {
-    assert(m_scheduler_->IsInLoopThread());
-    WriteInThread(msg.c_str(), msg.size());
-  }
-
-  void WriteInThread(const char *msg, size_t len) noexcept {
-    assert(m_scheduler_->IsInLoopThread());
-    m_output_buffer_->Write(msg, len);
-  }
-
   void ProcessMag();
 
  private:
@@ -55,6 +48,7 @@ class TcpConnection : public Noncopyable {
   std::unique_ptr<Buffer> m_input_buffer_;
   std::unique_ptr<Buffer> m_output_buffer_;
   Scheduler *const m_scheduler_ = Scheduler::GetThreadScheduler();
+  TcpSever *const m_sever_;
 };
 }  // namespace clsn
 

@@ -5,14 +5,24 @@
 #ifndef DEFTRPC_TASK_H
 #define DEFTRPC_TASK_H
 
+#include <sys/epoll.h>
 #include <functional>
 #include <variant>
+
 namespace clsn {
 using Task = std::function<void(void)>;
 
-struct Runnable {
+using Runnable = std::variant<std::monostate, void *, Task>;
+
+struct RunnableContext {
+  [[nodiscard]] bool IsNoneEvent() const noexcept { return m_event_ == 0; }
+
+  [[nodiscard]] bool IsReading() const noexcept { return 0 != (m_event_ & EPOLLIN); }
+
+  [[nodiscard]] bool IsWriting() const noexcept { return 0 != (m_event_ & EPOLLOUT); }
   int m_fd_ = -1;
-  std::variant<std::monostate, void *, Task> m_runnable_;
+  Runnable m_read_callback_;
+  Runnable m_write_callback_;
   uint32_t m_event_ = 0;
 };
 }  // namespace clsn

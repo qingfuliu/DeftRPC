@@ -9,23 +9,23 @@
 
 namespace clsn {
 
-TcpConnection::TcpConnection(int f, const Addr &addr) noexcept
+TcpConnection::TcpConnection(int f, const Addr &addr, TcpSever *sever) noexcept
     : m_socket_(f),
       m_remote_addr_(addr),
       m_input_buffer_(std::make_unique<RingBuffer>()),
-      m_output_buffer_(std::make_unique<RingBuffer>()) {}
+      m_output_buffer_(std::make_unique<RingBuffer>()),
+      m_sever_(sever) {}
 
 TcpConnection::~TcpConnection() = default;
 
-void TcpConnection::NewTcpConnectionArrive(int fd, const Addr &remote) noexcept {
-  CLSN_LOG_DEBUG << "new connection arrive,remote address is " << remote.ToString();
-  TcpConnection connection(fd, remote);
+void TcpConnection::NewTcpConnectionArrive(int fd, const Addr &remote, TcpSever *sever) noexcept {
+  TcpConnection connection(fd, remote, sever);
   connection.ProcessMag();
-  CLSN_LOG_DEBUG << "connection close,coroutine deconstruct";
+  Scheduler::Terminal();
 }
 
 void TcpConnection::ProcessMag() {
-  auto sever = dynamic_cast<TcpSever *>(m_scheduler_);
+  auto sever = m_sever_;
   std::string exception;
   assert(nullptr != sever);
   do {
@@ -40,26 +40,32 @@ void TcpConnection::ProcessMag() {
         if (!view.empty()) {
           std::string response_msg = sever->GetMagCallback()(this, view, TimeStamp::Now());
           sever->GetCodeC()->Encode(m_output_buffer_.get(), response_msg);
+          m_output_buffer_->FlushDataToFd(m_socket_.GetFd());
         }
       } catch (std::exception &e) {
         exception = e.what();
-        m_output_buffer_->Write(exception);
+        sever->GetCodeC()->Encode(m_output_buffer_.get(), exception);
+        m_output_buffer_->FlushDataToFd(m_socket_.GetFd());
       }
     } while (true);
 
+    // remote close
     if (res == 0) {
-      if (-1 == m_socket_.Close()) {
-        CLSN_LOG_ERROR << "connection close error,error is " << strerror(errno);
+      if (!m_input_buffer_->Empty()) {
+        m_output_buffer_->FlushDataToFd(m_socket_.GetFd());
       }
-      int fd = m_socket_.GetFd();
-      sever->AddDefer([sever, fd]() { sever->CloseConnection(fd); });
+      //      CLSN_LOG_DEBUG << "remote close:" << m_socket_.GetFd();
+      sever->AddDefer([this, sever, fd = m_socket_.GetFd()]() { sever->CleanConnection(fd); });
       break;
     }
+    // local close
     if (res == -1 && errno == EBADF) {
-      CLSN_LOG_ERROR << "please make sure this message only appears when the server is shut down!";
-      assert(sever->IsStop());
+      CLSN_LOG_ERROR << "please make sure this message only appears when the server is shut down or local close!";
+      break;
     } else {
       CLSN_LOG_ERROR << "read from m_socket_ error,error is " << strerror(errno);
+      sever->AddDefer([this, sever, fd = m_socket_.GetFd()]() { sever->CleanConnection(fd); });
+      break;
     }
   } while (!sever->IsStop());
 }

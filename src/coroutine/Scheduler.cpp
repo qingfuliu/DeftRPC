@@ -32,17 +32,21 @@ Scheduler::Scheduler(size_t sharedStackSize)
   }
   thread_scheduler = this;
 
+  if (0 != sharedStackSize) {
+    m_shared_stack_ = clsn::MakeSharedStack(sharedStackSize);
+  }
+
   /******************************event fd******************************/
   m_poller_->RegisterRead(m_event_fd_, Task([this] { ReadEventFd(); }));
   /******************************timer  fd******************************/
   m_poller_->RegisterRead(m_timer_queue_->GetTimerFd(), Task([this] { m_timer_queue_->HandleExpireEvent(); }));
-
-  if (0 != sharedStackSize) {
-    m_shared_stack_ = clsn::MakeSharedStack(sharedStackSize);
-  }
 }
 
-Scheduler::~Scheduler() = default;
+Scheduler::~Scheduler() {
+  m_poller_->CancelRegister(m_event_fd_);
+  close(m_event_fd_);
+  m_poller_->CancelRegister(m_timer_queue_->GetTimerFd());
+}
 
 Scheduler *Scheduler::GetThreadScheduler() {
   if (nullptr == thread_scheduler) {
@@ -118,8 +122,11 @@ void Scheduler::Yield() {
 }
 
 void Scheduler::Terminal() {
-  auto cur_coroutine = Scheduler::GetCurCoroutine();
-  cur_coroutine->SwapOutWithTerminal(*Scheduler::GetPrevCoroutine());
+  auto scheduler = Scheduler::GetThreadScheduler();
+  auto cur_coroutine = scheduler->m_coroutines_list_.back();
+  scheduler->m_coroutines_list_.pop_back();
+  auto prev_coroutine = scheduler->m_coroutines_list_.back();
+  cur_coroutine->SwapOutWithTerminal(*prev_coroutine);
 }
 
 void Scheduler::Start(int timeout) noexcept {
@@ -127,19 +134,20 @@ void Scheduler::Start(int timeout) noexcept {
   m_state_.store(kSchedulerState::EpollWait, std::memory_order_release);
 
   while (!m_stop_.load(std::memory_order_acquire)) {
-    m_active_coroutines_.clear();
-    if (0 < m_poller_->EpollWait(m_active_coroutines_, timeout)) {
+    m_active_runnable_.clear();
+    if (0 < m_poller_->EpollWait(m_active_runnable_, timeout)) {
       m_state_.store(kSchedulerState::HandleActiveFd, std::memory_order_release);
-      for (auto coroutine : m_active_coroutines_) {
-        switch (coroutine->m_runnable_.index()) {
+      for (auto runnable : m_active_runnable_) {
+        switch (runnable->index()) {
           case 1:
-            Scheduler::SwapIn(static_cast<Coroutine *>(std::get<1>(coroutine->m_runnable_)));
+            Scheduler::SwapIn(static_cast<Coroutine *>(std::get<1>(*runnable)));
             break;
           case 2:
-            std::get<2>(coroutine->m_runnable_).operator()();
+            std::get<2>(*runnable).operator()();
             break;
           default:
-            CLSN_LOG_ERROR << "The file descriptor:" << coroutine->m_fd_ << " is not registered correctly!";
+            CLSN_LOG_ERROR << "RunnableContext index is " << runnable->index()
+                           << ", which is not registered correctly!";
         }
       }
 
@@ -152,6 +160,8 @@ void Scheduler::Start(int timeout) noexcept {
     }
   }
   m_state_.store(kSchedulerState::DoNothing, std::memory_order_release);
+
+  CLSN_LOG_INFO << "Scheduler exit!";
 }
 
 void Scheduler::Stop() noexcept {
