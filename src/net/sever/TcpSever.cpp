@@ -35,6 +35,7 @@ TcpSever::~TcpSever() {
 void TcpSever::SetCodeC(CodeC *codeC) noexcept { m_codec_.reset(codeC); }
 
 void TcpSever::CleanConnection(int fd) noexcept {
+  CLSN_LOG_ERROR << "clean a connection:" << fd;
   auto it = m_connections_.find(fd);
   if (m_connections_.end() == it) {
     CLSN_LOG_ERROR << "clean a not exist connection!";
@@ -81,20 +82,14 @@ void TcpSever::AcceptTask() noexcept {
     Addr remote;
     int fd = m_accept_socket_.Accept(&remote);
     if (fd > 0) {
-      AddDefer([this, fd, remote]() {
-        std::pair<std::unordered_map<int, std::unique_ptr<Coroutine>>::iterator, bool> it;
-        {
-          std::lock_guard<std::mutex> guard(this->m_mutex_);
-          it = m_connections_.emplace(fd, CreateCoroutine(
-                                              [this, fd, remote]() {
-                                                TcpConnection::NewTcpConnectionArrive(fd, remote, this);
-                                                Scheduler::Terminal();
-                                              },
-                                              GetThreadSharedStack()));
-        }
-        auto coroutine = it.first->second.get();
-        Scheduler::SwapIn(coroutine);
-      });
+      auto scheduler = GetNextScheduler();
+      auto it = m_connections_.emplace(fd, CreateCoroutine(
+                                               [fd, remote, sever = this, scheduler]() {
+                                                 TcpConnection::NewTcpConnectionArrive(fd, remote, sever, scheduler);
+                                                 Scheduler::Terminal();
+                                               },
+                                               scheduler->GetSharedStack()));
+      scheduler->AddDefer([coroutine = it.first->second.get()]() { Scheduler::SwapIn(coroutine); });
     } else if (fd == -1 && errno == EBADF) {
       CLSN_LOG_ERROR << "please make sure this message only appears when the server is shut down!";
       break;

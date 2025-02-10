@@ -129,6 +129,8 @@ class Scheduler {
 
   void SetStopCallback(const Task &f) { m_stop_callback_ = f; }
 
+  SharedStack *GetSharedStack() noexcept { return m_shared_stack_.get(); }
+
  protected:
   Coroutine *CreateCoroutineEvent(int event_fd, Task task);
 

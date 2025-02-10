@@ -29,7 +29,7 @@ using MagCallback = std::function<std::string(TcpConnection *, std::string_view,
 
 class TcpConnection : public Noncopyable {
  public:
-  explicit TcpConnection(int f, const Addr &addr, TcpSever *sever) noexcept;
+  explicit TcpConnection(int f, const Addr &addr, TcpSever *sever, Scheduler *scheduler) noexcept;
 
   ~TcpConnection() override;
 
@@ -37,7 +37,7 @@ class TcpConnection : public Noncopyable {
     m_scheduler_->AddDefer([this] { m_socket_.Close(); });
   }
 
-  static void NewTcpConnectionArrive(int fd, const Addr &remote, TcpSever *sever) noexcept;
+  static void NewTcpConnectionArrive(int fd, const Addr &remote, TcpSever *sever, Scheduler *scheduler) noexcept;
 
  private:
   void ProcessMag();
@@ -47,7 +47,7 @@ class TcpConnection : public Noncopyable {
   const Addr m_remote_addr_;
   std::unique_ptr<Buffer> m_input_buffer_;
   std::unique_ptr<Buffer> m_output_buffer_;
-  Scheduler *const m_scheduler_ = Scheduler::GetThreadScheduler();
+  Scheduler *const m_scheduler_;
   TcpSever *const m_sever_;
 };
 }  // namespace clsn

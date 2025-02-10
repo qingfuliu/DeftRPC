@@ -9,25 +9,24 @@
 
 namespace clsn {
 
-TcpConnection::TcpConnection(int f, const Addr &addr, TcpSever *sever) noexcept
+TcpConnection::TcpConnection(int f, const Addr &addr, TcpSever *sever, Scheduler *scheduler) noexcept
     : m_socket_(f),
       m_remote_addr_(addr),
       m_input_buffer_(std::make_unique<RingBuffer>()),
       m_output_buffer_(std::make_unique<RingBuffer>()),
+      m_scheduler_(scheduler),
       m_sever_(sever) {}
 
 TcpConnection::~TcpConnection() = default;
 
-void TcpConnection::NewTcpConnectionArrive(int fd, const Addr &remote, TcpSever *sever) noexcept {
-  TcpConnection connection(fd, remote, sever);
+void TcpConnection::NewTcpConnectionArrive(int fd, const Addr &remote, TcpSever *sever, Scheduler *scheduler) noexcept {
+  TcpConnection connection(fd, remote, sever, scheduler);
   connection.ProcessMag();
   Scheduler::Terminal();
 }
 
 void TcpConnection::ProcessMag() {
-  auto sever = m_sever_;
   std::string exception;
-  assert(nullptr != sever);
   do {
     int res;
     do {
@@ -36,15 +35,15 @@ void TcpConnection::ProcessMag() {
         break;
       }
       try {
-        std::string view = sever->GetCodeC()->Decode(m_input_buffer_.get());
+        std::string view = m_sever_->GetCodeC()->Decode(m_input_buffer_.get());
         if (!view.empty()) {
-          std::string response_msg = sever->GetMagCallback()(this, view, TimeStamp::Now());
-          sever->GetCodeC()->Encode(m_output_buffer_.get(), response_msg);
+          std::string response_msg = m_sever_->GetMagCallback()(this, view, TimeStamp::Now());
+          m_sever_->GetCodeC()->Encode(m_output_buffer_.get(), response_msg);
           m_output_buffer_->FlushDataToFd(m_socket_.GetFd());
         }
       } catch (std::exception &e) {
         exception = e.what();
-        sever->GetCodeC()->Encode(m_output_buffer_.get(), exception);
+        m_sever_->GetCodeC()->Encode(m_output_buffer_.get(), exception);
         m_output_buffer_->FlushDataToFd(m_socket_.GetFd());
       }
     } while (true);
@@ -55,7 +54,7 @@ void TcpConnection::ProcessMag() {
         m_output_buffer_->FlushDataToFd(m_socket_.GetFd());
       }
       //      CLSN_LOG_DEBUG << "remote close:" << m_socket_.GetFd();
-      sever->AddDefer([this, sever, fd = m_socket_.GetFd()]() { sever->CleanConnection(fd); });
+      m_scheduler_->AddDefer([sever = m_sever_, fd = m_socket_.GetFd()]() { sever->CleanConnection(fd); });
       break;
     }
     // local close
@@ -64,9 +63,9 @@ void TcpConnection::ProcessMag() {
       break;
     } else {
       CLSN_LOG_ERROR << "read from m_socket_ error,error is " << strerror(errno) << ", code:" << errno;
-      sever->AddDefer([this, sever, fd = m_socket_.GetFd()]() { sever->CleanConnection(fd); });
+      m_scheduler_->AddDefer([sever = m_sever_, fd = m_socket_.GetFd()]() { sever->CleanConnection(fd); });
       break;
     }
-  } while (!sever->IsStop());
+  } while (!m_scheduler_->IsStop());
 }
 }  // namespace clsn

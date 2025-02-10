@@ -59,7 +59,6 @@ class TcpSever : public MultiThreadScheduler {
   const Addr m_local_addr_;
   std::unique_ptr<CodeC> m_codec_;
   std::unique_ptr<Coroutine> m_accept_coroutine_;
-  std::mutex m_mutex_;
   std::unordered_map<int, std::unique_ptr<Coroutine>> m_connections_;
   MagCallback m_msg_callback_;
 };

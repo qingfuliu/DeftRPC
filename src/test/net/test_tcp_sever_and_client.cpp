@@ -18,7 +18,7 @@ TEST(test_tcp_sever_and_client, testTcpSeverAndClient) {
   std::thread severThread{[&exter_sever] {
     EnableHook();
     std::string ipPort = "0.0.0.0:7901";
-    clsn::TcpSever sever(ipPort, 8, 0);
+    clsn::TcpSever sever(ipPort, 1, 0);
     exter_sever = &sever;
     sever.SetMagCallback(
         [](clsn::TcpConnection *, std::string message, clsn::TimeStamp) -> std::string { return message; });
