@@ -45,9 +45,12 @@ void Poller::CancelRegister(int fd) {
   if (m_runnable_context_.size() > fd &&
       (0 != m_runnable_context_[fd].m_write_callback_.index() ||
        0 != m_runnable_context_[fd].m_read_callback_.index() || 0 != m_runnable_context_[fd].m_event_ ||
-       0 != m_runnable_context_[fd].m_fd_)) {
-    m_runnable_context_[fd] = RunnableContext{0, {}, {}, 0};
-    EpollCtl(fd, EPOLL_CTL_DEL, 0);
+       -1 != m_runnable_context_[fd].m_fd_)) {
+    m_runnable_context_[fd] = RunnableContext{-1, {}, {}, 0};
+    if (0 != EpollCtl(fd, EPOLL_CTL_DEL, 0)) {
+      CLSN_LOG_ERROR << "Cancel register error!" << " Context[" << "fd:" << fd << ", error:" << strerror(errno) << "]";
+      throw std::logic_error("Cancel register error!");
+    }
   }
 }
 
@@ -61,7 +64,7 @@ void Poller::RegisterFd(RunnableContext runnable) {
     throw std::logic_error("fd should not less then zero!");
   }
 
-  if (m_runnable_context_.size() <= fd) {
+  if (static_cast<int>(m_runnable_context_.size()) <= fd) {
     do {
       m_runnable_context_.resize(m_runnable_context_.size() << 1);
     } while (m_runnable_context_.size() <= static_cast<size_t>(fd));
@@ -84,6 +87,17 @@ void Poller::RegisterFd(RunnableContext runnable) {
   if (-1 == EpollCtl(fd, ctl, event)) {
     CLSN_LOG_ERROR << "register m_socket_ failed!,m_socket_ is " << fd << " ,error is " << strerror(errno);
     throw std::logic_error("register m_socket_ failed!");
+  }
+}
+
+void Poller::ForEachRunnableContext(std::function<void(RunnableContext &)> func) {
+  if (nullptr == func) {
+    return;
+  }
+  for (size_t i = 0; i < m_runnable_context_.size(); ++i) {
+    if (static_cast<int>(i) != m_epoll_fd_ && -1 != m_runnable_context_[i].m_fd_) {
+      func(m_runnable_context_[i]);
+    }
   }
 }
 

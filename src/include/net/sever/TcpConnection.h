@@ -7,6 +7,7 @@
 
 #include <unistd.h>
 #include <cerrno>
+#include <cstring>
 #include <memory>
 #include <string>
 #include "common/buffer/EVBuffer.h"
@@ -29,24 +30,27 @@ using MagCallback = std::function<std::string(TcpConnection *, std::string_view,
 
 class TcpConnection : public Noncopyable {
  public:
-  explicit TcpConnection(int f, const Addr &addr, TcpSever *sever, Scheduler *scheduler) noexcept;
+  explicit TcpConnection(int fd, const Addr &addr, TcpSever *sever,
+                         MultiThreadScheduler::SchedulerThread *scheduler) noexcept;
 
   ~TcpConnection() override;
 
-  void Close() {
-    m_scheduler_->AddDefer([this] { m_socket_.Close(); });
-  }
-
-  static void NewTcpConnectionArrive(int fd, const Addr &remote, TcpSever *sever, Scheduler *scheduler) noexcept;
+  void Close();
+  /**
+   * Called after tcpconnection is constructed
+   */
+  void NewTcpConnectionEstablish() noexcept;
 
  private:
   void ProcessMag();
 
  private:
-  const Socket m_socket_;
+  Socket m_socket_;
   const Addr m_remote_addr_;
   std::unique_ptr<Buffer> m_input_buffer_;
   std::unique_ptr<Buffer> m_output_buffer_;
+  std::unique_ptr<Coroutine> m_coroutine_;
+  MultiThreadScheduler::SchedulerThread *const m_scheduler_thread_;
   Scheduler *const m_scheduler_;
   TcpSever *const m_sever_;
 };

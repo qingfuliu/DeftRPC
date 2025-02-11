@@ -39,19 +39,21 @@ TEST(test_tcp_sever_and_client, testTcpSeverAndClient) {
     std::uint32_t size = uniform_client_number(r);
     std::string str;
     str.resize(size, '\0');
-    for (int index = 0; index < size; ++index) {
+    for (std::uint32_t index = 0; index < size; ++index) {
       str[index] = uniformChar(r);
     }
     std::string ipPort = "127.0.0.1:7901";
     clients[std::make_unique<clsn::TcpClient>(ipPort)] = str;
   }
 
+  int i = 0;
   for (auto &[client, str] : clients) {
     ASSERT_EQ(true, client->Connect(1000));
     ASSERT_EQ(str.size(), client->Send(str));
     auto reveive_str = client->Receive();
     ASSERT_EQ(str, reveive_str);
-    client->Close();
+    (void)client->Close();
+    CLSN_LOG_DEBUG << "client index :" << i++;
   }
   CLSN_LOG_DEBUG << "client size :" << clients.size();
 

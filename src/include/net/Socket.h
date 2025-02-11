@@ -53,7 +53,7 @@ class Socket {
 
   int Write(char *buf, size_t len) const noexcept;
 
-  int Close() const noexcept;
+  int Close() noexcept;
 
  private:
   int m_fd_;

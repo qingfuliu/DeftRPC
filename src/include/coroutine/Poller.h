@@ -38,7 +38,7 @@ class Poller {
       throw std::logic_error("fd should not less then zero!");
     }
 
-    if (m_runnable_context_.size() <= fd ||
+    if (static_cast<int>(m_runnable_context_.size()) <= fd ||
         (0 == (static_cast<uint32_t>(kEvent::Read) & m_runnable_context_[fd].m_event_))) {
       RegisterFd(RunnableContext{.m_fd_ = fd,
                                  .m_read_callback_ = std::move(taskOrCoroutine),
@@ -49,9 +49,10 @@ class Poller {
       throw std::logic_error("fd register read twice!");
     }
   }
+
   template <class TaskOrCoroutine>
   void RegisterWrite(int fd, TaskOrCoroutine taskOrCoroutine) {
-    if (m_runnable_context_.size() <= fd ||
+    if (static_cast<int>(m_runnable_context_.size()) <= fd ||
         (0 == (static_cast<uint32_t>(kEvent::Write) & m_runnable_context_[fd].m_event_))) {
       RegisterFd(RunnableContext{.m_fd_ = fd,
                                  .m_write_callback_ = std::move(taskOrCoroutine),
@@ -64,6 +65,8 @@ class Poller {
   }
 
   void CancelRegister(int fd);
+
+  void ForEachRunnableContext(std::function<void(RunnableContext &)>);
 
  private:
   void RegisterFd(RunnableContext runnable);

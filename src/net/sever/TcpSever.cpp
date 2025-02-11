@@ -6,7 +6,6 @@
 #include "common/codeC/Codec.h"
 #include "hook/Hook.h"
 #include "net/sever/TcpConnection.h"
-
 namespace clsn {
 
 TcpSever::TcpSever(const std::string &ipPort, std::uint32_t threadNumber, size_t sharedStackSize) noexcept
@@ -17,7 +16,10 @@ TcpSever::TcpSever(const std::string &ipPort, std::uint32_t threadNumber, size_t
       m_accept_coroutine_(CreateCoroutine([this]() -> void {
         this->AcceptTask();
         Scheduler::Terminal();
-      })) {
+      })),
+      m_connections_(threadNumber) {
+  MultiThreadScheduler::WithPreparation([]() { EnableHook(); });
+
   m_accept_socket_.SetReusePort(true);
   m_accept_socket_.SetReuseAddr(true);
   if (m_codec_ == nullptr) {
@@ -34,32 +36,26 @@ TcpSever::~TcpSever() {
 
 void TcpSever::SetCodeC(CodeC *codeC) noexcept { m_codec_.reset(codeC); }
 
-void TcpSever::CleanConnection(int fd) noexcept {
-  CLSN_LOG_ERROR << "clean a connection:" << fd;
-  auto it = m_connections_.find(fd);
-  if (m_connections_.end() == it) {
-    CLSN_LOG_ERROR << "clean a not exist connection!";
+void TcpSever::CleanConnection(int index, int fd) noexcept {
+  auto it = m_connections_[index].find(fd);
+  if (m_connections_[index].end() == it) {
+    CLSN_LOG_ERROR << "clean a not exist connection!" << "index:" << index << ",fd:" << fd;
     return;
+  } else {
+    CLSN_LOG_DEBUG << "clean a:" << "index:" << index << ",fd:" << fd;
   }
-  if (0 != close(fd)) {
-    CLSN_LOG_ERROR << "close socket " << fd
-                   << "error when "
-                      "CleanConnection,error is "
-                   << errno;
-  }
-  m_connections_.erase(it);
+  m_connections_[index].erase(it);
 }
 
 void TcpSever::Start(int timeout) noexcept {
   Scheduler::AddDefer([this]() { Scheduler::SwapIn(m_accept_coroutine_.get()); });
   clsn::MultiThreadScheduler::Start(timeout);
-  CloseAcceptor();
-  CloseAllConnection();
+  //  CloseAllConnection();
 }
 
 void TcpSever::Stop() noexcept {
   if (IsInLoopThread()) {
-    Scheduler::CancelRegister(m_accept_socket_.GetFd());
+    CloseAcceptor();
     clsn::MultiThreadScheduler::Stop();
   } else {
     AddDefer([this]() { this->Stop(); });
@@ -82,14 +78,12 @@ void TcpSever::AcceptTask() noexcept {
     Addr remote;
     int fd = m_accept_socket_.Accept(&remote);
     if (fd > 0) {
-      auto scheduler = GetNextScheduler();
-      auto it = m_connections_.emplace(fd, CreateCoroutine(
-                                               [fd, remote, sever = this, scheduler]() {
-                                                 TcpConnection::NewTcpConnectionArrive(fd, remote, sever, scheduler);
-                                                 Scheduler::Terminal();
-                                               },
-                                               scheduler->GetSharedStack()));
-      scheduler->AddDefer([coroutine = it.first->second.get()]() { Scheduler::SwapIn(coroutine); });
+      auto scheduler_thread = GetNextScheduler();
+      scheduler_thread->GetScheduler()->AddDefer([this, scheduler_thread, fd, remote]() {
+        auto it = m_connections_[scheduler_thread->GetIndex()].emplace(
+            fd, std::make_unique<TcpConnection>(fd, remote, this, scheduler_thread));
+        it.first->second->NewTcpConnectionEstablish();
+      });
     } else if (fd == -1 && errno == EBADF) {
       CLSN_LOG_ERROR << "please make sure this message only appears when the server is shut down!";
       break;
@@ -103,16 +97,10 @@ void TcpSever::AcceptTask() noexcept {
 
 void TcpSever::NewConnectionArrives(int fd, const Addr &remote) noexcept {}
 
-void TcpSever::CloseAllConnection() noexcept {
-  for (auto &[fd, c] : m_connections_) {
-    close(fd);
-    Scheduler::SwapIn(c.get());
-  }
-  m_connections_.clear();
-}
+void TcpSever::CloseAllConnection() noexcept {}
 
 void TcpSever::CloseAcceptor() noexcept {
-  close(m_accept_socket_.GetFd());
+  ::close(m_accept_socket_.GetFd());
   Scheduler::AddDefer([accept_ptr = m_accept_coroutine_.get()] { Scheduler::SwapIn(accept_ptr); });
 }
 

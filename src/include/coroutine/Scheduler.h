@@ -22,7 +22,6 @@
 #include "common/task/Task.h"
 #include "common/thread.h"
 #include "common/timer/Timer.h"
-#include "hook/Hook.h"
 namespace clsn {
 class Mutex;
 
@@ -78,11 +77,11 @@ class Scheduler {
     }
   }
 
-  virtual void Start(int timeout) noexcept;
+  virtual void Start(int timeout);
 
   virtual bool IsRunning() noexcept { return !m_stop_.load(std::memory_order_acquire); }
 
-  virtual void Stop() noexcept;
+  virtual void Stop();
 
   [[nodiscard]] bool IsStop() const noexcept { return m_stop_.load(std::memory_order_acquire); }
 
@@ -131,9 +130,6 @@ class Scheduler {
 
   SharedStack *GetSharedStack() noexcept { return m_shared_stack_.get(); }
 
- protected:
-  Coroutine *CreateCoroutineEvent(int event_fd, Task task);
-
  private:
   void AddTask(ExtraTask f) noexcept {
     if (IsInLoopThread()) {
@@ -181,6 +177,7 @@ class Scheduler {
 };
 
 class MultiThreadScheduler : public Scheduler {
+ public:
   class SchedulerThread {
    public:
     SchedulerThread() = default;
@@ -211,9 +208,26 @@ class MultiThreadScheduler : public Scheduler {
       return nullptr != m_scheduler_ && m_scheduler_->IsRunning();
     }
 
+    SchedulerThread &WithPreparation(std::function<void(void)> preparation) {
+      m_preparation_ = std::move(preparation);
+      return *this;
+    }
+
+    SchedulerThread &WithCleanup(std::function<void(void)> cleanup) {
+      m_cleanup_ = std::move(cleanup);
+      return *this;
+    }
+
+    int GetIndex() const noexcept { return m_index_; }
+
+    void SetIndex(int index) noexcept { m_index_ = index; }
+
    private:
     void ThreadFunction(int timeout) {
-      EnableHook();
+      if (m_preparation_) {
+        m_preparation_();
+      }
+
       Scheduler scheduler;
       {
         std::unique_lock<std::mutex> guard(m_mutex_);
@@ -221,6 +235,11 @@ class MultiThreadScheduler : public Scheduler {
         m_condition_variable_.notify_one();
       }
       scheduler.Start(timeout);
+
+      if (m_cleanup_) {
+        m_cleanup_();
+      }
+
       {
         std::unique_lock<std::mutex> guard(m_mutex_);
         m_scheduler_ = nullptr;
@@ -229,9 +248,12 @@ class MultiThreadScheduler : public Scheduler {
     }
 
    private:
+    int m_index_{-1};
     std::mutex m_mutex_{};
     std::condition_variable m_condition_variable_;
     std::thread m_thread_{};
+    std::function<void(void)> m_preparation_;
+    std::function<void(void)> m_cleanup_;
     Scheduler *m_scheduler_{nullptr};
   };
 
@@ -243,13 +265,20 @@ class MultiThreadScheduler : public Scheduler {
 
   ~MultiThreadScheduler() override = default;
 
-  Scheduler *GetNextScheduler() noexcept {
+  /**
+   * Non thread safe
+   * @return
+   */
+  SchedulerThread *GetNextScheduler() noexcept {
+    if (m_schedulers_.size() == 1) {
+      m_schedulers_[0].get();
+    }
     static size_t index = 0;
     index = (index + 1) % m_schedulers_.size();
-    return m_schedulers_[index]->GetScheduler();
+    return m_schedulers_[index].get();
   }
 
-  void Start(int timeout) noexcept override;
+  void Start(int timeout) override;
 
   bool IsRunning() noexcept override {
     if (!Scheduler::IsRunning()) {
@@ -266,9 +295,21 @@ class MultiThreadScheduler : public Scheduler {
 
   void Stop() noexcept override;
 
+  MultiThreadScheduler &WithPreparation(std::function<void(void)> preparation) {
+    m_preparation_ = std::move(preparation);
+    return *this;
+  }
+
+  MultiThreadScheduler &WithCleanup(std::function<void(void)> cleanup) {
+    m_cleanup_ = std::move(cleanup);
+    return *this;
+  }
+
  private:
   std::mutex m_mutex_;
   std::vector<std::unique_ptr<SchedulerThread>> m_schedulers_;
+  std::function<void(void)> m_preparation_;
+  std::function<void(void)> m_cleanup_;
 };
 
 }  // namespace clsn

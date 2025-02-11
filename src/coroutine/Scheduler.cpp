@@ -129,7 +129,11 @@ void Scheduler::Terminal() {
   cur_coroutine->SwapOutWithTerminal(*prev_coroutine);
 }
 
-void Scheduler::Start(int timeout) noexcept {
+void Scheduler::Start(int timeout) {
+  if (!IsInLoopThread()) {
+    CLSN_LOG_ERROR << "The scheduler must be started on loop thread!";
+    throw std::logic_error("The scheduler must be started on loop thread!");
+  }
   CLSN_LOG_INFO << "Scheduler start!";
   m_stop_.store(false, std::memory_order_release);
   m_state_.store(kSchedulerState::EpollWait, std::memory_order_release);
@@ -158,14 +162,33 @@ void Scheduler::Start(int timeout) noexcept {
         task();
       }
       m_state_.store(kSchedulerState::EpollWait, std::memory_order_release);
+      if (!m_extra_tasks_.Empty()) {
+        Notify();
+      }
     }
   }
   m_state_.store(kSchedulerState::DoNothing, std::memory_order_release);
-
+  CLSN_LOG_INFO << "cleanup exit fd in poller!";
+  m_poller_->ForEachRunnableContext([this](RunnableContext &runnable) {
+    if (runnable.m_fd_ != m_event_fd_ && runnable.m_fd_ != m_timer_queue_->GetTimerFd()) {
+      auto callback = runnable.GetCallBack();
+      close(runnable.m_fd_);
+      switch (callback.index()) {
+        case 1:
+          Scheduler::SwapIn(static_cast<Coroutine *>(std::get<1>(callback)));
+          break;
+        case 2:
+          std::get<2>(callback).operator()();
+          break;
+        default:
+          CLSN_LOG_ERROR << "RunnableContext index is " << callback.index() << ", which is not registered correctly!";
+      }
+    }
+  });
   CLSN_LOG_INFO << "Scheduler exit!";
 }
 
-void Scheduler::Stop() noexcept {
+void Scheduler::Stop() {
   if (nullptr != m_stop_callback_) {
     m_stop_callback_();
   }
@@ -175,14 +198,6 @@ void Scheduler::Stop() noexcept {
       Notify();
     }
   }
-}
-
-Coroutine *Scheduler::CreateCoroutineEvent(int event_fd, Task task) {
-  while (event_fd >= m_coroutines_.size()) {
-    m_coroutines_.resize(m_coroutines_.size() << 1);
-  }
-  m_coroutines_[event_fd] = CreateCoroutine(std::move(task), m_shared_stack_.get());
-  return m_coroutines_[event_fd].get();
 }
 
 void Scheduler::ReadEventFd() const noexcept {
@@ -199,12 +214,15 @@ void Scheduler::WriteEventFd() const noexcept {
   }
 }
 
-void MultiThreadScheduler::Start(int timeout) noexcept {
+void MultiThreadScheduler::Start(int timeout) {
   {
     std::unique_lock<std::mutex> guard(m_mutex_);
-    for (auto &scheduler : m_schedulers_) {
-      scheduler = std::make_unique<SchedulerThread>();
-      scheduler->Start(timeout);
+    for (int i = 0; i < m_schedulers_.size(); ++i) {
+      m_schedulers_[i] = std::make_unique<SchedulerThread>();
+      m_schedulers_[i]->SetIndex(i);
+      m_schedulers_[i]->WithPreparation(m_preparation_);
+      m_schedulers_[i]->WithCleanup(m_cleanup_);
+      m_schedulers_[i]->Start(timeout);
     }
   }
 

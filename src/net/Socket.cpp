@@ -148,7 +148,7 @@ int Socket::Write(char *buf, size_t len) const noexcept {
   return size;
 }
 
-int Socket::Close() const noexcept {
+int Socket::Close() noexcept {
   int flag = ::close(m_fd_);
   return flag;
 }

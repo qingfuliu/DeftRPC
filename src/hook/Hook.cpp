@@ -128,11 +128,14 @@ int accept4(int sockFd, struct sockaddr *address, socklen_t *addressLen, int fla
   if (fd == -1 && errno == EAGAIN) {
     clsn::Scheduler::RegisterRead(sockFd, clsn::Scheduler::GetCurCoroutine());
     clsn::Scheduler::Yield();
-    clsn::Scheduler::CancelRegister(sockFd);
 
     do {
       fd = accept4_t(sockFd, address, addressLen, flags);
     } while (-1 == fd && errno == EINTR);
+
+    if (-1 != fd) {
+      clsn::Scheduler::CancelRegister(sockFd);
+    }
   }
   return fd;
 }
@@ -160,7 +163,9 @@ auto IOBase(OriginFunc originFunc, clsn::kEvent event, int fd, Args... args) {
       clsn::Scheduler::Yield();
       n = originFunc(fd, args...);
     } while (n == -1 && (errno == EINTR || errno == EAGAIN));
-    clsn::Scheduler::CancelRegister(fd);
+    if (-1 != n) {
+      clsn::Scheduler::CancelRegister(fd);
+    }
   }
   return n;
 }
@@ -257,9 +262,9 @@ void EnableHook() noexcept {
     mutex.lock();
     if (nullptr == p) {
       p = &clsn::detail::HookInitializer::GetInstance();
-      p->InitHook();
     }
   }
+  p->InitHook();
   clsn::enable_hook = true;
   assert(clsn::enable_hook);
 }

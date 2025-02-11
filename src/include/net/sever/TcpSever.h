@@ -39,7 +39,7 @@ class TcpSever : public MultiThreadScheduler {
 
   MagCallback &GetMagCallback() noexcept { return m_msg_callback_; }
 
-  void CleanConnection(int fd) noexcept;
+  void CleanConnection(int index, int fd) noexcept;
 
   void Start(int timeout) noexcept override;
 
@@ -59,7 +59,7 @@ class TcpSever : public MultiThreadScheduler {
   const Addr m_local_addr_;
   std::unique_ptr<CodeC> m_codec_;
   std::unique_ptr<Coroutine> m_accept_coroutine_;
-  std::unordered_map<int, std::unique_ptr<Coroutine>> m_connections_;
+  std::vector<std::unordered_map<int, std::unique_ptr<TcpConnection>>> m_connections_;
   MagCallback m_msg_callback_;
 };
 

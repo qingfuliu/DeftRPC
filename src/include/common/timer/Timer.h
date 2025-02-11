@@ -99,7 +99,7 @@ class Timer {
         m_expire_(m_interval_),
         m_id_(id.fetch_add(1, std::memory_order_release)) {}
 
-  Timer() noexcept : m_id_(0), m_interval_(0), m_expire_(TimeStamp::ClockType::now()), m_repeat_(false) {}
+  Timer() noexcept : m_repeat_(false), m_interval_(0), m_expire_(TimeStamp::ClockType::now()), m_id_(0) {}
 
   Timer(const Timer &timer) = default;
 
