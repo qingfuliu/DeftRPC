@@ -32,8 +32,7 @@ main() {
 	fi
   git submodule init
   git submodule update
-  cd third_part/benchmark && cmake -E make_directory "build" && cmake -E chdir "build" cmake -DBENCHMARK_DOWNLOAD_DEPENDENCIES=on -DCMAKE_BUILD_TYPE=Release ../ && cmake --build "build" --config Release --target install
-	echo "Script complete."
+  echo "Script complete."
 }
 
 checkSystem() {
@@ -81,7 +80,7 @@ install() {
 			18.04) install_ubuntu ;;
 			20.04) install_ubuntu ;;
 			22.04) install_ubuntu ;;
-			*) give_up ;;
+			*) install_ubuntu ;;
 			esac
 		elif [ "${os_version}" == "centos" ]; then
       install_centos
