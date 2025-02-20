@@ -29,7 +29,7 @@ TEST(test_tcp_sever_and_client, testTcpSeverAndClient1) {
 
   std::random_device randomDevice;
   unsigned int seed = randomDevice();  // 生成一个随机的种子值
-  std::uniform_int_distribution<std::uint32_t> uniform_client_number(10000, 30000);
+  std::uniform_int_distribution<std::uint32_t> uniform_client_number(2, 2 << 10);
   std::uniform_int_distribution<char> uniformChar;
   std::mt19937 r(seed);
 
@@ -82,7 +82,7 @@ TEST(test_tcp_sever_and_client, testTcpSeverAndClient2) {
 
       std::random_device randomDevice;
       unsigned int seed = randomDevice();  // 生成一个随机的种子值
-      std::uniform_int_distribution<std::uint32_t> uniform_client_number(10000, 30000);
+      std::uniform_int_distribution<std::uint32_t> uniform_client_number(2, 2 << 10);
       std::uniform_int_distribution<char> uniformChar;
       std::mt19937 r(seed);
 
