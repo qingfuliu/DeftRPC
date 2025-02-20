@@ -6,7 +6,7 @@
 #define DEFTRPC_COROUTINECONTEXT_H
 
 #include <unistd.h>
-#include <valgrind/memcheck.h>
+//#include <valgrind/memcheck.h>
 #include <algorithm>
 #include <memory>
 #include "log/Log.h"

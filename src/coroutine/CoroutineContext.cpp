@@ -48,8 +48,8 @@ CoroutineContext::CoroutineContext(CoroutineFunc func, CoroutineArg arg, SharedS
 
 CoroutineContext::~CoroutineContext() noexcept {
   if (-1 != m_valgrind_stack_id_) {
-    VALGRIND_STACK_DEREGISTER(m_valgrind_stack_id_);
-    m_valgrind_stack_id_ = -1;
+    //    VALGRIND_STACK_DEREGISTER(m_valgrind_stack_id_);
+    //    m_valgrind_stack_id_ = -1;
   }
 }
 
@@ -68,13 +68,14 @@ void CoroutineContext::MakeMem() {
       m_mem_.m_stack_bp_ = m_mem_.m_stack_buffer_.get() + m_mem_.m_stack_size_;
       std::fill(m_mem_.m_stack_buffer_.get(), m_mem_.m_stack_buffer_.get() + m_mem_.m_stack_size_, 0);
       // register stack for valgrind
-      if (-1 == m_valgrind_stack_id_) {
-        m_valgrind_stack_id_ =
-            VALGRIND_STACK_REGISTER(m_mem_.m_stack_buffer_.get(), m_mem_.m_stack_buffer_.get() + m_mem_.m_stack_size_);
-      } else {
-        VALGRIND_STACK_CHANGE(m_valgrind_stack_id_, m_mem_.m_stack_buffer_.get(),
-                              m_mem_.m_stack_buffer_.get() + m_mem_.m_stack_size_);
-      }
+      //      if (-1 == m_valgrind_stack_id_) {
+      //        m_valgrind_stack_id_ =
+      //            VALGRIND_STACK_REGISTER(m_mem_.m_stack_buffer_.get(), m_mem_.m_stack_buffer_.get() +
+      //            m_mem_.m_stack_size_);
+      //      } else {
+      //        VALGRIND_STACK_CHANGE(m_valgrind_stack_id_, m_mem_.m_stack_buffer_.get(),
+      //                              m_mem_.m_stack_buffer_.get() + m_mem_.m_stack_size_);
+      //      }
     }
   } else {
     m_mem_.m_stack_buffer_.reset(m_shared_mem_->GetStack());
@@ -133,7 +134,6 @@ void CoroutineContext::SaveSharedStack() {
 
     m_mem_.m_saved_stack_.reset(new char[m_mem_.m_save_stack_size_]);
     std::fill(m_mem_.m_saved_stack_.get(), m_mem_.m_saved_stack_.get() + m_mem_.m_save_stack_size_, 0);
-    VALGRIND_STACK_REGISTER(0, 100);
   }
   m_shared_mem_->SaveStack(m_mem_.m_saved_stack_.get(), m_mem_.m_valid_size_);
   m_shared_mem_->SetOwner(nullptr);

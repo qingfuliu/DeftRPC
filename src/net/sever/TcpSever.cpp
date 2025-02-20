@@ -36,18 +36,17 @@ TcpSever::~TcpSever() {
 
 void TcpSever::SetCodeC(CodeC *codeC) noexcept { m_codec_.reset(codeC); }
 
-void TcpSever::CleanConnection(int index, int fd) noexcept {
+void TcpSever::CleanConnection(int index, int fd) {
   auto it = m_connections_[index].find(fd);
   if (m_connections_[index].end() == it) {
     CLSN_LOG_ERROR << "clean a not exist connection!" << "index:" << index << ",fd:" << fd;
+    throw std::logic_error("clean a not exist connection!");
     return;
-  } else {
-    CLSN_LOG_DEBUG << "clean a:" << "index:" << index << ",fd:" << fd;
   }
   m_connections_[index].erase(it);
 }
 
-void TcpSever::Start(int timeout) noexcept {
+void TcpSever::Start(int timeout)  {
   Scheduler::AddDefer([this]() { Scheduler::SwapIn(m_accept_coroutine_.get()); });
   clsn::MultiThreadScheduler::Start(timeout);
   //  CloseAllConnection();

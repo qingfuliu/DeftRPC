@@ -4,3 +4,4 @@ if (ENABLE_TEST STREQUAL "True")
 endif ()
 
 add_subdirectory(./highwayhash)
+add_subdirectory(./benchmark)

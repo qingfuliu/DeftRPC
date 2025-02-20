@@ -39,9 +39,9 @@ class TcpSever : public MultiThreadScheduler {
 
   MagCallback &GetMagCallback() noexcept { return m_msg_callback_; }
 
-  void CleanConnection(int index, int fd) noexcept;
+  void CleanConnection(int index, int fd);
 
-  void Start(int timeout) noexcept override;
+  void Start(int timeout) override;
 
   void Stop() noexcept override;
 

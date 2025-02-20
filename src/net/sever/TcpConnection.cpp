@@ -29,7 +29,6 @@ TcpConnection::~TcpConnection() = default;
 
 void TcpConnection::Close() {
   m_scheduler_->AddDefer([this] {
-    CLSN_LOG_DEBUG << "AddDefer Close 1:" << m_socket_.GetFd();
     if (0 != m_socket_.Close()) {
       CLSN_LOG_ERROR << "socket close error!" << " Context[" << "fd:" << m_socket_.GetFd()
                      << ", error:" << strerror(errno) << "]";
@@ -41,7 +40,6 @@ void TcpConnection::Close() {
 }
 
 void TcpConnection::NewTcpConnectionEstablish() noexcept {
-  CLSN_LOG_DEBUG << "NewTcpConnectionEstablish:" << m_socket_.GetFd();
   m_scheduler_->AddDefer([coroutine = m_coroutine_.get()]() { Scheduler::SwapIn(coroutine); });
 }
 
@@ -73,14 +71,14 @@ void TcpConnection::ProcessMag() {
       if (!m_input_buffer_->Empty()) {
         m_output_buffer_->FlushDataToFd(m_socket_.GetFd());
       }
-      CLSN_LOG_DEBUG << "m_socket_ Close 1:" << m_socket_.GetFd();
-      m_scheduler_->AddDefer([this]() {
-        if (0 != m_socket_.Close()) {
-          CLSN_LOG_ERROR << "socket close error!" << " Context[" << "fd:" << m_socket_.GetFd()
-                         << ", error:" << strerror(errno) << "]";
-          throw std::runtime_error("socket close error!");
-        };
-        m_sever_->CleanConnection(m_scheduler_thread_->GetIndex(), m_socket_.GetFd());
+
+      m_scheduler_->AddDefer([sever = this->m_sever_, scheduler_thread = this->m_scheduler_thread_,
+                              fd = m_socket_.GetFd()] {
+        sever->CleanConnection(scheduler_thread->GetIndex(), fd);
+        if (0 != close(fd)) {
+          CLSN_LOG_ERROR << "close socket error!" << " Context[" << "fd:" << fd << ", error:" << strerror(errno) << "]";
+          throw std::runtime_error("close socket error!");
+        }
       });
       break;
     }

@@ -1,6 +1,0 @@
-file(GLOB_RECURSE COMMON_SRC LIST_DIRECTORIES false ./*.cpp)
-
-add_library(CLSN_COMMON SHARED ${COMMON_SRC})
-
-
-

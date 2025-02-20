@@ -206,8 +206,10 @@ add_custom_target(check-lint echo '${LINT_FILES}' | xargs -n12 -P8
 include_directories(${CMAKE_SOURCE_DIR}/src/include)
 include_directories(${CMAKE_SOURCE_DIR}/third_part)
 
+if (ENABLE_TEST)
+    add_subdirectory(./test)
+endif ()
 add_executable(DeftRPC main.cpp)
 add_subdirectory(./src)
-#add_subdirectory(./example)
 add_subdirectory(./third_part)
 

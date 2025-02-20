@@ -168,7 +168,7 @@ void Scheduler::Start(int timeout) {
     }
   }
   m_state_.store(kSchedulerState::DoNothing, std::memory_order_release);
-  CLSN_LOG_INFO << "cleanup exit fd in poller!";
+  CLSN_LOG_INFO << "cleanup all fd in poller!";
   m_poller_->ForEachRunnableContext([this](RunnableContext &runnable) {
     if (runnable.m_fd_ != m_event_fd_ && runnable.m_fd_ != m_timer_queue_->GetTimerFd()) {
       auto callback = runnable.GetCallBack();

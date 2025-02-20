@@ -18,7 +18,7 @@ TEST(test_tcp_sever_and_client, testTcpSeverAndClient) {
   std::thread severThread{[&exter_sever] {
     EnableHook();
     std::string ipPort = "0.0.0.0:7901";
-    clsn::TcpSever sever(ipPort, 1, 0);
+    clsn::TcpSever sever(ipPort, 8, 0);
     exter_sever = &sever;
     sever.SetMagCallback(
         [](clsn::TcpConnection *, std::string message, clsn::TimeStamp) -> std::string { return message; });
@@ -29,7 +29,7 @@ TEST(test_tcp_sever_and_client, testTcpSeverAndClient) {
 
   std::random_device randomDevice;
   unsigned int seed = randomDevice();  // 生成一个随机的种子值
-  std::uniform_int_distribution<std::uint32_t> uniform_client_number(1024, 4096);
+  std::uniform_int_distribution<std::uint32_t> uniform_client_number(10000, 30000);
   std::uniform_int_distribution<char> uniformChar;
   std::mt19937 r(seed);
 
@@ -53,7 +53,6 @@ TEST(test_tcp_sever_and_client, testTcpSeverAndClient) {
     auto reveive_str = client->Receive();
     ASSERT_EQ(str, reveive_str);
     (void)client->Close();
-    CLSN_LOG_DEBUG << "client index :" << i++;
   }
   CLSN_LOG_DEBUG << "client size :" << clients.size();
 

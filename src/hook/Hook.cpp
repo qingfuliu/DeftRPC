@@ -262,9 +262,9 @@ void EnableHook() noexcept {
     mutex.lock();
     if (nullptr == p) {
       p = &clsn::detail::HookInitializer::GetInstance();
+      p->InitHook();
     }
   }
-  p->InitHook();
   clsn::enable_hook = true;
   assert(clsn::enable_hook);
 }

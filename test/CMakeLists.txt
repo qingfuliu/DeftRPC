@@ -18,9 +18,7 @@ foreach (filename IN LISTS TEST_SOURCE)
     target_include_directories(${target} PRIVATE ${CMAKE_SOURCE_DIR}/src/include PUBLIC ${CMAKE_SOURCE_DIR}/include/log)
 
     target_link_libraries(${target}
-            CLSN_HOOK CLSN_COROUTINE LOG benchmark
-            pthread CLSN_NET CLSN_SEVER CLSN_CLIENT
-            CLSN_DATASTRUCT CLSN_COMMON gtest_main)
+            DeftRpc benchmark gtest_main)
 
     gtest_discover_tests(${target})
 endforeach ()
